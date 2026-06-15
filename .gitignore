@@ -1,0 +1,29 @@
+# Claude
+
+.claude/settings.local.json
+
+# Node
+
+node_modules/
+.next/
+dist/
+
+# Python
+
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# OS
+
+.DS_Store
+
+# Env
+
+.env
+.env.*
+
+# Logs
+
+*.log
