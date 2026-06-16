@@ -10,7 +10,6 @@ env:
   DATABASE_URL: postgresql://vrs_user:vrs_password@localhost:5432/vrs_db
   JWT_SECRET: ci-jwt-secret-for-build
   JWT_REFRESH_SECRET: ci-jwt-refresh-secret-for-build
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
@@ -32,9 +31,9 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
