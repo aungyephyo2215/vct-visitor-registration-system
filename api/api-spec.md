@@ -1,55 +1,95 @@
 # API Specification
 
+Base URL
+
+/api/v1
+
+---
+
 ## Authentication
 
-POST
+POST /auth/login
 
-/api/v1/auth/login
+Request
+
+{
+  "email":"admin@example.com",
+  "password":"password"
+}
+
+Response
+
+{
+  "access_token":"xxxxx",
+  "refresh_token":"xxxxx"
+}
 
 ---
 
 ## Visitors
 
-GET
+GET /visitors
 
-/api/v1/visitors
+Create Visitor
 
-POST
+POST /visitors
 
-/api/v1/visitors
+Request
 
-GET
+{
+  "name":"John",
+  "phone":"091234567",
+  "nrc":"12/ABC(N)123456"
+}
 
-/api/v1/visitors/:id
+---
 
-PUT
+GET /visitors/:id
 
-/api/v1/visitors/:id
+---
 
-DELETE
+PUT /visitors/:id
 
-/api/v1/visitors/:id
+---
+
+DELETE /visitors/:id
 
 ---
 
 ## Visits
 
-GET
+POST /visits
 
-/api/v1/visits
+GET /visits
 
-POST
-
-/api/v1/visits/checkin
-
-POST
-
-/api/v1/visits/checkout
+GET /visits/:id
 
 ---
 
-## Audit Logs
+## QR
 
-GET
+POST /qr/generate
 
-/api/v1/audit-logs
+GET /qr/:token
+
+---
+
+## Check In
+
+POST /checkin
+
+---
+
+## Check Out
+
+POST /checkout
+
+---
+
+## Reports
+
+GET /reports/daily
+
+GET /reports/monthly
+
+GET /reports/frequent-visitors

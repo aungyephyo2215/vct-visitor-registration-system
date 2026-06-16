@@ -1,41 +1,55 @@
-# Dashboard Wireframe
+# Wireframe
 
-------------------------------------------------
+Dashboard
 
-LOGO
++----------------------------------+
 
-------------------------------------------------
+Sidebar
+
+- Dashboard
+- Visitors
+- History
+- Reports
+- Settings
+
+-----------------------------------
 
 Today's Visitors
 
-Currently Inside
+Checked In
 
 Checked Out
 
-------------------------------------------------
+Pending
 
-Recent Visitors
-
-Name
-
-Purpose
-
-Check In
-
-Status
-
-------------------------------------------------
+-----------------------------------
 
 Recent Activities
 
-------------------------------------------------
++----------------------------------+
 
-Quick Actions
+---
 
-New Visitor
+Visitor Page
 
-Scan QR
++--------------------------------+
 
-Reports
+Search Box
 
-------------------------------------------------
++--------------------------------+
+
+Table
+
+Photo
+
+Name
+
+Phone
+
+Host
+
+Status
+
+Actions
+
++--------------------------------+
