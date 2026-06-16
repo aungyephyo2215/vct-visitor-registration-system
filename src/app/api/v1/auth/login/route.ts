@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { loginSchema, formatZodErrors } from "@/lib/validations";
 import { verifyPassword } from "@/lib/password";
@@ -6,10 +6,26 @@ import { signAccessToken, signRefreshToken, getAccessTokenMaxAge, getRefreshToke
 import { toSafeUser } from "@/lib/auth";
 import { successResponse, errorResponse, validationErrorResponse } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { cookies } from "next/headers";
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting by IP
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const rateLimit = checkRateLimit(`login:${ip}`);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { success: false, error: { message: "Too many login attempts. Try again later." } },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)),
+          },
+        }
+      );
+    }
+
     const body = await request.json();
     const parsed = loginSchema.safeParse(body);
 

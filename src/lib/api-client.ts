@@ -29,6 +29,10 @@ async function request<T>(
   const json = await res.json();
 
   if (!res.ok) {
+    // Suppress 401 console noise — auth guard handles this gracefully
+    if (res.status !== 401) {
+      console.error(`API error ${res.status}: ${path}`);
+    }
     const message = json?.error?.message || `Request failed (${res.status})`;
     const error = new Error(message) as Error & { status: number; details: unknown };
     error.status = res.status;

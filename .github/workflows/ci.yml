@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: vrs_user
+          POSTGRES_PASSWORD: vrs_password
+          POSTGRES_DB: vrs_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://vrs_user:vrs_password@localhost:5432/vrs_db
+
+      - name: Run build
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://vrs_user:vrs_password@localhost:5432/vrs_db
+          JWT_SECRET: ci-jwt-secret-for-build
+          JWT_REFRESH_SECRET: ci-jwt-refresh-secret-for-build

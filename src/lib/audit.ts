@@ -30,11 +30,8 @@ interface CreateAuditLogParams {
 let _defaultPropertyId: string | null = null;
 
 async function getDefaultPropertyId(prisma: PrismaClient): Promise<string> {
-  if (!_defaultPropertyId) {
-    const property = await prisma.property.findFirst({ where: { status: "ACTIVE" } });
-    _defaultPropertyId = property?.id || "seed-property-01";
-  }
-  return _defaultPropertyId;
+  const property = await prisma.property.findFirst({ where: { status: "ACTIVE" } });
+  return property?.id || "seed-property-01";
 }
 
 export async function createAuditLog(params: CreateAuditLogParams) {

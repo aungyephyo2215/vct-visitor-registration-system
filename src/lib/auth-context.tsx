@@ -35,7 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const user = await api.get<SafeUser>("/api/v1/auth/me");
       setState({ user, isLoading: false, isAuthenticated: true });
-    } catch {
+    } catch (err) {
+      // 401 on public pages (landing, login) is expected — no console noise
       setState({ user: null, isLoading: false, isAuthenticated: false });
     }
   }, []);
