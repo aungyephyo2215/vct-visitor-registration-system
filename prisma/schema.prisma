@@ -1,0 +1,304 @@
+// Prisma schema for Visitor Registration System
+// Generated from database/schema.md
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Enums ──────────────────────────────────────────
+
+enum PropertyType {
+  CONDO
+  APARTMENT
+  OFFICE
+  WAREHOUSE
+}
+
+enum PropertyStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum UnitStatus {
+  OCCUPIED
+  VACANT
+  MAINTENANCE
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  PROPERTY_ADMIN
+  SECURITY_GUARD
+  RESIDENT
+  OFFICE_STAFF
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  LOCKED
+}
+
+enum IdType {
+  NRC
+  PASSPORT
+  DRIVING_LICENSE
+  COMPANY_ID
+  OTHER
+}
+
+enum VisitPurpose {
+  FAMILY_VISIT
+  BUSINESS_MEETING
+  DELIVERY
+  MAINTENANCE
+  INTERVIEW
+  CONTRACTOR
+  OTHER
+}
+
+enum VisitStatus {
+  EXPECTED
+  CHECKED_IN
+  CHECKED_OUT
+  NO_SHOW
+  CANCELLED
+}
+
+enum QRStatus {
+  ACTIVE
+  USED
+  EXPIRED
+  REVOKED
+}
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  CREATE_VISITOR
+  UPDATE_VISITOR
+  DELETE_VISITOR
+  GENERATE_QR
+  CHECK_IN
+  CHECK_OUT
+  FAILED_QR_SCAN
+  MANUAL_CHECKOUT
+  BLOCKLIST_MATCH
+}
+
+enum BlocklistStatus {
+  ACTIVE
+  REMOVED
+}
+
+// ── Models ──────────────────────────────────────────
+
+model Property {
+  id         String         @id @default(uuid())
+  name       String
+  type       PropertyType
+  address    String
+  timezone   String
+  status     PropertyStatus
+  created_at DateTime       @default(now())
+  updated_at DateTime       @updatedAt
+  deleted_at DateTime?
+
+  units      Unit[]
+  users      User[]
+  visitors   Visitor[]
+  visits     Visit[]
+  qrCodes    QRCode[]
+  auditLogs  AuditLog[]
+  blocklists Blocklist[]
+
+  @@index([status])
+  @@map("properties")
+}
+
+model Unit {
+  id          String       @id @default(uuid())
+  property_id String
+  unit_no     String
+  floor       Int
+  status      UnitStatus
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+  deleted_at  DateTime?
+
+  property Property @relation(fields: [property_id], references: [id])
+  users    User[]
+  visits   Visit[]
+
+  @@unique([property_id, unit_no])
+  @@index([property_id])
+  @@index([property_id, status])
+  @@map("units")
+}
+
+model User {
+  id            String     @id @default(uuid())
+  property_id   String?
+  unit_id       String?
+  name          String
+  email         String     @unique
+  password_hash String
+  role          UserRole
+  status        UserStatus
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+  deleted_at    DateTime?
+
+  property    Property?   @relation(fields: [property_id], references: [id])
+  unit        Unit?       @relation(fields: [unit_id], references: [id])
+  visits      Visit[]     @relation("hostedVisits")
+  auditLogs   AuditLog[]
+  blocklists  Blocklist[]
+
+  @@index([property_id])
+  @@index([unit_id])
+  @@index([role])
+  @@index([status])
+  @@index([property_id, role])
+  @@index([property_id, status])
+  @@map("users")
+}
+
+model Visitor {
+  id          String   @id @default(uuid())
+  property_id String
+  name        String
+  phone       String
+  id_type     IdType
+  id_number   String
+  photo_url   String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  deleted_at  DateTime?
+
+  property Property @relation(fields: [property_id], references: [id])
+  visits   Visit[]
+
+  @@index([property_id])
+  @@index([phone])
+  @@index([id_number])
+  @@index([property_id, phone])
+  @@index([property_id, id_number])
+  @@map("visitors")
+}
+
+model Visit {
+  id                  String       @id @default(uuid())
+  property_id         String
+  visitor_id          String
+  unit_id             String
+  host_user_id        String?
+  purpose             VisitPurpose
+  notes               String?
+  vehicle_number      String?
+  expected_checkin_time DateTime?
+  checkin_time        DateTime?
+  checkout_time       DateTime?
+  status              VisitStatus
+  created_at          DateTime     @default(now())
+  updated_at          DateTime     @updatedAt
+  deleted_at          DateTime?
+
+  property Property @relation(fields: [property_id], references: [id])
+  visitor  Visitor  @relation(fields: [visitor_id], references: [id])
+  unit     Unit     @relation(fields: [unit_id], references: [id])
+  host     User?    @relation("hostedVisits", fields: [host_user_id], references: [id])
+  qrCodes  QRCode[]
+
+  @@index([property_id])
+  @@index([visitor_id])
+  @@index([unit_id])
+  @@index([host_user_id])
+  @@index([status])
+  @@index([expected_checkin_time])
+  @@index([checkin_time])
+  @@index([property_id, status, expected_checkin_time])
+  @@index([property_id, checkin_time])
+  @@index([property_id, visitor_id])
+  @@index([property_id, unit_id])
+  @@map("visits")
+}
+
+model QRCode {
+  id          String    @id @default(uuid())
+  property_id String
+  visit_id    String
+  token_hash  String    @unique
+  status      QRStatus
+  expires_at  DateTime
+  used_at     DateTime?
+  revoked_at  DateTime?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  property Property @relation(fields: [property_id], references: [id])
+  visit    Visit    @relation(fields: [visit_id], references: [id])
+
+  @@index([property_id])
+  @@index([visit_id])
+  @@index([status])
+  @@index([expires_at])
+  @@index([property_id, status, expires_at])
+  @@map("qr_codes")
+}
+
+model AuditLog {
+  id            String       @id @default(uuid())
+  property_id   String
+  user_id       String?
+  action        AuditAction
+  resource_type String
+  resource_id   String?
+  ip_address    String
+  user_agent    String
+  metadata      Json?
+  created_at    DateTime     @default(now())
+
+  property Property @relation(fields: [property_id], references: [id])
+  user     User?    @relation(fields: [user_id], references: [id])
+
+  @@index([property_id])
+  @@index([user_id])
+  @@index([action])
+  @@index([created_at])
+  @@index([property_id, created_at])
+  @@index([property_id, action])
+  @@index([property_id, user_id])
+  @@map("audit_logs")
+}
+
+model Blocklist {
+  id           String          @id @default(uuid())
+  property_id  String
+  visitor_name String
+  phone        String?
+  id_number    String?
+  reason       String
+  status       BlocklistStatus
+  created_by   String
+  created_at   DateTime        @default(now())
+  updated_at   DateTime        @updatedAt
+  deleted_at   DateTime?
+
+  property Property @relation(fields: [property_id], references: [id])
+  creator  User     @relation(fields: [created_by], references: [id])
+
+  @@index([property_id])
+  @@index([phone])
+  @@index([id_number])
+  @@index([status])
+  @@index([property_id, phone])
+  @@index([property_id, id_number])
+  @@index([property_id, status])
+  @@map("blocklists")
+}
