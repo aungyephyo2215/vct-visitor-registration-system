@@ -77,6 +77,41 @@ export const checkoutSchema = z.object({
   visit_id: z.string().min(1, "Visit ID is required"),
 });
 
+export const invitationCreateSchema = z.object({
+  visitor_name: z.string().min(1, "Visitor name is required").max(100),
+  visitor_phone: z.string().min(1, "Phone is required").max(20),
+  visitor_email: z.string().email("Invalid email").optional().nullable(),
+  visitor_id_type: z.enum(["NRC", "PASSPORT", "DRIVING_LICENSE", "COMPANY_ID", "OTHER"]).optional().nullable(),
+  visitor_id_number: z.string().max(50).optional().nullable(),
+  visitor_type: z.enum(["GUEST", "FAMILY", "VIP", "VENDOR", "CONTRACTOR", "DELIVERY", "AUDITOR", "GOVERNMENT"]),
+  unit_id: z.string().min(1, "Unit is required"),
+  expected_date: z.string().min(1, "Expected date is required"),
+  expected_time: z.string().max(50).optional().nullable(),
+  notes: z.string().max(500).optional().nullable(),
+});
+
+export const invitationUpdateSchema = z.object({
+  visitor_name: z.string().min(1).max(100).optional(),
+  visitor_phone: z.string().min(1).max(20).optional(),
+  visitor_email: z.string().email("Invalid email").optional().nullable(),
+  visitor_id_type: z.enum(["NRC", "PASSPORT", "DRIVING_LICENSE", "COMPANY_ID", "OTHER"]).optional().nullable(),
+  visitor_id_number: z.string().max(50).optional().nullable(),
+  visitor_type: z.enum(["GUEST", "FAMILY", "VIP", "VENDOR", "CONTRACTOR", "DELIVERY", "AUDITOR", "GOVERNMENT"]).optional(),
+  unit_id: z.string().min(1).optional(),
+  expected_date: z.string().optional(),
+  expected_time: z.string().max(50).optional().nullable(),
+  notes: z.string().max(500).optional().nullable(),
+  status: z.enum(["PENDING", "APPROVED", "REJECTED", "EXPIRED", "CANCELLED"]).optional(),
+});
+
+export const invitationApproveSchema = z.object({
+  reason: z.string().max(500).optional().nullable(),
+});
+
+export const invitationRejectSchema = z.object({
+  reason: z.string().min(1, "Reason is required").max(500),
+});
+
 export const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),

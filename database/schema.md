@@ -1,4 +1,4 @@
-Database Schema
+# Database Schema
 
 Enum Definitions
 
@@ -371,3 +371,89 @@ Reason:
 
 * QRCode uses lifecycle status.
 * AuditLog must be append-only.
+
+Future Tables
+
+Invitation
+
+* id: uuid
+* property_id: uuid
+* visitor_name: varchar
+* visitor_phone: varchar
+* visitor_email: varchar
+* visitor_type: varchar
+* host_user_id: uuid
+* approval_status: varchar
+* qr_code_id: uuid nullable
+* expires_at: timestamp
+* created_at: timestamp
+
+Badge
+
+* id: uuid
+* property_id: uuid
+* visit_id: uuid
+* badge_number: varchar
+* printed_at: timestamp
+* returned_at: timestamp
+
+Notification
+
+* id: uuid
+* property_id: uuid
+* visit_id: uuid
+* channel: varchar
+* recipient: varchar
+* status: varchar
+* sent_at: timestamp
+
+Vehicle
+
+* id: uuid
+* property_id: uuid
+* visit_id: uuid
+* vehicle_number: varchar
+* vehicle_type: varchar
+
+NDA
+
+* id: uuid
+* property_id: uuid
+* visit_id: uuid
+* signed: boolean
+* signed_at: timestamp
+
+SafetyForm
+
+* id: uuid
+* property_id: uuid
+* visit_id: uuid
+* completed: boolean
+* completed_at: timestamp
+
+And future:
+
+* Invitation
+* Badge
+* Notification
+* Vehicle
+* NDA
+* SafetyForm
+
+VisitorType
+
+GUEST
+
+FAMILY
+
+VIP
+
+VENDOR
+
+CONTRACTOR
+
+DELIVERY
+
+AUDITOR
+
+GOVERNMENT

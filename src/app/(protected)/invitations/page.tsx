@@ -27,19 +27,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { StatusBadge } from "@/components/status-badge";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
-interface Visit {
+interface Invitation {
   id: string;
+  visitor_name: string;
+  visitor_phone: string;
+  visitor_type: string;
+  expected_date: string;
+  expected_time: string | null;
   status: string;
-  purpose: string;
-  checkin_time: string | null;
-  checkout_time: string | null;
   created_at: string;
-  visitor: { name: string } | null;
+  inviter: { name: string };
   unit: { unit_no: string; floor: number };
-  host: { name: string } | null;
 }
 
 interface PaginatedResult<T> {
@@ -52,16 +53,24 @@ interface PaginatedResult<T> {
 
 const statuses = [
   { value: "", label: "All Statuses" },
-  { value: "EXPECTED", label: "Expected" },
-  { value: "CHECKED_IN", label: "Checked In" },
-  { value: "CHECKED_OUT", label: "Checked Out" },
-  { value: "NO_SHOW", label: "No Show" },
+  { value: "PENDING", label: "Pending" },
+  { value: "APPROVED", label: "Approved" },
+  { value: "REJECTED", label: "Rejected" },
+  { value: "EXPIRED", label: "Expired" },
   { value: "CANCELLED", label: "Cancelled" },
 ];
 
-export default function VisitsPage() {
+const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  PENDING: "outline",
+  APPROVED: "default",
+  REJECTED: "destructive",
+  EXPIRED: "secondary",
+  CANCELLED: "outline",
+};
+
+export default function InvitationsPage() {
   const router = useRouter();
-  const [visits, setVisits] = useState<Visit[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -73,11 +82,11 @@ export default function VisitsPage() {
     try {
       const params: Record<string, string | number> = { page, limit: 20 };
       if (statusFilter) params.status = statusFilter;
-      const result = await api.get<PaginatedResult<Visit>>(
-        "/api/v1/visits",
+      const result = await api.get<PaginatedResult<Invitation>>(
+        "/api/v1/invitations",
         params
       );
-      setVisits(result.data);
+      setInvitations(result.data);
       setTotalPages(result.totalPages);
       setTotal(result.total);
     } catch {
@@ -99,15 +108,15 @@ export default function VisitsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Visits</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Invitations</h1>
           <p className="text-muted-foreground">
-            Manage visitor check-ins and visits
+            Manage visitor pre-registrations
           </p>
         </div>
-        <Link href="/visits/new">
+        <Link href="/invitations/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Create Visit
+            New Invitation
           </Button>
         </Link>
       </div>
@@ -137,9 +146,9 @@ export default function VisitsPage() {
               <Skeleton className="h-8 w-full" />
               <Skeleton className="h-8 w-full" />
             </div>
-          ) : visits.length === 0 ? (
+          ) : invitations.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">
-              No visits found.
+              No invitations found.
             </div>
           ) : (
             <>
@@ -147,44 +156,41 @@ export default function VisitsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Visitor</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Unit</TableHead>
-                    <TableHead>Purpose</TableHead>
+                    <TableHead>Date</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Check In</TableHead>
-                    <TableHead>Check Out</TableHead>
+                    <TableHead>Invited By</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {visits.map((v) => (
+                  {invitations.map((inv) => (
                     <TableRow
-                      key={v.id}
+                      key={inv.id}
                       className="cursor-pointer"
-                      onClick={() => router.push(`/visits/${v.id}`)}
+                      onClick={() => router.push(`/invitations/${inv.id}`)}
                     >
                       <TableCell className="font-medium">
-                        {v.visitor?.name || "—"}
+                        {inv.visitor_name}
                       </TableCell>
                       <TableCell>
-                        {v.unit?.unit_no || "—"}
-                        {v.unit?.floor ? ` (F${v.unit.floor})` : ""}
+                        {inv.visitor_type?.replace(/_/g, " ")}
                       </TableCell>
                       <TableCell>
-                        {v.purpose?.replace(/_/g, " ")}
+                        Unit {inv.unit?.unit_no || "—"}
+                        {inv.unit?.floor ? ` (F${inv.unit.floor})` : ""}
                       </TableCell>
                       <TableCell>
-                        <StatusBadge status={v.status} />
+                        {new Date(inv.expected_date).toLocaleDateString()}
+                        {inv.expected_time ? ` ${inv.expected_time}` : ""}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={statusVariant[inv.status] || "outline"}>
+                          {inv.status?.replace(/_/g, " ")}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {v.checkin_time
-                          ? new Date(v.checkin_time).toLocaleString()
-                          : "—"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {v.checkout_time
-                          ? new Date(v.checkout_time).toLocaleString()
-                          : v.checkin_time
-                            ? "Active"
-                            : "—"}
+                        {inv.inviter?.name || "—"}
                       </TableCell>
                     </TableRow>
                   ))}

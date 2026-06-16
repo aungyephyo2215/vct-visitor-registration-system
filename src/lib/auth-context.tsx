@@ -8,8 +8,15 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
+import { usePathname } from "next/navigation";
 import { api } from "./api-client";
 import type { SafeUser } from "./types";
+
+const publicPaths = ["/", "/login"];
+
+function isPublicPath(pathname: string): boolean {
+  return publicPaths.some((p) => pathname === p || pathname.startsWith(p + "/"));
+}
 
 interface AuthState {
   user: SafeUser | null;
@@ -25,25 +32,27 @@ interface AuthContextType extends AuthState {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname() ?? "";
+  const isPublic = isPublicPath(pathname);
   const [state, setState] = useState<AuthState>({
     user: null,
-    isLoading: true,
+    isLoading: isPublic ? false : true,
     isAuthenticated: false,
   });
 
   const refresh = useCallback(async () => {
     try {
-      const user = await api.get<SafeUser>("/api/v1/auth/me");
-      setState({ user, isLoading: false, isAuthenticated: true });
-    } catch (err) {
-      // 401 on public pages (landing, login) is expected — no console noise
+      const result = await api.get<{ user: SafeUser }>("/api/v1/auth/me");
+      setState({ user: result.user, isLoading: false, isAuthenticated: true });
+    } catch {
       setState({ user: null, isLoading: false, isAuthenticated: false });
     }
   }, []);
 
   useEffect(() => {
+    if (isPublic) return;
     refresh();
-  }, [refresh]);
+  }, [refresh, isPublic]);
 
   const logout = useCallback(async () => {
     try {

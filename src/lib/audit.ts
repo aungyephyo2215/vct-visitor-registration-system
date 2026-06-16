@@ -13,7 +13,14 @@ type AuditAction =
   | "CHECK_OUT"
   | "FAILED_QR_SCAN"
   | "MANUAL_CHECKOUT"
-  | "BLOCKLIST_MATCH";
+  | "BLOCKLIST_MATCH"
+  | "CREATE_INVITATION"
+  | "UPDATE_INVITATION"
+  | "DELETE_INVITATION"
+  | "APPROVE_INVITATION"
+  | "REJECT_INVITATION"
+  | "VERIFY_VISITOR"
+  | "ATTACH_VISITOR";
 
 interface CreateAuditLogParams {
   prisma: PrismaClient;
@@ -26,8 +33,6 @@ interface CreateAuditLogParams {
   user_agent?: string;
   metadata?: Record<string, unknown>;
 }
-
-let _defaultPropertyId: string | null = null;
 
 async function getDefaultPropertyId(prisma: PrismaClient): Promise<string> {
   const property = await prisma.property.findFirst({ where: { status: "ACTIVE" } });

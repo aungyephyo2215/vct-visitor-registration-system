@@ -50,15 +50,17 @@ npx prisma db seed
 npm run dev
 ```
 
-Open http://localhost:3000
+Open [http://localhost:3000](http://localhost:3000)
 
 ### Default Accounts
 
 | Email | Password | Role |
-|-------|----------|------|
-| admin@vrs.com | Admin123! | SUPER_ADMIN |
-| property@vrs.com | Admin123! | PROPERTY_ADMIN |
-| guard@vrs.com | Guard123! | SECURITY_GUARD |
+| ------- | ---------- | ------ |
+| <admin@vrs.com> | Admin123! | SUPER_ADMIN |
+| <property@vrs.com> | Admin123! | PROPERTY_ADMIN |
+| <guard@vrs.com> | Guard123! | SECURITY_GUARD |
+| <resident@vrs.com> | Resident123! | RESIDENT |
+| <office@vrs.com> | Office123! | OFFICE_STAFF |
 
 ## Docker Deployment
 
@@ -66,7 +68,7 @@ Open http://localhost:3000
 docker compose up --build -d
 ```
 
-This starts PostgreSQL and the Next.js app. The app is available at http://localhost:3000.
+This starts PostgreSQL and the Next.js app. The app is available at [http://localhost:3000](http://localhost:3000).
 
 ## Documentation
 
@@ -76,7 +78,7 @@ This starts PostgreSQL and the Next.js app. The app is available at http://local
 
 ## Project Structure
 
-```
+```text
 src/
   app/
     (protected)/    # Authenticated pages (dashboard, visitors, visits, reports, settings)

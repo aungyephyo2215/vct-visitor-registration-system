@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Users,
   CalendarClock,
+  Mail,
   BarChart3,
   Settings,
   LogOut,
@@ -14,6 +15,7 @@ import {
   X,
   QrCode,
   ChevronDown,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -25,6 +27,8 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/visitors", label: "Visitors", icon: Users },
   { href: "/visits", label: "Visits", icon: CalendarClock },
+  { href: "/invitations", label: "Invitations", icon: Mail },
+  { href: "/security/verify", label: "Security", icon: ShieldCheck },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

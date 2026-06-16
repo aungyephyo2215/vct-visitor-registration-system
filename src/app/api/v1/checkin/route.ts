@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
         visit: {
           include: {
             visitor: true,
+            verification: { select: { id: true } },
           },
         },
       },
@@ -52,6 +53,16 @@ export async function POST(request: NextRequest) {
 
     if (qrCode.visit.status === "CANCELLED") {
       return errorResponse("Visit is cancelled", 400);
+    }
+
+    // Check visitor exists (security must register before check-in)
+    if (!qrCode.visit.visitor) {
+      return errorResponse("Visitor not registered. Please register visitor before check-in.", 400);
+    }
+
+    // Check verification completed
+    if (!qrCode.visit.verification) {
+      return errorResponse("Verification not completed. Please complete verification before check-in.", 400);
     }
 
     // Check blocklist

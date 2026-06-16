@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Copy, QrCodeIcon, CheckCircle, LogOut } from "lucide-react";
+import { ArrowLeft, Copy, QrCodeIcon, CheckCircle, LogOut, ShieldCheck } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -32,10 +33,19 @@ interface Visit {
   checkout_time: string | null;
   expected_checkin_time: string | null;
   created_at: string;
-  visitor: { id: string; name: string; phone: string; id_type: string; id_number: string };
+  visitor: { id: string; name: string; phone: string; id_type: string; id_number: string } | null;
   unit: { id: string; unit_no: string; floor: number };
   host: { id: string; name: string; email: string } | null;
   qrCodes?: { id: string; status: string; expires_at: string }[];
+  verification?: {
+    id: string;
+    photo_url: string | null;
+    vehicle_number: string | null;
+    nda_signed: boolean;
+    safety_form_signed: boolean;
+    verified_at: string;
+    verifier: { name: string };
+  } | null;
 }
 
 export default function VisitDetailPage() {
@@ -424,6 +434,71 @@ export default function VisitDetailPage() {
               </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Verification Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5" />
+            Verification
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {visit.verification ? (
+            <dl className="space-y-3">
+              <div className="flex justify-between">
+                <dt className="text-sm text-muted-foreground">Verified By</dt>
+                <dd className="font-medium">{visit.verification.verifier?.name}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-sm text-muted-foreground">Verified At</dt>
+                <dd className="font-medium">
+                  {new Date(visit.verification.verified_at).toLocaleString()}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-sm text-muted-foreground">NDA</dt>
+                <dd>
+                  <Badge variant={visit.verification.nda_signed ? "default" : "secondary"}>
+                    {visit.verification.nda_signed ? "Signed" : "Not signed"}
+                  </Badge>
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-sm text-muted-foreground">Safety Form</dt>
+                <dd>
+                  <Badge variant={visit.verification.safety_form_signed ? "default" : "secondary"}>
+                    {visit.verification.safety_form_signed ? "Completed" : "Not completed"}
+                  </Badge>
+                </dd>
+              </div>
+              {visit.verification.vehicle_number && (
+                <div className="flex justify-between">
+                  <dt className="text-sm text-muted-foreground">Vehicle</dt>
+                  <dd className="font-medium">{visit.verification.vehicle_number}</dd>
+                </div>
+              )}
+              {visit.verification.photo_url && (
+                <div>
+                  <dt className="text-sm text-muted-foreground">Photo</dt>
+                  <dd>
+                    <img src={visit.verification.photo_url} alt="Visitor" className="mt-1 h-20 w-20 rounded-md object-cover" />
+                  </dd>
+                </div>
+              )}
+            </dl>
+          ) : (
+            <div>
+              <p className="text-sm text-muted-foreground mb-3">Not yet verified</p>
+              <Link href={`/security/verify`}>
+                <Button variant="outline" size="sm">
+                  Verify Visitor
+                </Button>
+              </Link>
+            </div>
+          )}
         </CardContent>
       </Card>
 

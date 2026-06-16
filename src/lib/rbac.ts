@@ -1,7 +1,7 @@
 import type { SafeUser } from "./types";
 import { forbiddenResponse } from "./api-response";
 
-type UserRole = "SUPER_ADMIN" | "PROPERTY_ADMIN" | "SECURITY_GUARD" | "RESIDENT" | "OFFICE_STAFF";
+export type UserRole = "SUPER_ADMIN" | "PROPERTY_ADMIN" | "SECURITY_GUARD" | "RESIDENT" | "OFFICE_STAFF";
 
 export function requireRole(
   user: SafeUser,

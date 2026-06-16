@@ -11,6 +11,13 @@ const visitIncludes = {
   unit: { select: { id: true, unit_no: true, floor: true } },
   host: { select: { id: true, name: true, email: true } },
   qrCodes: { select: { id: true, status: true, expires_at: true } },
+  verification: {
+    select: {
+      id: true, photo_url: true, vehicle_number: true,
+      nda_signed: true, safety_form_signed: true, verified_at: true,
+      verifier: { select: { name: true } },
+    },
+  },
 };
 
 export async function GET(

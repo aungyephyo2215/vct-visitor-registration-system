@@ -6,6 +6,8 @@ const protectedPages = [
   "/dashboard",
   "/visitors",
   "/visits",
+  "/invitations",
+  "/security",
   "/reports",
   "/settings",
 ];

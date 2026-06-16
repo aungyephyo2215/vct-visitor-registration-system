@@ -11,6 +11,8 @@ async function main() {
 
   const hashedAdmin = await bcrypt.hash("Admin123!", 12);
   const hashedGuard = await bcrypt.hash("Guard123!", 12);
+  const hashedResident = await bcrypt.hash("Resident123!", 12);
+  const hashedOffice = await bcrypt.hash("Office123!", 12);
 
   // Create property
   const property = await prisma.property.upsert({
@@ -69,6 +71,25 @@ async function main() {
       status: "ACTIVE" as const,
       property_id: property.id,
     },
+    {
+      id: "seed-user-resident",
+      name: "Resident Owner",
+      email: "resident@vrs.com",
+      password_hash: hashedResident,
+      role: "RESIDENT" as const,
+      status: "ACTIVE" as const,
+      property_id: property.id,
+      unit_id: unit.id,
+    },
+    {
+      id: "seed-user-office",
+      name: "Office Staff",
+      email: "office@vrs.com",
+      password_hash: hashedOffice,
+      role: "OFFICE_STAFF" as const,
+      status: "ACTIVE" as const,
+      property_id: property.id,
+    },
   ];
 
   for (const user of users) {
@@ -78,6 +99,56 @@ async function main() {
       create: user,
     });
     console.log(`User: ${user.email} (${user.role})`);
+  }
+
+  // Create sample invitations
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(10, 0, 0, 0);
+
+  const nextWeek = new Date();
+  nextWeek.setDate(nextWeek.getDate() + 7);
+  nextWeek.setHours(14, 0, 0, 0);
+
+  const invitations = [
+    {
+      id: "seed-invitation-01",
+      property_id: property.id,
+      invited_by: "seed-user-property",
+      visitor_name: "Alice Johnson",
+      visitor_phone: "+95911111111",
+      visitor_email: "alice@example.com",
+      visitor_id_type: "PASSPORT" as const,
+      visitor_id_number: "PP987654",
+      visitor_type: "FAMILY" as const,
+      unit_id: unit.id,
+      expected_date: tomorrow,
+      expected_time: "10:00-12:00",
+      notes: "Family visit for weekend",
+      status: "PENDING" as const,
+    },
+    {
+      id: "seed-invitation-02",
+      property_id: property.id,
+      invited_by: "seed-user-property",
+      visitor_name: "Bob Smith",
+      visitor_phone: "+95922222222",
+      visitor_type: "VENDOR" as const,
+      unit_id: unit.id,
+      expected_date: nextWeek,
+      expected_time: "14:00",
+      notes: "Supply delivery",
+      status: "PENDING" as const,
+    },
+  ];
+
+  for (const inv of invitations) {
+    await prisma.invitation.upsert({
+      where: { id: inv.id },
+      update: {},
+      create: inv,
+    });
+    console.log(`Invitation: ${inv.visitor_name} (${inv.status})`);
   }
 
   console.log("Seed complete.");

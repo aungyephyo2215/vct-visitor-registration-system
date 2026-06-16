@@ -91,6 +91,39 @@ enum AuditAction {
   FAILED_QR_SCAN
   MANUAL_CHECKOUT
   BLOCKLIST_MATCH
+  CREATE_INVITATION
+  UPDATE_INVITATION
+  DELETE_INVITATION
+  APPROVE_INVITATION
+  REJECT_INVITATION
+  VERIFY_VISITOR
+  ATTACH_VISITOR
+}
+
+enum InvitationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+enum VisitorType {
+  GUEST
+  FAMILY
+  VIP
+  VENDOR
+  CONTRACTOR
+  DELIVERY
+  AUDITOR
+  GOVERNMENT
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
 }
 
 enum BlocklistStatus {
@@ -118,6 +151,9 @@ model Property {
   qrCodes    QRCode[]
   auditLogs  AuditLog[]
   blocklists Blocklist[]
+  invitations Invitation[]
+  badges     Badge[]
+  verifications Verification[]
 
   @@index([status])
   @@map("properties")
@@ -136,6 +172,7 @@ model Unit {
   property Property @relation(fields: [property_id], references: [id])
   users    User[]
   visits   Visit[]
+  invitations Invitation[]
 
   @@unique([property_id, unit_no])
   @@index([property_id])
@@ -161,6 +198,10 @@ model User {
   visits      Visit[]     @relation("hostedVisits")
   auditLogs   AuditLog[]
   blocklists  Blocklist[]
+  invitations           Invitation[] @relation("invitedBy")
+  approvedInvitations   Invitation[] @relation("approvedBy")
+  approvals             Approval[]
+  verifications         Verification[]
 
   @@index([property_id])
   @@index([unit_id])
@@ -185,6 +226,7 @@ model Visitor {
 
   property Property @relation(fields: [property_id], references: [id])
   visits   Visit[]
+  verifications Verification[]
 
   @@index([property_id])
   @@index([phone])
@@ -197,7 +239,7 @@ model Visitor {
 model Visit {
   id                  String       @id @default(uuid())
   property_id         String
-  visitor_id          String
+  visitor_id          String?
   unit_id             String
   host_user_id        String?
   purpose             VisitPurpose
@@ -212,10 +254,12 @@ model Visit {
   deleted_at          DateTime?
 
   property Property @relation(fields: [property_id], references: [id])
-  visitor  Visitor  @relation(fields: [visitor_id], references: [id])
+  visitor  Visitor?  @relation(fields: [visitor_id], references: [id])
   unit     Unit     @relation(fields: [unit_id], references: [id])
   host     User?    @relation("hostedVisits", fields: [host_user_id], references: [id])
-  qrCodes  QRCode[]
+  qrCodes  QRCode[]  @relation("VisitQRCodes")
+  invitations Invitation[]  @relation("VisitInvitations")
+  verification Verification?
 
   @@index([property_id])
   @@index([visitor_id])
@@ -244,7 +288,7 @@ model QRCode {
   updated_at  DateTime  @updatedAt
 
   property Property @relation(fields: [property_id], references: [id])
-  visit    Visit    @relation(fields: [visit_id], references: [id])
+  visit    Visit    @relation("VisitQRCodes", fields: [visit_id], references: [id])
 
   @@index([property_id])
   @@index([visit_id])
@@ -303,4 +347,108 @@ model Blocklist {
   @@index([property_id, id_number])
   @@index([property_id, status])
   @@map("blocklists")
+}
+
+model Invitation {
+  id               String           @id @default(uuid())
+  property_id      String
+  invited_by       String
+  visitor_name     String
+  visitor_phone    String
+  visitor_email    String?
+  visitor_id_type  IdType?
+  visitor_id_number String?
+  visitor_type     VisitorType
+  unit_id          String
+  expected_date    DateTime
+  expected_time    String?
+  notes            String?
+  status           InvitationStatus
+  reason           String?
+  approved_by      String?
+  approved_at      DateTime?
+  visit_id         String?
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+  deleted_at       DateTime?
+
+  property Property @relation(fields: [property_id], references: [id])
+  inviter  User     @relation("invitedBy", fields: [invited_by], references: [id])
+  approver User?    @relation("approvedBy", fields: [approved_by], references: [id])
+  unit     Unit     @relation(fields: [unit_id], references: [id])
+  visit    Visit?    @relation("VisitInvitations", fields: [visit_id], references: [id])
+  approvals Approval[]
+  badges   Badge[]
+
+  @@index([property_id])
+  @@index([status])
+  @@index([invited_by])
+  @@index([property_id, status])
+  @@index([property_id, expected_date])
+  @@index([property_id, invited_by])
+  @@index([visit_id])
+  @@map("invitations")
+}
+
+model Approval {
+  id             String         @id @default(uuid())
+  invitation_id  String
+  status         ApprovalStatus
+  approved_by    String
+  note           String?
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+
+  invitation Invitation @relation(fields: [invitation_id], references: [id])
+  approver   User       @relation(fields: [approved_by], references: [id])
+
+  @@index([invitation_id])
+  @@index([invitation_id, status])
+  @@map("approvals")
+}
+
+model Badge {
+  id            String   @id @default(uuid())
+  property_id   String
+  invitation_id String?
+  visit_id      String?
+  visitor_id    String?
+  badge_type    String
+  badge_data    Json?
+  generated_at  DateTime @default(now())
+  printed_at    DateTime?
+  expires_at    DateTime?
+
+  property   Property   @relation(fields: [property_id], references: [id])
+  invitation Invitation? @relation(fields: [invitation_id], references: [id])
+
+  @@index([property_id])
+  @@index([invitation_id])
+  @@index([visit_id])
+  @@map("badges")
+}
+
+model Verification {
+  id                String   @id @default(uuid())
+  property_id       String
+  visit_id          String
+  visitor_id        String?
+  photo_url         String?
+  vehicle_number    String?
+  nda_signed        Boolean  @default(false)
+  safety_form_signed Boolean @default(false)
+  verified_by       String
+  verified_at       DateTime @default(now())
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  property Property @relation(fields: [property_id], references: [id])
+  visit    Visit    @relation(fields: [visit_id], references: [id])
+  visitor  Visitor? @relation(fields: [visitor_id], references: [id])
+  verifier User     @relation(fields: [verified_by], references: [id])
+
+  @@unique([visit_id])
+  @@index([property_id])
+  @@index([verified_by])
+  @@map("verifications")
 }
