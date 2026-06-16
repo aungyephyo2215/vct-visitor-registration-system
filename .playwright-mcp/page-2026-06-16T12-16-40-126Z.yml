@@ -1,0 +1,39 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - img [ref=e6]
+          - generic [ref=e12]: VRS
+        - navigation [ref=e13]:
+          - link "Sign In" [ref=e14] [cursor=pointer]:
+            - /url: /login
+          - link "Sign In" [ref=e15] [cursor=pointer]:
+            - /url: /login
+    - main [ref=e16]:
+      - generic [ref=e17]:
+        - heading "Visitor Registration, Simplified" [level=1] [ref=e18]
+        - paragraph [ref=e19]: Replace paper visitor logs with QR-based digital registration. Secure, fast, and built for condos, apartments, offices, and warehouses.
+        - link "Sign In" [ref=e21] [cursor=pointer]:
+          - /url: /login
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - img [ref=e25]
+          - heading "QR Check-In" [level=3] [ref=e31]
+          - paragraph [ref=e32]: Digital QR codes replace paper logs. Visitors check in with a scan.
+        - generic [ref=e33]:
+          - img [ref=e34]
+          - heading "Security Dashboard" [level=3] [ref=e37]
+          - paragraph [ref=e38]: Real-time visitor status, blocklist alerts, and audit trails.
+        - generic [ref=e39]:
+          - img [ref=e40]
+          - heading "Visitor History" [level=3] [ref=e44]
+          - paragraph [ref=e45]: Full visit history with search, filters, and export.
+        - generic [ref=e46]:
+          - img [ref=e47]
+          - heading "Multi-Property" [level=3] [ref=e51]
+          - paragraph [ref=e52]: Manage condos, apartments, offices, and warehouses from one system.
+    - contentinfo [ref=e53]: Visitor Registration System
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e59] [cursor=pointer]:
+    - img [ref=e60]
