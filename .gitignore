@@ -30,3 +30,4 @@ __pycache__/
 
 /src/generated/prisma
 .playwright-mcp/
+cookies.txt
