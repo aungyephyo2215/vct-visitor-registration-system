@@ -29,3 +29,4 @@ __pycache__/
 *.log
 
 /src/generated/prisma
+.playwright-mcp/
