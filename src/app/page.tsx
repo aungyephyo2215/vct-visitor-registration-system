@@ -41,10 +41,10 @@ export default function Home() {
               Sign In
             </Link>
             <Link
-              href="/register"
+              href="/login"
               className="inline-flex h-9 items-center justify-center rounded-md bg-foreground px-4 text-sm font-medium text-background hover:bg-foreground/90"
             >
-              Get Started
+              Sign In
             </Link>
           </nav>
         </div>
@@ -63,14 +63,8 @@ export default function Home() {
           </p>
           <div className="mt-8 flex items-center justify-center gap-4">
             <Link
-              href="/register"
-              className="inline-flex h-10 items-center justify-center rounded-md bg-foreground px-6 text-sm font-medium text-background hover:bg-foreground/90"
-            >
-              Get Started
-            </Link>
-            <Link
               href="/login"
-              className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-6 text-sm font-medium hover:bg-accent"
+              className="inline-flex h-10 items-center justify-center rounded-md bg-foreground px-6 text-sm font-medium text-background hover:bg-foreground/90"
             >
               Sign In
             </Link>
