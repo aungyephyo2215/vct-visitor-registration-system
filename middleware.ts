@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import type { JWTPayload } from "jose";
 import { verifyAccessToken } from "@/lib/jwt";
+
+function setUserHeaders(headers: Headers, payload: JWTPayload): Headers {
+  const h = new Headers(headers);
+  h.set("x-user-id", payload.sub as string);
+  h.set("x-user-email", (payload.email as string) || "");
+  h.set("x-user-role", (payload.role as string) || "");
+  h.set("x-user-property-id", (payload.property_id as string) || "");
+  return h;
+}
 
 const protectedPages = [
   "/dashboard",
@@ -34,15 +44,9 @@ export async function middleware(request: NextRequest) {
     if (token) {
       const payload = await verifyAccessToken(token);
       if (payload?.sub) {
-        const requestHeaders = new Headers(request.headers);
-        requestHeaders.set("x-user-id", payload.sub as string);
-        requestHeaders.set("x-user-email", (payload.email as string) || "");
-        requestHeaders.set("x-user-role", (payload.role as string) || "");
-        requestHeaders.set(
-          "x-user-property-id",
-          (payload.property_id as string) || ""
-        );
-        return NextResponse.next({ request: { headers: requestHeaders } });
+        return NextResponse.next({
+          request: { headers: setUserHeaders(request.headers, payload) },
+        });
       }
     }
     return NextResponse.next();
@@ -71,16 +75,9 @@ export async function middleware(request: NextRequest) {
       );
     }
 
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("x-user-id", payload.sub as string);
-    requestHeaders.set("x-user-email", (payload.email as string) || "");
-    requestHeaders.set("x-user-role", (payload.role as string) || "");
-    requestHeaders.set(
-      "x-user-property-id",
-      (payload.property_id as string) || ""
-    );
-
-    return NextResponse.next({ request: { headers: requestHeaders } });
+    return NextResponse.next({
+      request: { headers: setUserHeaders(request.headers, payload) },
+    });
   }
 
   // Page route protection
@@ -98,16 +95,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("x-user-id", payload.sub as string);
-    requestHeaders.set("x-user-email", (payload.email as string) || "");
-    requestHeaders.set("x-user-role", (payload.role as string) || "");
-    requestHeaders.set(
-      "x-user-property-id",
-      (payload.property_id as string) || ""
-    );
-
-    return NextResponse.next({ request: { headers: requestHeaders } });
+    return NextResponse.next({
+      request: { headers: setUserHeaders(request.headers, payload) },
+    });
   }
 
   return NextResponse.next();

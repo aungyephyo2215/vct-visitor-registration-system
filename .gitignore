@@ -1,55 +1,30 @@
-# Claude
-
-.claude/settings.local.json
-
-# Node
-
+# --- Dependencies ---
 node_modules/
+
+# --- Build Output ---
 .next/
 dist/
+/src/generated/prisma
 
-# Python
-
-venv/
-.venv/
-__pycache__/
-*.pyc
-
-# OS
-
-.DS_Store
-
-# Env
-
+# --- Environment ---
 .env
 .env.*
+!.env.example
 
-# Logs
+# --- OS Files ---
+.DS_Store
 
+# --- Logs ---
 *.log
 
-/src/generated/prisma
+# --- Playwright ---
 .playwright-mcp/
-cookies.txt
+test-results/
 
-# Playwright
-.playwright-mcp/
-
-# Claude
+# --- Claude ---
+.claude/settings.local.json
 claude-output.txt
 
-# Environment
-.env
-.env.local
-
-# MacOS
-.DS_Store
-
-# Local generated / sensitive files
-.playwright-mcp/
-claude-output.txt
-cookies.txt
-.env
-.env.local
-.DS_Store
+# --- Secrets & Local Artifacts ---
 .mcp.json
+cookies.txt
