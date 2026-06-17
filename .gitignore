@@ -44,3 +44,11 @@ claude-output.txt
 
 # MacOS
 .DS_Store
+
+# Local generated / sensitive files
+.playwright-mcp/
+claude-output.txt
+cookies.txt
+.env
+.env.local
+.DS_Store
