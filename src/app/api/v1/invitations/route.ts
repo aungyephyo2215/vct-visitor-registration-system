@@ -5,11 +5,16 @@ import { successResponse, errorResponse, validationErrorResponse } from "@/lib/a
 import { invitationCreateSchema, paginationSchema, formatZodErrors } from "@/lib/validations";
 import { requirePropertyAccess, requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
+import { expireStaleInvitations } from "@/lib/invitation-expire";
 import type { IdType, VisitorType } from "@/generated/prisma/enums";
 
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
+
+    // Auto-expire stale PENDING invitations before listing
+    await expireStaleInvitations(prisma);
+
     const { searchParams } = new URL(request.url);
     const query = paginationSchema.safeParse(Object.fromEntries(searchParams));
 

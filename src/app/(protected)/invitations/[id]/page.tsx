@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { ArrowLeft, CheckCircle, XCircle, ShieldCheck, QrCodeIcon, Printer } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
@@ -9,13 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -92,8 +87,12 @@ export default function InvitationDetailPage() {
   const isApproved = invitation?.status === "APPROVED";
   const isPending = invitation?.status === "PENDING";
   const hasQr = invitation?.visit_id != null;
-  const canApprove = isPending && user && ["SUPER_ADMIN", "PROPERTY_ADMIN", "OFFICE_STAFF"].includes(user.role);
-  const canGenerateQr = isApproved && user && ["SUPER_ADMIN", "PROPERTY_ADMIN", "OFFICE_STAFF", "SECURITY_GUARD"].includes(user.role);
+  const canApprove =
+    isPending && user && ["SUPER_ADMIN", "PROPERTY_ADMIN", "OFFICE_STAFF"].includes(user.role);
+  const canGenerateQr =
+    isApproved &&
+    user &&
+    ["SUPER_ADMIN", "PROPERTY_ADMIN", "OFFICE_STAFF", "SECURITY_GUARD"].includes(user.role);
 
   useEffect(() => {
     async function load() {
@@ -166,13 +165,14 @@ export default function InvitationDetailPage() {
     setGeneratingQr(true);
     try {
       const result = await api.post<{ token: string; expires_at: string; visit_id: string }>(
-        `/api/v1/invitations/${id}/generate-qr`, {}
+        `/api/v1/invitations/${id}/generate-qr`,
+        {},
       );
       setQrToken(result.token);
       setQrExpires(result.expires_at);
 
       // Update invitation with visit_id
-      setInvitation((prev) => prev ? { ...prev, visit_id: result.visit_id } : prev);
+      setInvitation((prev) => (prev ? { ...prev, visit_id: result.visit_id } : prev));
 
       // Render QR client-side
       try {
@@ -201,7 +201,15 @@ export default function InvitationDetailPage() {
       const badge = await api.post<{ id: string }>("/api/v1/badges", {
         invitation_id: id,
       });
-      setBadges((prev) => [...prev, { id: badge.id, badge_type: invitation?.visitor_type || "", generated_at: new Date().toISOString(), printed_at: null }]);
+      setBadges((prev) => [
+        ...prev,
+        {
+          id: badge.id,
+          badge_type: invitation?.visitor_type || "",
+          generated_at: new Date().toISOString(),
+          printed_at: null,
+        },
+      ]);
       toast.success("Badge generated");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to generate badge");
@@ -231,9 +239,7 @@ export default function InvitationDetailPage() {
         </Link>
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight">
-              {invitation.visitor_name}
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tight">{invitation.visitor_name}</h1>
             <Badge variant={statusVariant[invitation.status] || "outline"}>
               {invitation.status?.replace(/_/g, " ")}
             </Badge>
@@ -252,32 +258,31 @@ export default function InvitationDetailPage() {
           <CardContent>
             <dl className="space-y-4">
               <div>
-                <dt className="text-sm text-muted-foreground">Name</dt>
+                <dt className="text-muted-foreground text-sm">Name</dt>
                 <dd className="font-medium">{invitation.visitor_name}</dd>
               </div>
               <div>
-                <dt className="text-sm text-muted-foreground">Phone</dt>
+                <dt className="text-muted-foreground text-sm">Phone</dt>
                 <dd className="font-medium">{invitation.visitor_phone}</dd>
               </div>
               {invitation.visitor_email && (
                 <div>
-                  <dt className="text-sm text-muted-foreground">Email</dt>
+                  <dt className="text-muted-foreground text-sm">Email</dt>
                   <dd className="font-medium">{invitation.visitor_email}</dd>
                 </div>
               )}
               {invitation.visitor_id_type && (
                 <div>
-                  <dt className="text-sm text-muted-foreground">ID</dt>
+                  <dt className="text-muted-foreground text-sm">ID</dt>
                   <dd className="font-medium">
-                    {invitation.visitor_id_type?.replace(/_/g, " ")} / {invitation.visitor_id_number}
+                    {invitation.visitor_id_type?.replace(/_/g, " ")} /{" "}
+                    {invitation.visitor_id_number}
                   </dd>
                 </div>
               )}
               <div>
-                <dt className="text-sm text-muted-foreground">Type</dt>
-                <dd className="font-medium">
-                  {invitation.visitor_type?.replace(/_/g, " ")}
-                </dd>
+                <dt className="text-muted-foreground text-sm">Type</dt>
+                <dd className="font-medium">{invitation.visitor_type?.replace(/_/g, " ")}</dd>
               </div>
             </dl>
           </CardContent>
@@ -290,13 +295,13 @@ export default function InvitationDetailPage() {
           <CardContent>
             <dl className="space-y-4">
               <div>
-                <dt className="text-sm text-muted-foreground">Unit</dt>
+                <dt className="text-muted-foreground text-sm">Unit</dt>
                 <dd className="font-medium">
                   Unit {invitation.unit?.unit_no} (Floor {invitation.unit?.floor})
                 </dd>
               </div>
               <div>
-                <dt className="text-sm text-muted-foreground">Expected Date</dt>
+                <dt className="text-muted-foreground text-sm">Expected Date</dt>
                 <dd className="font-medium">
                   {new Date(invitation.expected_date).toLocaleDateString()}
                   {invitation.expected_time ? ` at ${invitation.expected_time}` : ""}
@@ -304,18 +309,18 @@ export default function InvitationDetailPage() {
               </div>
               {invitation.notes && (
                 <div>
-                  <dt className="text-sm text-muted-foreground">Notes</dt>
+                  <dt className="text-muted-foreground text-sm">Notes</dt>
                   <dd className="font-medium">{invitation.notes}</dd>
                 </div>
               )}
               <Separator />
               <div>
-                <dt className="text-sm text-muted-foreground">Invited By</dt>
+                <dt className="text-muted-foreground text-sm">Invited By</dt>
                 <dd className="font-medium">{invitation.inviter?.name}</dd>
               </div>
               {invitation.approver && (
                 <div>
-                  <dt className="text-sm text-muted-foreground">
+                  <dt className="text-muted-foreground text-sm">
                     {invitation.status === "APPROVED" ? "Approved By" : "Reviewed By"}
                   </dt>
                   <dd className="font-medium">{invitation.approver.name}</dd>
@@ -323,7 +328,7 @@ export default function InvitationDetailPage() {
               )}
               {invitation.reason && (
                 <div>
-                  <dt className="text-sm text-muted-foreground">Reason</dt>
+                  <dt className="text-muted-foreground text-sm">Reason</dt>
                   <dd className="font-medium">{invitation.reason}</dd>
                 </div>
               )}
@@ -340,9 +345,7 @@ export default function InvitationDetailPage() {
               <QrCodeIcon className="h-5 w-5" />
               QR Code
             </CardTitle>
-            <CardDescription>
-              Generate QR code for visitor check-in
-            </CardDescription>
+            <CardDescription>Generate QR code for visitor check-in</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {!hasQr && (
@@ -355,10 +358,16 @@ export default function InvitationDetailPage() {
               <div className="space-y-4 rounded-lg border p-4">
                 <div className="flex items-center justify-center">
                   {qrImage ? (
-                    <img src={qrImage} alt="QR Code" className="h-48 w-48" />
+                    <Image
+                      src={qrImage}
+                      alt="QR Code"
+                      width={192}
+                      height={192}
+                      className="h-48 w-48"
+                    />
                   ) : (
-                    <div className="flex h-48 w-48 items-center justify-center bg-muted rounded-lg">
-                      <QrCodeIcon className="h-12 w-12 text-muted-foreground" />
+                    <div className="bg-muted flex h-48 w-48 items-center justify-center rounded-lg">
+                      <QrCodeIcon className="text-muted-foreground h-12 w-12" />
                     </div>
                   )}
                 </div>
@@ -366,7 +375,7 @@ export default function InvitationDetailPage() {
                   <Label>QR Token</Label>
                   <Input readOnly value={qrToken} className="font-mono text-xs" />
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Expires: {qrExpires ? new Date(qrExpires).toLocaleString() : "—"}
                 </p>
               </div>
@@ -374,7 +383,7 @@ export default function InvitationDetailPage() {
 
             {hasQr && !qrToken && (
               <div>
-                <p className="text-sm text-muted-foreground mb-3">
+                <p className="text-muted-foreground mb-3 text-sm">
                   QR code has been generated. View linked visit for QR details.
                 </p>
                 <Link href={`/visits/${invitation.visit_id}`}>
@@ -396,9 +405,7 @@ export default function InvitationDetailPage() {
               <Printer className="h-5 w-5" />
               Visitor Badge
             </CardTitle>
-            <CardDescription>
-              Generate and print visitor badge
-            </CardDescription>
+            <CardDescription>Generate and print visitor badge</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Button onClick={handleGenerateBadge} disabled={generatingBadge} variant="outline">
@@ -408,12 +415,15 @@ export default function InvitationDetailPage() {
             {badges.length > 0 && (
               <div className="space-y-3">
                 {badges.map((b) => (
-                  <div key={b.id} className="flex items-center justify-between rounded-lg border p-3">
+                  <div
+                    key={b.id}
+                    className="flex items-center justify-between rounded-lg border p-3"
+                  >
                     <div>
                       <p className="text-sm font-medium">
                         Badge — {b.badge_type?.replace(/_/g, " ")}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">
                         Generated: {new Date(b.generated_at).toLocaleString()}
                       </p>
                     </div>
@@ -438,24 +448,30 @@ export default function InvitationDetailPage() {
             <ShieldCheck className="h-5 w-5" />
             Approval History
           </CardTitle>
-          <CardDescription>
-            Record of all approval actions
-          </CardDescription>
+          <CardDescription>Record of all approval actions</CardDescription>
         </CardHeader>
         <CardContent>
           {approvals.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No approval actions yet.</p>
+            <p className="text-muted-foreground text-sm">No approval actions yet.</p>
           ) : (
             <div className="space-y-3">
               {approvals.map((a) => (
                 <div key={a.id} className="flex items-center justify-between rounded-lg border p-3">
                   <div>
                     <p className="text-sm font-medium">{a.approver.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       {new Date(a.created_at).toLocaleString()}
                     </p>
                   </div>
-                  <Badge variant={a.status === "APPROVED" ? "default" : a.status === "REJECTED" ? "destructive" : "outline"}>
+                  <Badge
+                    variant={
+                      a.status === "APPROVED"
+                        ? "default"
+                        : a.status === "REJECTED"
+                          ? "destructive"
+                          : "outline"
+                    }
+                  >
                     {a.status}
                   </Badge>
                 </div>
@@ -470,9 +486,7 @@ export default function InvitationDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle>Review Invitation</CardTitle>
-            <CardDescription>
-              Approve or reject this invitation
-            </CardDescription>
+            <CardDescription>Approve or reject this invitation</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-3">
@@ -480,7 +494,11 @@ export default function InvitationDetailPage() {
                 <CheckCircle className="mr-2 h-4 w-4" />
                 {actionLoading ? "Processing..." : "Approve"}
               </Button>
-              <Button variant="destructive" onClick={() => setShowReject(true)} disabled={actionLoading}>
+              <Button
+                variant="destructive"
+                onClick={() => setShowReject(true)}
+                disabled={actionLoading}
+              >
                 <XCircle className="mr-2 h-4 w-4" />
                 Reject
               </Button>
@@ -499,10 +517,22 @@ export default function InvitationDetailPage() {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => { setShowReject(false); setRejectReason(""); }}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setShowReject(false);
+                      setRejectReason("");
+                    }}
+                  >
                     Cancel
                   </Button>
-                  <Button variant="destructive" size="sm" onClick={handleReject} disabled={actionLoading || !rejectReason.trim()}>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleReject}
+                    disabled={actionLoading || !rejectReason.trim()}
+                  >
                     {actionLoading ? "Rejecting..." : "Confirm Reject"}
                   </Button>
                 </div>
@@ -520,20 +550,34 @@ export default function InvitationDetailPage() {
         <CardContent>
           <div className="flex items-center gap-2 text-sm">
             <div className="flex items-center gap-1">
-              <div className={`h-2 w-2 rounded-full ${invitation.created_at ? "bg-green-500" : "bg-muted"}`} />
+              <div
+                className={`h-2 w-2 rounded-full ${invitation.created_at ? "bg-green-500" : "bg-muted"}`}
+              />
               <span className={invitation.created_at ? "" : "text-muted-foreground"}>Created</span>
             </div>
-            <div className="h-px flex-1 bg-muted" />
+            <div className="bg-muted h-px flex-1" />
             <div className="flex items-center gap-1">
-              <div className={`h-2 w-2 rounded-full ${["APPROVED", "REJECTED"].includes(invitation.status) ? invitation.status === "APPROVED" ? "bg-green-500" : "bg-destructive" : "bg-muted"}`} />
-              <span className={["APPROVED", "REJECTED"].includes(invitation.status) ? "" : "text-muted-foreground"}>
+              <div
+                className={`h-2 w-2 rounded-full ${["APPROVED", "REJECTED"].includes(invitation.status) ? (invitation.status === "APPROVED" ? "bg-green-500" : "bg-destructive") : "bg-muted"}`}
+              />
+              <span
+                className={
+                  ["APPROVED", "REJECTED"].includes(invitation.status)
+                    ? ""
+                    : "text-muted-foreground"
+                }
+              >
                 {invitation.status === "REJECTED" ? "Rejected" : "Reviewed"}
               </span>
             </div>
-            <div className="h-px flex-1 bg-muted" />
+            <div className="bg-muted h-px flex-1" />
             <div className="flex items-center gap-1">
-              <div className={`h-2 w-2 rounded-full ${invitation.visit_id ? "bg-green-500" : "bg-muted"}`} />
-              <span className={invitation.visit_id ? "" : "text-muted-foreground"}>QR Generated</span>
+              <div
+                className={`h-2 w-2 rounded-full ${invitation.visit_id ? "bg-green-500" : "bg-muted"}`}
+              />
+              <span className={invitation.visit_id ? "" : "text-muted-foreground"}>
+                QR Generated
+              </span>
             </div>
           </div>
         </CardContent>

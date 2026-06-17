@@ -7,6 +7,8 @@ import {
   CalendarClock,
   Clock,
   BarChart3,
+  Mail,
+  FileText,
   Plus,
   ArrowRight,
 } from "lucide-react";
@@ -65,6 +67,22 @@ const statsCards = [
     query: "/api/v1/visits",
     countField: "total" as const,
   },
+  {
+    title: "Pending Invitations",
+    icon: Mail,
+    color: "text-amber-600",
+    bg: "bg-amber-100 dark:bg-amber-900/20",
+    query: "/api/v1/invitations?status=PENDING",
+    countField: "total" as const,
+  },
+  {
+    title: "Awaiting Approval",
+    icon: FileText,
+    color: "text-rose-600",
+    bg: "bg-rose-100 dark:bg-rose-900/20",
+    query: "/api/v1/invitations?status=PENDING",
+    countField: "total" as const,
+  },
 ];
 
 export default function DashboardPage() {
@@ -76,9 +94,7 @@ export default function DashboardPage() {
     async function load() {
       try {
         const results = await Promise.all(
-          statsCards.map((card) =>
-            api.get<PaginatedResult<unknown>>(card.query)
-          )
+          statsCards.map((card) => api.get<PaginatedResult<unknown>>(card.query)),
         );
         const statMap: Record<string, number> = {};
         statsCards.forEach((card, i) => {
@@ -86,9 +102,7 @@ export default function DashboardPage() {
         });
         setStats(statMap);
 
-        const recentVisits = await api.get<PaginatedResult<Visit>>(
-          "/api/v1/visits?limit=5"
-        );
+        const recentVisits = await api.get<PaginatedResult<Visit>>("/api/v1/visits?limit=5");
         setVisits(recentVisits.data);
       } catch {
         toast.error("Failed to load dashboard data");
@@ -103,16 +117,14 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Overview of your property activity
-        </p>
+        <p className="text-muted-foreground">Overview of your property activity</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {statsCards.map((card) => (
           <Card key={card.title}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-muted-foreground text-sm font-medium">
                 {card.title}
               </CardTitle>
               <div className={`rounded-lg p-2 ${card.bg}`}>
@@ -123,9 +135,7 @@ export default function DashboardPage() {
               {loading ? (
                 <Skeleton className="h-8 w-20" />
               ) : (
-                <div className="text-2xl font-bold">
-                  {stats[card.title] ?? 0}
-                </div>
+                <div className="text-2xl font-bold">{stats[card.title] ?? 0}</div>
               )}
             </CardContent>
           </Card>
@@ -151,12 +161,12 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : visits.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No visits yet</p>
+              <p className="text-muted-foreground text-sm">No visits yet</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b text-left text-muted-foreground">
+                    <tr className="text-muted-foreground border-b text-left">
                       <th className="pb-2 font-medium">Visitor</th>
                       <th className="pb-2 font-medium">Unit</th>
                       <th className="pb-2 font-medium">Purpose</th>
@@ -172,13 +182,11 @@ export default function DashboardPage() {
                           {v.unit?.unit_no || "—"}
                           {v.unit?.floor ? ` (F${v.unit.floor})` : ""}
                         </td>
-                        <td className="py-2">
-                          {v.purpose?.replace(/_/g, " ")}
-                        </td>
+                        <td className="py-2">{v.purpose?.replace(/_/g, " ")}</td>
                         <td className="py-2">
                           <StatusBadge status={v.status} />
                         </td>
-                        <td className="py-2 text-muted-foreground">
+                        <td className="text-muted-foreground py-2">
                           {v.checkin_time
                             ? new Date(v.checkin_time).toLocaleTimeString()
                             : v.created_at
@@ -209,6 +217,12 @@ export default function DashboardPage() {
               <Button className="w-full justify-start" variant="outline">
                 <Plus className="mr-2 h-4 w-4" />
                 Create Visit
+              </Button>
+            </Link>
+            <Link href="/invitations/new">
+              <Button className="w-full justify-start" variant="outline">
+                <Mail className="mr-2 h-4 w-4" />
+                New Invitation
               </Button>
             </Link>
           </CardContent>
