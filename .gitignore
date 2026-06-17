@@ -31,3 +31,16 @@ __pycache__/
 /src/generated/prisma
 .playwright-mcp/
 cookies.txt
+
+# Playwright
+.playwright-mcp/
+
+# Claude
+claude-output.txt
+
+# Environment
+.env
+.env.local
+
+# MacOS
+.DS_Store
