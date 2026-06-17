@@ -12,6 +12,8 @@ Replace paper visitor logs with QR code check-in/check-out. Manage visitors, vis
 - **QR Check-In** — Validate QR token, check blocklist, record check-in time
 - **QR Check-Out** — Staff-initiated check-out with audit trail
 - **Security Dashboard** — Real-time stats, recent visits, quick actions
+- **Invitation & Approval** — Pre-register visitors, approve/reject with notifications
+- **Notification Bell** — In-app notification dropdown with real-time unread badge
 - **Role-Based Access Control** — SUPER_ADMIN, PROPERTY_ADMIN, SECURITY_GUARD, RESIDENT, OFFICE_STAFF
 - **Audit Logging** — 13 event types across all operations
 - **Blocklist** — Block visitors by phone or ID number
@@ -19,13 +21,14 @@ Replace paper visitor logs with QR code check-in/check-out. Manage visitors, vis
 
 ## Tech Stack
 
-| Layer       | Technology                                                    |
-| ----------- | ------------------------------------------------------------- |
-| Frontend    | Next.js 16.2, React 19, TypeScript, Tailwind CSS 4, shadcn/ui |
-| Backend     | Next.js Route Handlers                                        |
-| Database    | PostgreSQL 16, Prisma 7 ORM                                   |
-| Auth        | JWT (jose), bcryptjs                                          |
-| Container   | Docker, Docker Compose                                        |
+| Layer     | Technology                                                    |
+| --------- | ------------------------------------------------------------- |
+| Frontend  | Next.js 16.2, React 19, TypeScript, Tailwind CSS 4, shadcn/ui |
+| Backend   | Next.js Route Handlers                                        |
+| Database  | PostgreSQL 16, Prisma 7 ORM                                   |
+| Auth      | JWT (jose), bcryptjs                                          |
+| Testing   | Vitest (147 unit tests), Playwright (33 e2e tests)            |
+| Container | Docker, Docker Compose                                        |
 
 ## Quick Start
 
@@ -54,13 +57,13 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ### Default Accounts
 
-| Email | Password | Role |
-| ------- | ---------- | ------ |
-| <admin@vrs.com> | Admin123! | SUPER_ADMIN |
-| <property@vrs.com> | Admin123! | PROPERTY_ADMIN |
-| <guard@vrs.com> | Guard123! | SECURITY_GUARD |
-| <resident@vrs.com> | Resident123! | RESIDENT |
-| <office@vrs.com> | Office123! | OFFICE_STAFF |
+| Email              | Password     | Role           |
+| ------------------ | ------------ | -------------- |
+| <admin@vrs.com>    | Admin123!    | SUPER_ADMIN    |
+| <property@vrs.com> | Admin123!    | PROPERTY_ADMIN |
+| <guard@vrs.com>    | Guard123!    | SECURITY_GUARD |
+| <resident@vrs.com> | Resident123! | RESIDENT       |
+| <office@vrs.com>   | Office123!   | OFFICE_STAFF   |
 
 ## Docker Deployment
 
@@ -96,8 +99,9 @@ prisma/
 ## Future Roadmap
 
 - Reports & Analytics dashboard
-- Settings & property management UI
+- CSV / Excel Export
+- Delivery management workflow
+- Self-service kiosk
 - Mobile app with QR scanner
 - AI visitor statistics and suspicious activity alerts
-- Email/SMS notifications
-- Exportable visit reports
+- Email/Telegram/LINE notifications

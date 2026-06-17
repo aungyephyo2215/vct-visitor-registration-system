@@ -1,5 +1,6 @@
 // Simple in-memory rate limiter
 // Resets on server restart — acceptable for MVP
+// Disabled in test environments (NODE_ENV=test or PLAYWRIGHT=true)
 
 interface RateLimitEntry {
   count: number;
@@ -7,6 +8,12 @@ interface RateLimitEntry {
 }
 
 const store = new Map<string, RateLimitEntry>();
+
+const UNLIMITED = { allowed: true, remaining: Infinity, resetAt: Infinity } as const;
+
+function isTestEnv(): boolean {
+  return process.env.NODE_ENV === "test" || process.env.PLAYWRIGHT === "true";
+}
 
 // Clean up expired entries every 5 minutes
 const CLEANUP_INTERVAL = 5 * 60 * 1000;
@@ -29,14 +36,17 @@ interface RateLimitConfig {
 }
 
 const defaultConfig: RateLimitConfig = {
-  maxRequests: 10,  // 10 attempts
-  windowMs: 60 * 1000,  // per 60 seconds
+  maxRequests: 10, // 10 attempts
+  windowMs: 60 * 1000, // per 60 seconds
 };
 
 export function checkRateLimit(
   key: string,
-  config: RateLimitConfig = defaultConfig
+  config: RateLimitConfig = defaultConfig,
 ): { allowed: boolean; remaining: number; resetAt: number } {
+  // Skip rate limiting entirely in test environments
+  if (isTestEnv()) return { ...UNLIMITED };
+
   cleanup();
 
   const now = Date.now();
