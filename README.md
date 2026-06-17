@@ -1,6 +1,6 @@
 <p align="center">
   <img src="https://img.shields.io/badge/version-1.2.0-blue?style=for-the-badge" alt="Version 1.2.0">
-  <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License MIT">
+
   <img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge" alt="Build Passing">
   <img src="https://img.shields.io/badge/tests-180%20passing-success?style=for-the-badge" alt="180 Tests Passing">
   <img src="https://img.shields.io/badge/audit-0%20vulns-brightgreen?style=for-the-badge" alt="0 Vulnerabilities">
@@ -226,12 +226,6 @@ All gates must pass. Playwright E2E run locally (requires Docker PostgreSQL).
 | **Phase 6.5** | **QR Email Delivery**           | 📋 Planned  |
 | Phase 7       | Self-Kiosk, Mobile QR Scanner   | 🔜 Upcoming |
 | Phase 8       | AI Analytics, Suspicious Alerts | 🔜 Upcoming |
-
----
-
-## 📄 License
-
-MIT — See [LICENSE](LICENSE) for details.
 
 ---
 
