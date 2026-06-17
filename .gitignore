@@ -52,3 +52,4 @@ cookies.txt
 .env
 .env.local
 .DS_Store
+.mcp.json
