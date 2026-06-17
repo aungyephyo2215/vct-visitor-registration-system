@@ -151,6 +151,55 @@ async function main() {
     console.log(`Invitation: ${inv.visitor_name} (${inv.status})`);
   }
 
+  // Sample notifications
+  const notifData = [
+    {
+      user_id: "seed-user-property",
+      property_id: property.id,
+      type: "INVITATION_CREATED" as const,
+      title: "New Invitation",
+      message: "Resident Owner invited Alice Johnson (FAMILY)",
+      resource_type: "invitation" as const,
+      resource_id: "seed-invitation-01",
+      action_url: "/invitations/seed-invitation-01",
+      is_read: false,
+    },
+    {
+      user_id: "seed-user-property",
+      property_id: property.id,
+      type: "INVITATION_CREATED" as const,
+      title: "New Invitation",
+      message: "Resident Owner invited Bob Smith (VENDOR)",
+      resource_type: "invitation" as const,
+      resource_id: "seed-invitation-02",
+      action_url: "/invitations/seed-invitation-02",
+      is_read: false,
+    },
+    {
+      user_id: "seed-user-resident",
+      property_id: property.id,
+      type: "INVITATION_APPROVED" as const,
+      title: "Invitation Approved",
+      message: "Your invitation for Alice Johnson has been approved",
+      resource_type: "invitation" as const,
+      resource_id: "seed-invitation-01",
+      action_url: "/invitations/seed-invitation-01",
+      is_read: true,
+      read_at: new Date(),
+    },
+  ];
+
+  for (const n of notifData) {
+    await prisma.notification.upsert({
+      where: { id: `seed-notif-${notifData.indexOf(n) + 1}` },
+      update: {},
+      create: { id: `seed-notif-${notifData.indexOf(n) + 1}`, ...n },
+    });
+    console.log(
+      `Notification: ${n.title} → ${n.user_id === "seed-user-property" ? "Property Admin" : "Resident"}`,
+    );
+  }
+
   console.log("Seed complete.");
 }
 

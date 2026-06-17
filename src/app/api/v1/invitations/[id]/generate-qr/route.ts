@@ -5,11 +5,9 @@ import { requireAuth } from "@/lib/auth";
 import { successResponse, errorResponse, notFoundResponse } from "@/lib/api-response";
 import { requirePropertyAccess, requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
+import { sendNotification } from "@/lib/notifications/service";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth(request);
     requireRole(user, "SUPER_ADMIN", "PROPERTY_ADMIN", "OFFICE_STAFF", "SECURITY_GUARD");
@@ -24,7 +22,10 @@ export async function POST(
     requirePropertyAccess(user, invitation.property_id);
 
     if (invitation.status !== "APPROVED") {
-      return errorResponse(`Invitation is ${invitation.status.toLowerCase()}, must be APPROVED`, 400);
+      return errorResponse(
+        `Invitation is ${invitation.status.toLowerCase()}, must be APPROVED`,
+        400,
+      );
     }
 
     if (invitation.visit_id) {
@@ -39,7 +40,8 @@ export async function POST(
         unit_id: invitation.unit_id,
         host_user_id: invitation.invited_by,
         purpose: "OTHER",
-        notes: invitation.notes || `Invitation: ${invitation.visitor_name} (${invitation.visitor_type})`,
+        notes:
+          invitation.notes || `Invitation: ${invitation.visitor_name} (${invitation.visitor_type})`,
         expected_checkin_time: invitation.expected_date,
         status: "EXPECTED",
       },
@@ -80,12 +82,29 @@ export async function POST(
       metadata: { invitation_id: id, source: "invitation" },
     });
 
-    return successResponse({
-      token,
-      expires_at: expiresAt,
-      visit_id: visit.id,
-      qr_code_id: qrCode.id,
-    }, 201);
+    // Notify inviter
+    await sendNotification(
+      prisma,
+      "QR_GENERATED",
+      {
+        kind: "invitation",
+        invitedBy: invitation.invited_by,
+      },
+      { visitor: invitation.visitor_name },
+      invitation.property_id,
+      visit.id,
+      { invitation_id: id },
+    );
+
+    return successResponse(
+      {
+        token,
+        expires_at: expiresAt,
+        visit_id: visit.id,
+        qr_code_id: qrCode.id,
+      },
+      201,
+    );
   } catch (error) {
     if (error instanceof Response) return error;
     console.error("Generate QR from invitation error:", error);

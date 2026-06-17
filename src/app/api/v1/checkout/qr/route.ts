@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/auth";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { requirePropertyAccess, requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
+import { sendNotification } from "@/lib/notifications/service";
 
 export async function POST(request: NextRequest) {
   try {
@@ -60,6 +61,19 @@ export async function POST(request: NextRequest) {
       ip_address: request.headers.get("x-forwarded-for") || undefined,
       user_agent: request.headers.get("user-agent") || undefined,
     });
+
+    // Notify host
+    await sendNotification(
+      prisma,
+      "CHECKED_OUT",
+      {
+        kind: "visit",
+        hostUserId: qrCode.visit.host_user_id,
+      },
+      { visitor: updated.visitor?.name ?? "Visitor" },
+      qrCode.visit.property_id,
+      qrCode.visit.id,
+    );
 
     return successResponse(updated);
   } catch (error) {

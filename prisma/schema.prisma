@@ -131,6 +131,22 @@ enum BlocklistStatus {
   REMOVED
 }
 
+enum NotificationType {
+  INVITATION_CREATED
+  INVITATION_APPROVED
+  INVITATION_REJECTED
+  QR_GENERATED
+  VISITOR_VERIFIED
+  CHECKED_IN
+  CHECKED_OUT
+}
+
+enum NotificationResourceType {
+  invitation
+  visit
+  verification
+}
+
 // ── Models ──────────────────────────────────────────
 
 model Property {
@@ -154,6 +170,7 @@ model Property {
   invitations Invitation[]
   badges     Badge[]
   verifications Verification[]
+  notifications Notification[]
 
   @@index([status])
   @@map("properties")
@@ -202,6 +219,7 @@ model User {
   approvedInvitations   Invitation[] @relation("approvedBy")
   approvals             Approval[]
   verifications         Verification[]
+  notifications         Notification[]
 
   @@index([property_id])
   @@index([unit_id])
@@ -347,6 +365,31 @@ model Blocklist {
   @@index([property_id, id_number])
   @@index([property_id, status])
   @@map("blocklists")
+}
+
+model Notification {
+  id            String                   @id @default(uuid())
+  user_id       String
+  property_id   String
+  type          NotificationType
+  title         String
+  message       String
+  resource_type NotificationResourceType
+  resource_id   String?
+  action_url    String?
+  metadata      Json?
+  is_read       Boolean                  @default(false)
+  read_at       DateTime?
+  created_at    DateTime                 @default(now())
+  updated_at    DateTime                 @updatedAt
+
+  user     User     @relation(fields: [user_id], references: [id])
+  property Property @relation(fields: [property_id], references: [id])
+
+  @@index([user_id, is_read, created_at])
+  @@index([property_id])
+  @@index([user_id, created_at])
+  @@map("notifications")
 }
 
 model Invitation {

@@ -12,12 +12,11 @@ import {
   Settings,
   LogOut,
   Menu,
-  X,
   QrCode,
-  ChevronDown,
   ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { NotificationBell } from "@/components/notification-bell";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -33,31 +32,20 @@ const navItems = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-function Sidebar({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
+function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
   const { logout } = useAuth();
 
   return (
     <>
-      {open && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={onClose}
-        />
-      )}
+      {open && <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={onClose} />}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r bg-background transition-transform lg:static lg:translate-x-0 ${
+        className={`bg-background fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r transition-transform lg:static lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex h-16 items-center gap-2 border-b px-6 font-semibold text-lg">
-          <QrCode className="h-5 w-5 text-primary" />
+        <div className="flex h-16 items-center gap-2 border-b px-6 text-lg font-semibold">
+          <QrCode className="text-primary h-5 w-5" />
           <span>VRS</span>
         </div>
         <nav className="flex-1 space-y-1 p-4">
@@ -83,7 +71,7 @@ function Sidebar({
         <div className="border-t p-4">
           <button
             onClick={() => logout().then(() => (window.location.href = "/login"))}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
           >
             <LogOut className="h-4 w-4" />
             Sign Out
@@ -94,11 +82,7 @@ function Sidebar({
   );
 }
 
-export default function ProtectedLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading, isAuthenticated, logout } = useAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -113,7 +97,7 @@ export default function ProtectedLayout({
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
       </div>
     );
   }
@@ -134,7 +118,7 @@ export default function ProtectedLayout({
       <div className="flex min-h-screen w-full">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <div className="flex flex-1 flex-col">
-          <header className="flex h-16 items-center gap-4 border-b bg-background px-4 lg:px-6">
+          <header className="bg-background flex h-16 items-center gap-4 border-b px-4 lg:px-6">
             <Button
               variant="ghost"
               size="icon"
@@ -144,8 +128,9 @@ export default function ProtectedLayout({
               <Menu className="h-5 w-5" />
             </Button>
             <div className="flex-1" />
+            <NotificationBell />
             <div className="flex items-center gap-3">
-              <div className="text-right text-sm hidden sm:block">
+              <div className="hidden text-right text-sm sm:block">
                 <div className="font-medium">{user?.name}</div>
                 <Badge variant="secondary" className="text-xs font-normal">
                   {roleLabel}
@@ -157,13 +142,11 @@ export default function ProtectedLayout({
               <Button
                 variant="ghost"
                 size="icon"
-                className="hidden sm:flex h-8 w-8"
-                onClick={() =>
-                  logout().then(() => (window.location.href = "/login"))
-                }
+                className="hidden h-8 w-8 sm:flex"
+                onClick={() => logout().then(() => (window.location.href = "/login"))}
                 title="Sign Out"
               >
-                <LogOut className="h-4 w-4 text-muted-foreground" />
+                <LogOut className="text-muted-foreground h-4 w-4" />
               </Button>
             </div>
           </header>

@@ -1,14 +1,17 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { successResponse, errorResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response";
+import {
+  successResponse,
+  errorResponse,
+  notFoundResponse,
+  validationErrorResponse,
+} from "@/lib/api-response";
 import { requirePropertyAccess, requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
+import { sendNotification } from "@/lib/notifications/service";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth(request);
     requireRole(user, "SUPER_ADMIN", "PROPERTY_ADMIN", "OFFICE_STAFF", "SECURITY_GUARD");
@@ -34,10 +37,7 @@ export async function GET(
   }
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth(request);
     requireRole(user, "SUPER_ADMIN", "PROPERTY_ADMIN", "OFFICE_STAFF", "SECURITY_GUARD");
@@ -122,8 +122,25 @@ export async function POST(
       resource_id: id,
       ip_address: request.headers.get("x-forwarded-for") || undefined,
       user_agent: request.headers.get("user-agent") || undefined,
-      metadata: { visitor_id: visitor.id, nda_signed: body.nda_signed, safety_signed: body.safety_form_signed },
+      metadata: {
+        visitor_id: visitor.id,
+        nda_signed: body.nda_signed,
+        safety_signed: body.safety_form_signed,
+      },
     });
+
+    // Notify host
+    await sendNotification(
+      prisma,
+      "VISITOR_VERIFIED",
+      {
+        kind: "visit",
+        hostUserId: visit.host_user_id,
+      },
+      { visitor: body.visitor_name },
+      visit.property_id,
+      id,
+    );
 
     return successResponse(verification, 201);
   } catch (error) {
@@ -136,10 +153,7 @@ export async function POST(
   }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth(request);
     requireRole(user, "SUPER_ADMIN", "PROPERTY_ADMIN", "OFFICE_STAFF", "SECURITY_GUARD");
@@ -165,7 +179,8 @@ export async function PATCH(
     if (body.photo_url !== undefined) updateData.photo_url = body.photo_url;
     if (body.vehicle_number !== undefined) updateData.vehicle_number = body.vehicle_number;
     if (body.nda_signed !== undefined) updateData.nda_signed = body.nda_signed;
-    if (body.safety_form_signed !== undefined) updateData.safety_form_signed = body.safety_form_signed;
+    if (body.safety_form_signed !== undefined)
+      updateData.safety_form_signed = body.safety_form_signed;
 
     const verification = await prisma.verification.update({
       where: { id: existing.id },

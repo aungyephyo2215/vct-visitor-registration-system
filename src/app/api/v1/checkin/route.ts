@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { successResponse, errorResponse, validationErrorResponse } from "@/lib/api-response";
 import { checkinSchema, formatZodErrors } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
+import { sendNotification } from "@/lib/notifications/service";
 
 export async function POST(request: NextRequest) {
   try {
@@ -62,7 +63,10 @@ export async function POST(request: NextRequest) {
 
     // Check verification completed
     if (!qrCode.visit.verification) {
-      return errorResponse("Verification not completed. Please complete verification before check-in.", 400);
+      return errorResponse(
+        "Verification not completed. Please complete verification before check-in.",
+        400,
+      );
     }
 
     // Check blocklist
@@ -113,6 +117,19 @@ export async function POST(request: NextRequest) {
       ip_address: request.headers.get("x-forwarded-for") || undefined,
       user_agent: request.headers.get("user-agent") || undefined,
     });
+
+    // Notify host — qrCode.visit includes visitor relation for name
+    await sendNotification(
+      prisma,
+      "CHECKED_IN",
+      {
+        kind: "visit",
+        hostUserId: qrCode.visit.host_user_id,
+      },
+      { visitor: qrCode.visit.visitor?.name ?? "Visitor" },
+      qrCode.visit.property_id,
+      qrCode.visit.id,
+    );
 
     const updatedVisit = await prisma.visit.findUnique({
       where: { id: qrCode.visit.id },

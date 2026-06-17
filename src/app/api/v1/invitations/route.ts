@@ -6,6 +6,7 @@ import { invitationCreateSchema, paginationSchema, formatZodErrors } from "@/lib
 import { requirePropertyAccess, requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { expireStaleInvitations } from "@/lib/invitation-expire";
+import { sendBulkNotifications, getApproverRecipients } from "@/lib/notifications/service";
 import type { IdType, VisitorType } from "@/generated/prisma/enums";
 
 export async function GET(request: NextRequest) {
@@ -136,6 +137,21 @@ export async function POST(request: NextRequest) {
       ip_address: request.headers.get("x-forwarded-for") || undefined,
       user_agent: request.headers.get("user-agent") || undefined,
     });
+
+    // Fire-and-forget notification to all approvers
+    const approverIds = await getApproverRecipients(prisma, property_id);
+    await sendBulkNotifications(
+      prisma,
+      approverIds,
+      "INVITATION_CREATED",
+      {
+        inviter: user.name,
+        visitor: parsed.data.visitor_name,
+        type: parsed.data.visitor_type,
+      },
+      property_id,
+      invitation.id,
+    );
 
     return successResponse(invitation, 201);
   } catch (error) {

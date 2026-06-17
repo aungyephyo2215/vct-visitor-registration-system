@@ -6,7 +6,7 @@ async function request<T>(
   method: string,
   path: string,
   body?: unknown,
-  options?: RequestOptions
+  options?: RequestOptions,
 ): Promise<T> {
   let url = path;
 
@@ -24,6 +24,11 @@ async function request<T>(
     headers: body ? { "Content-Type": "application/json" } : undefined,
     body: body ? JSON.stringify(body) : undefined,
     credentials: "include",
+    // Prevent browser from caching GET responses.
+    // Without this, a page refresh may serve a stale cached
+    // response instead of hitting the server — causing
+    // "Mark all read → refresh → unread again" bugs.
+    cache: method === "GET" ? "no-store" : undefined,
   });
 
   const json = await res.json();

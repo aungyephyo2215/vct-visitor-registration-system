@@ -4,11 +4,9 @@ import { requireAuth } from "@/lib/auth";
 import { successResponse, errorResponse, notFoundResponse } from "@/lib/api-response";
 import { requirePropertyAccess, requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
+import { sendNotification } from "@/lib/notifications/service";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth(request);
     requireRole(user, "SUPER_ADMIN", "PROPERTY_ADMIN", "OFFICE_STAFF");
@@ -60,6 +58,19 @@ export async function POST(
       ip_address: request.headers.get("x-forwarded-for") || undefined,
       user_agent: request.headers.get("user-agent") || undefined,
     });
+
+    // Notify inviter
+    await sendNotification(
+      prisma,
+      "INVITATION_APPROVED",
+      {
+        kind: "invitation",
+        invitedBy: invitation.invited_by,
+      },
+      { visitor: invitation.visitor_name },
+      invitation.property_id,
+      id,
+    );
 
     return successResponse(updated);
   } catch (error) {
