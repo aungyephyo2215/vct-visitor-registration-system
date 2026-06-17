@@ -21,6 +21,10 @@ export async function loginForm(page: Page, role: string) {
 
   // Use UI form - it's the only reliable way to get cookies into the browser context
   await page.goto("/login", { waitUntil: "domcontentloaded" });
+  // Wait for React hydration: LoginForm uses useSearchParams() behind Suspense,
+  // so the form only appears after client-side hydration. Wait for the submit
+  // button to be visible and enabled as a reliable hydration signal.
+  await page.waitForSelector('button[type="submit"]:not([disabled])', { timeout: 15000 });
   await page.waitForSelector("#email", { timeout: 10000 });
   await page.fill("#email", user.email);
   await page.fill("#password", user.password);

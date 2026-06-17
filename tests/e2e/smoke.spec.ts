@@ -22,15 +22,13 @@ test.describe("Smoke Tests", () => {
 
   test("invalid credentials show error", async ({ page }) => {
     await page.goto("/login", { waitUntil: "domcontentloaded" });
+    // Wait for React hydration: LoginForm renders behind Suspense via useSearchParams
+    await page.waitForSelector('button[type="submit"]:not([disabled])', { timeout: 15000 });
     await page.fill("#email", "wrong@email.com");
     await page.fill("#password", "wrongpass");
-    // Remove required attribute to allow submission with form data
-    await page.evaluate(() => {
-      document.querySelectorAll("[required]").forEach(el => el.removeAttribute("required"));
-    });
     await page.click('button[type="submit"]');
-    await page.waitForTimeout(2000);
-    await expect(page.getByText("Invalid email or password")).toBeVisible();
+    // API returns 401, the form sets error state — wait for it to appear
+    await expect(page.getByText("Invalid email or password")).toBeVisible({ timeout: 10000 });
   });
 });
 

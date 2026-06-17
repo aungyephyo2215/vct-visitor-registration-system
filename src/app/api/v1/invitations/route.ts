@@ -77,10 +77,19 @@ export async function POST(request: NextRequest) {
       return validationErrorResponse(formatZodErrors(parsed.error));
     }
 
-    let property_id = user.property_id;
+    // Resolve property_id: SUPER_ADMIN has none, so derive from unit.
+    // For scoped users, validate the unit belongs to their property.
+    let property_id: string;
 
-    // SUPER_ADMIN has no property_id — resolve from unit
-    if (!property_id) {
+    if (user.property_id) {
+      // Scoped user — validate the unit belongs to their property
+      property_id = user.property_id;
+      const unit = await prisma.unit.findFirst({
+        where: { id: parsed.data.unit_id, property_id, deleted_at: null },
+      });
+      if (!unit) return errorResponse("Unit not found in this property", 404);
+    } else {
+      // SUPER_ADMIN — resolve property from unit
       const unit = await prisma.unit.findFirst({
         where: { id: parsed.data.unit_id, deleted_at: null },
         select: { property_id: true },
@@ -89,15 +98,9 @@ export async function POST(request: NextRequest) {
       property_id = unit.property_id;
     }
 
-    // Validate unit belongs to property
-    const unit = await prisma.unit.findFirst({
-      where: { id: parsed.data.unit_id, property_id, deleted_at: null },
-    });
-    if (!unit) return errorResponse("Unit not found in this property", 404);
-
     const invitation = await prisma.invitation.create({
       data: {
-        property_id: property_id!,
+        property_id,
         invited_by: user.id,
         visitor_name: parsed.data.visitor_name,
         visitor_phone: parsed.data.visitor_phone,
@@ -119,7 +122,7 @@ export async function POST(request: NextRequest) {
 
     await createAuditLog({
       prisma,
-      property_id: property_id!,
+      property_id,
       user_id: user.id,
       action: "CREATE_INVITATION",
       resource_type: "invitation",
