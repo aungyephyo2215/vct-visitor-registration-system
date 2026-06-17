@@ -77,14 +77,21 @@ export async function POST(request: NextRequest) {
       return validationErrorResponse(formatZodErrors(parsed.error));
     }
 
-    const property_id = user.property_id;
-    if (!property_id && user.role !== "SUPER_ADMIN") {
-      return errorResponse("No property associated", 400);
+    let property_id = user.property_id;
+
+    // SUPER_ADMIN has no property_id — resolve from unit
+    if (!property_id) {
+      const unit = await prisma.unit.findFirst({
+        where: { id: parsed.data.unit_id, deleted_at: null },
+        select: { property_id: true },
+      });
+      if (!unit) return errorResponse("Unit not found", 404);
+      property_id = unit.property_id;
     }
 
     // Validate unit belongs to property
     const unit = await prisma.unit.findFirst({
-      where: { id: parsed.data.unit_id, property_id: property_id!, deleted_at: null },
+      where: { id: parsed.data.unit_id, property_id, deleted_at: null },
     });
     if (!unit) return errorResponse("Unit not found in this property", 404);
 

@@ -19,13 +19,13 @@ Replace paper visitor logs with QR code check-in/check-out. Manage visitors, vis
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 16.2, React 19, TypeScript, Tailwind CSS 4, shadcn/ui |
-| Backend | Next.js Route Handlers |
-| Database | PostgreSQL 16, Prisma 7 ORM |
-| Auth | JWT (jose), bcryptjs |
-| Container | Docker, Docker Compose |
+| Layer       | Technology                                                    |
+| ----------- | ------------------------------------------------------------- |
+| Frontend    | Next.js 16.2, React 19, TypeScript, Tailwind CSS 4, shadcn/ui |
+| Backend     | Next.js Route Handlers                                        |
+| Database    | PostgreSQL 16, Prisma 7 ORM                                   |
+| Auth        | JWT (jose), bcryptjs                                          |
+| Container   | Docker, Docker Compose                                        |
 
 ## Quick Start
 

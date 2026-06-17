@@ -95,18 +95,26 @@ export default function NewInvitationPage() {
 
     setLoading(true);
     try {
-      await api.post("/api/v1/invitations", {
-        ...form,
-        visitor_email: form.visitor_email || undefined,
-        visitor_id_type: form.visitor_id_type || undefined,
-        visitor_id_number: form.visitor_id_number || undefined,
-        expected_time: form.expected_time || undefined,
-        notes: form.notes || undefined,
-      });
+      // Build payload with only filled fields to prevent enum/email validation errors
+      const payload: Record<string, unknown> = {
+        visitor_name: form.visitor_name.trim(),
+        visitor_phone: form.visitor_phone.trim(),
+        visitor_type: form.visitor_type,
+        unit_id: form.unit_id,
+        expected_date: new Date(form.expected_date).toISOString(),
+      };
+      if (form.visitor_email) payload.visitor_email = form.visitor_email.trim();
+      if (form.visitor_id_type) payload.visitor_id_type = form.visitor_id_type;
+      if (form.visitor_id_number) payload.visitor_id_number = form.visitor_id_number.trim();
+      if (form.expected_time) payload.expected_time = form.expected_time;
+      if (form.notes) payload.notes = form.notes.trim();
+
+      await api.post("/api/v1/invitations", payload);
       toast.success("Invitation created");
       router.push("/invitations");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create invitation");
+      const msg = err instanceof Error ? err.message : "Failed to create invitation";
+      setError(msg);
     } finally {
       setLoading(false);
     }
