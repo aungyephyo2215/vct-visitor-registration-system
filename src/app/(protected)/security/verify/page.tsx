@@ -34,6 +34,18 @@ const idTypes = [
   { value: "OTHER", label: "Other" },
 ];
 
+interface VerificationData {
+  id: string;
+  visit_id: string;
+  visitor_id: string | null;
+  photo_url: string | null;
+  vehicle_number: string | null;
+  nda_signed: boolean;
+  safety_form_signed: boolean;
+  verified_by: string;
+  verified_at: string;
+}
+
 interface VisitData {
   qr: { id: string; status: string; expires_at: string };
   visit: {
@@ -69,7 +81,7 @@ export default function SecurityVerifyPage() {
   const [ndaSigned, setNdaSigned] = useState(false);
   const [safetySigned, setSafetySigned] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [existingVerification, setExistingVerification] = useState<any>(null);
+  const [existingVerification, setExistingVerification] = useState<VerificationData | null>(null);
   const [checkingIn, setCheckingIn] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
 
@@ -100,7 +112,7 @@ export default function SecurityVerifyPage() {
 
       // Check if verification already exists
       try {
-        const existing = await api.get<any>(`/api/v1/visits/${data.visit.id}/verification`);
+        const existing = await api.get<VerificationData>(`/api/v1/visits/${data.visit.id}/verification`);
         if (existing) {
           setExistingVerification(existing);
         }
@@ -145,14 +157,14 @@ export default function SecurityVerifyPage() {
       if (photoUrl) payload.photo_url = photoUrl;
       if (vehicleNumber) payload.vehicle_number = vehicleNumber.trim();
 
-      const result = await api.post(`/api/v1/visits/${visitData.visit.id}/verification`, payload);
+      const result = await api.post<VerificationData>(`/api/v1/visits/${visitData.visit.id}/verification`, payload);
       setExistingVerification(result);
       toast.success("Verification completed");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Verification failed";
       // Handle "already verified" gracefully — treat as success
       if (msg.includes("already verified")) {
-        const existing = await api.get<any>(`/api/v1/visits/${visitData.visit.id}/verification`).catch(() => null);
+        const existing = await api.get<VerificationData>(`/api/v1/visits/${visitData.visit.id}/verification`).catch(() => null);
         if (existing) setExistingVerification(existing);
         toast.success("Already verified");
       } else {

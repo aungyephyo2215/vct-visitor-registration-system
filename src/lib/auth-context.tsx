@@ -49,10 +49,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Initial auth check on mount — calling setState in this effect is intentional
+  // as it initializes the auth state from the server on first load.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isPublic) return;
     refresh();
   }, [refresh, isPublic]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const logout = useCallback(async () => {
     try {

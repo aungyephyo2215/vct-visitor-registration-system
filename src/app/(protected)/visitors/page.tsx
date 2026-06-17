@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Pencil, Trash2 } from "lucide-react";
@@ -52,6 +52,7 @@ export default function VisitorsPage() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Debounce search
   useEffect(() => {
@@ -62,34 +63,38 @@ export default function VisitorsPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params: Record<string, string | number> = { page, limit: 20 };
-      if (debouncedSearch) params.search = debouncedSearch;
-      const result = await api.get<PaginatedResult<Visitor>>(
-        "/api/v1/visitors",
-        params
-      );
-      setVisitors(result.data);
-      setTotalPages(result.totalPages);
-      setTotal(result.total);
-    } catch {
-      toast.error("Failed to load visitors");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, debouncedSearch]);
-
   useEffect(() => {
-    load();
-  }, [load]);
+    let cancelled = false;
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const params: Record<string, string | number> = { page, limit: 20 };
+        if (debouncedSearch) params.search = debouncedSearch;
+        const result = await api.get<PaginatedResult<Visitor>>(
+          "/api/v1/visitors",
+          params
+        );
+        if (!cancelled) {
+          setVisitors(result.data);
+          setTotalPages(result.totalPages);
+          setTotal(result.total);
+        }
+      } catch {
+        if (!cancelled) toast.error("Failed to load visitors");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    fetchData();
+    return () => { cancelled = true; };
+  }, [page, debouncedSearch, refreshKey]);
 
   async function handleDelete(id: string) {
     try {
       await api.del(`/api/v1/visitors/${id}`);
       toast.success("Visitor deleted");
-      load();
+      // Force re-fetch by toggling refresh key since load() no longer exists
+      setRefreshKey((k) => k + 1);
     } catch {
       toast.error("Failed to delete visitor");
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Filter } from "lucide-react";
@@ -17,7 +17,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Table,
@@ -77,32 +76,31 @@ export default function InvitationsPage() {
   const [total, setTotal] = useState(0);
   const [statusFilter, setStatusFilter] = useState("");
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params: Record<string, string | number> = { page, limit: 20 };
-      if (statusFilter) params.status = statusFilter;
-      const result = await api.get<PaginatedResult<Invitation>>(
-        "/api/v1/invitations",
-        params
-      );
-      setInvitations(result.data);
-      setTotalPages(result.totalPages);
-      setTotal(result.total);
-    } catch {
-      // silently fail
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const params: Record<string, string | number> = { page, limit: 20 };
+        if (statusFilter) params.status = statusFilter;
+        const result = await api.get<PaginatedResult<Invitation>>(
+          "/api/v1/invitations",
+          params
+        );
+        if (!cancelled) {
+          setInvitations(result.data);
+          setTotalPages(result.totalPages);
+          setTotal(result.total);
+        }
+      } catch {
+        // silently fail
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
+    fetchData();
+    return () => { cancelled = true; };
   }, [page, statusFilter]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [statusFilter]);
 
   return (
     <div className="space-y-6">
@@ -125,7 +123,7 @@ export default function InvitationsPage() {
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
-            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v || "")}>
+            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v || ""); setPage(1); }}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue />
               </SelectTrigger>

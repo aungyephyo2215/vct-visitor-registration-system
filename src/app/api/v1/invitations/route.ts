@@ -5,6 +5,7 @@ import { successResponse, errorResponse, validationErrorResponse } from "@/lib/a
 import { invitationCreateSchema, paginationSchema, formatZodErrors } from "@/lib/validations";
 import { requirePropertyAccess, requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
+import type { IdType, VisitorType } from "@/generated/prisma/enums";
 
 export async function GET(request: NextRequest) {
   try {
@@ -105,9 +106,9 @@ export async function POST(request: NextRequest) {
         visitor_name: parsed.data.visitor_name,
         visitor_phone: parsed.data.visitor_phone,
         visitor_email: parsed.data.visitor_email || null,
-        visitor_id_type: parsed.data.visitor_id_type as any || null,
+        visitor_id_type: (parsed.data.visitor_id_type as IdType) || null,
         visitor_id_number: parsed.data.visitor_id_number || null,
-        visitor_type: parsed.data.visitor_type as any,
+        visitor_type: parsed.data.visitor_type as VisitorType,
         unit_id: parsed.data.unit_id,
         expected_date: new Date(parsed.data.expected_date),
         expected_time: parsed.data.expected_time || null,
