@@ -7,116 +7,103 @@ size: 16:9
 ---
 
 <!-- _class: lead -->
+<!-- 20s -->
 
 # 🏢 Visitor Registration System
 
 ## QR-Based Digital Visitor Management
 
-### AI-Powered with Claude Code
+### AI-Powered Development with Claude Code
+
+> 🎤 _"Hi, I'm Aung. I built a visitor registration system that replaces paper logs with QR codes — entirely with Claude Code AI. Here's the story."_
 
 ---
+
+<!-- 20s -->
 
 ## 🔍 Problem → 🎯 Solution
 
-**Problem:** Paper visitor logs are slow, insecure, unsearchable. No real-time host notification. Zero audit trail.
+**Problem:** Paper logs. No audit trail. No host notifications. Slow security checks. Four property types share the same challenge.
 
-**Solution:** A web-based VRS with visitor registration, QR check-in/check-out, role-based access control, notification system, and audit logging.
+**Solution:** Web-based VRS — QR check-in/out with cryptographic tokens, 5-role RBAC, real-time notification bell, blocklist validation, and complete audit logging.
+
+![bg right 30%](./docs/screenshots/dashboard.png)
+
+> 🎤 _"Every condo, office, and warehouse uses clipboards at the front desk. Our system replaces that with a QR code scan — instant blocklist check, identity verification, host notification, all in seconds."_
 
 ---
+
+<!-- 20s -->
 
 ## 🧠 Claude Code AI Workflow
 
 ```text
-Product Manager Agent → Architect Agent
-        ↓                      ↓
-  Requirements          System Design
-        ↓                      ↓
- Database Review ← Prisma Reviewer
-        ↓
- API Review ← API Reviewer
-        ↓
- Feature Code ← Backend + Frontend Agents
-        ↓
- Testing ← Software Tester + Playwright MCP
-        ↓
- Release ← Release Manager + GitHub MCP
+Product Manager → Architect → Prisma Reviewer → API Reviewer
+      ↓               ↓               ↓               ↓
+Requirements    System Design    Database Review    API Design
+      ↓               ↓               ↓               ↓
+Backend + Frontend Agents → Software Tester → Release Manager
 ```
 
----
+**5 MCP Servers · 18 Skills · 5 Agents · 6 Subagents · 5 Workflows**
 
-## 🔧 MCP, Skills & Agents
-
-**5 MCP Servers:** Context7, Playwright, Sequential Thinking, GitHub, PostgreSQL
-
-**18 Skills:** database-design, qr-workflow, security-review, testing, docker-production, speckit-\* suite
-
-**5 Agents:** Product Manager, Software Architect, Backend, Frontend, UI/UX
-
-**6 Subagents:** API Reviewer, DevOps Engineer, Prisma Reviewer, Release Manager, Software Tester, Document Writer
-
-**5 Workflows:** audit, generate-release-notes, review-code, run-tests, verify-phase
+> 🎤 _"Every phase used a dedicated AI agent with real tools. MCP gives Claude a browser, database access, and GitHub. Skills encode our project rules — database design standards, QR security, testing strategy. Workflows run multiple agents in parallel for code review and testing."_
 
 ---
+
+<!-- 20s -->
 
 ## 🏗️ Architecture & Security
 
 ```text
-Browser → Next.js 16 (Route Handlers)
-       ├── JWT Auth (jose) + 5 RBAC Roles
-       ├── Visitor/Visit/Invitation/QR Modules
-       ├── Notification: Bell + 7 Event Types
-       └── Prisma 7 → PostgreSQL 16
+Browser → Next.js 16 → JWT + 5-Role RBAC
+                    → Visitor / Visit / Invitation / QR Modules
+                    → Notification Bell + 7 Event Types
+                    → Prisma 7 → PostgreSQL 16
 ```
 
-14 Models, 16 Enums, Full Indexes, Multi-Tenancy
+**14 Models · 16 Enums · Full Indexes · Multi-Tenancy**
+
+**Notification Module:** 4-file library · Fire-and-forget · Server-truth re-fetch
+
+**Security:** JWT with refresh tokens · Rate limiting · QR replay protection · 20+ audit event types · Property-level data isolation
+
+![bg right 35%](./docs/screenshots/notification-bell.png)
+
+> 🎤 _"Next.js modular monolith. Five roles scoped by property_id. The notification module is a 4-file library with fire-and-forget design — failures never block parent operations. QR tokens are cryptographically random, SHA-256 hashed, single-use with expiry."_
 
 ---
 
-## 🔔 Notification Module (v1.2.0)
+<!-- 20s -->
 
-- 7 event types across full invitation + visit lifecycle
-- Bell icon with real-time unread badge + 30s polling
-- 4-file library: templates → builder → recipients → service
-- Fire-and-forget design: notification failure never blocks parent operation
-- Server-truth re-fetch: no optimistic UI guess
-
----
-
-## 🧪 Quality Gates
+## 🧪 Quality Gates & Releases
 
 ```text
-npm ci → lint → type check → unit tests → build
-                          ↓
-              PLAYWRIGHT=true → 33 E2E tests
+npm ci → lint → type check → 147 unit tests → build → 33 E2E tests
 ```
 
-| Suite            | Tests    | Status |
-| :--------------- | -------- | :----- |
-| Unit (Vitest)    | 147      | ✅     |
-| E2E (Playwright) | 33       | ✅     |
-| TypeScript       | 0 errors | ✅     |
-| npm audit        | 0 vulns  | ✅     |
+| Suite               | Tests    | Result     |
+| :------------------ | -------- | :--------- |
+| Unit (Vitest)       | 147      | ✅ Passing |
+| E2E (Playwright)    | 33       | ✅ Passing |
+| TypeScript + ESLint | 0 errors | ✅ Clean   |
+| npm audit           | 0 vulns  | ✅ Clean   |
 
----
+**v1.0.0 → v1.1.0 → v1.2.0** · 30 commits · Semantic versioning · Docker ready
 
-## 📦 Git Releases & Methodology
-
-```text
-v1.0.0 (Jun 16) → v1.1.0 (Jun 17) → v1.2.0 (Jun 18)
-```
-
-**Methodology:** Requirements → Architecture → Database → API → UI → Code → Test → Docker → CI/CD → Release
-
-**Rule:** Never code first. Design before implementation. Every feature: architecture review, security review, automated tests, Docker ready.
+> 🎤 _"Every commit passes CI: lint, type check, 147 unit tests, build. 33 Playwright E2E tests cover the full workflow — smoke, invitation, notification, RBAC. Three releases in three days with full GitHub Release notes. One command to deploy: docker compose up."_
 
 ---
 
 <!-- _class: lead -->
+<!-- 20s -->
 
 ## 🙏 Thank You
 
-Visitor Registration System v1.2.0
+**🔗 [github.com/aungyephyo2215/vct-visitor-registration-system](https://github.com/aungyephyo2215/vct-visitor-registration-system)**
 
-🔗 github.com/aungyephyo2215/vct-visitor-registration-system
+📊 **180 Tests** · 🐳 **Docker Ready** · 🔐 **5-Role RBAC**
 
 Built with ❤️ using Claude Code AI
+
+> 🎤 _"The repo is public with full documentation, screenshots, and a one-command Docker deployment. I'm happy to take questions. Thank you."_
