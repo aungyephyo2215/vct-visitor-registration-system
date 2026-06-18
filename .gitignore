@@ -28,3 +28,17 @@ claude-output.txt
 # --- Secrets & Local Artifacts ---
 .mcp.json
 cookies.txt
+
+# --- IDE ---
+.vscode/
+.idea/
+
+# --- TypeScript ---
+*.tsbuildinfo
+
+# --- Coverage ---
+coverage/
+
+# --- Misc ---
+*.tgz
+.cache/
