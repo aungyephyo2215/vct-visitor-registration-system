@@ -80,9 +80,11 @@
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/dashboard.png" alt="Dashboard" width="32%">
-  <img src="docs/screenshots/notification-bell.png" alt="Notification Bell" width="32%">
-  <img src="docs/screenshots/invitation-detail.png" alt="Invitation Detail" width="32%">
+  <img src="docs/screenshots/dashboard.png" alt="Dashboard" width="400">
+  <img src="docs/screenshots/notification-bell.png" alt="Notification Bell" width="400">
+</p>
+<p align="center">
+  <img src="docs/screenshots/invitation-detail.png" alt="Invitation Detail" width="600">
 </p>
 
 ---
