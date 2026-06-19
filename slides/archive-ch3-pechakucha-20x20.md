@@ -4,6 +4,7 @@ theme: uncover
 paginate: true
 auto-scaling: true
 size: 16:9
+auto-advance: 20
 ---
 
 <!-- _class: lead -->

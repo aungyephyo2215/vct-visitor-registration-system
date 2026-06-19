@@ -1,12 +1,14 @@
+# Security Review
+
 Act as Senior Security Engineer.
 
-Review:
+## Review
 
 - authentication.md
 - api-spec.md
 - schema.md
 
-Check:
+## Check
 
 - JWT
 - RBAC
@@ -15,7 +17,7 @@ Check:
 - File upload security
 - Audit logs
 
-Output:
+## Output
 
 - Risks
 - Critical Issues

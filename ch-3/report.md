@@ -6,6 +6,7 @@ github_username: aungyephyo2215
 personal_repo_url: https://github.com/aungyephyo2215/vct-visitor-registration-system
 project_summary: Visitor Registration System — QR-based digital visitor management for condos, apartments, offices, and warehouses with JWT auth, 5-role RBAC, QR check-in/out, invitation/approval workflow, notification bell, and 180 automated tests.
 slides_url: https://github.com/aungyephyo2215/vct-visitor-registration-system/blob/main/slides/ch3-pechakucha-20x20.md
+slides_url: https://github.com/aungyephyo2215/vct-visitor-registration-system/blob/main/slides/ch3-pechakucha-6x20.md
 
 ## Methodology
 
