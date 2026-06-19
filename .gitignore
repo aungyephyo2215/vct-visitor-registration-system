@@ -26,7 +26,7 @@ test-results/
 claude-output.txt
 
 # --- Secrets & Local Artifacts ---
-.mcp.json
+# .mcp.json
 cookies.txt
 
 # --- IDE ---
