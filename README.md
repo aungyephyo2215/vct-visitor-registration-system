@@ -49,29 +49,36 @@
       <p>Pre-register visitors. Approve or reject with reason. Automatic notification delivery to all stakeholders.</p>
     </td>
     <td>
-      <h3>🔔 Notification Bell</h3>
-      <p>Real-time in-app notification dropdown with unread badge. 7 event types across the invitation and visit lifecycle.</p>
+      <h3>✉️ QR Email Delivery</h3>
+      <p>Automatically email hosted QR access links after invitation QR generation, track delivery status, and support safe manual resend with cooldowns.</p>
     </td>
   </tr>
   <tr>
+    <td>
+      <h3>🔔 Notification Bell</h3>
+      <p>Real-time in-app notification dropdown with unread badge. 7 event types across the invitation and visit lifecycle.</p>
+    </td>
     <td>
       <h3>🛡️ Role-Based Access Control</h3>
       <p>Five roles: SUPER_ADMIN, PROPERTY_ADMIN, SECURITY_GUARD, RESIDENT, OFFICE_STAFF. Property-level data isolation.</p>
     </td>
+  </tr>
+  <tr>
     <td>
       <h3>📊 Audit Logging</h3>
       <p>20+ event types across all operations. IP address, user agent, and metadata tracked per event.</p>
     </td>
-  </tr>
-  <tr>
     <td>
       <h3>🚫 Visitor Blocklist</h3>
       <p>Block visitors by phone number or ID. Automatic check-in rejection for blocked visitors.</p>
     </td>
+  </tr>
+  <tr>
     <td>
       <h3>🏢 Multi-Property</h3>
       <p>Single system supports unlimited properties. Each with isolated users, units, visitors, and data.</p>
     </td>
+    <td></td>
   </tr>
 </table>
 
@@ -181,13 +188,13 @@ tests/
 
 ## 📚 Documentation
 
-| Document                                            | Description                                |
-| :-------------------------------------------------- | :----------------------------------------- |
-| [Setup Guide](docs/setup.md)                        | Detailed installation and configuration    |
-| [API Reference](docs/api.md)                        | Complete REST API documentation            |
-| [Release Notes](docs/releases/)                     | Version history and changelogs             |
-| [Architecture](architecture/system-architecture.md) | System design and component architecture   |
-| [Database Schema](prisma/schema.prisma)             | Full data model with relations and indexes |
+| Document                                            | Description                                                        |
+| :-------------------------------------------------- | :----------------------------------------------------------------- |
+| [Setup Guide](docs/setup.md)                        | Detailed installation, email provider, and QR resend configuration |
+| [API Reference](docs/api.md)                        | Complete REST API documentation including QR email delivery        |
+| [Release Notes](docs/releases/)                     | Version history and changelogs                                     |
+| [Architecture](architecture/system-architecture.md) | System design and component architecture                           |
+| [Database Schema](prisma/schema.prisma)             | Full data model with relations and indexes                         |
 
 ---
 
@@ -225,17 +232,17 @@ All gates must pass. Playwright E2E run locally (requires Docker PostgreSQL).
 
 ## 🗺️ Roadmap
 
-| Phase         | Feature                         | Status      |
-| :------------ | :------------------------------ | :---------- |
-| Phase 1       | Core Visitor Management         | ✅ Complete |
-| Phase 2       | QR Workflow                     | ✅ Complete |
-| Phase 3       | Dashboard & Reports             | ✅ Complete |
-| Phase 4       | Universal Workflow Planning     | ✅ Complete |
-| Phase 5       | MVP Finalization                | ✅ Complete |
-| Phase 6       | Invitation & Approval Workflow  | ✅ Complete |
-| **Phase 6.5** | **QR Email Delivery**           | 📋 Planned  |
-| Phase 7       | Self-Kiosk, Mobile QR Scanner   | 🔜 Upcoming |
-| Phase 8       | AI Analytics, Suspicious Alerts | 🔜 Upcoming |
+| Phase         | Feature                         | Status         |
+| :------------ | :------------------------------ | :------------- |
+| Phase 1       | Core Visitor Management         | ✅ Complete    |
+| Phase 2       | QR Workflow                     | ✅ Complete    |
+| Phase 3       | Dashboard & Reports             | ✅ Complete    |
+| Phase 4       | Universal Workflow Planning     | ✅ Complete    |
+| Phase 5       | MVP Finalization                | ✅ Complete    |
+| Phase 6       | Invitation & Approval Workflow  | ✅ Complete    |
+| **Phase 6.5** | **QR Email Delivery**           | ✅ Implemented |
+| Phase 7       | Self-Kiosk, Mobile QR Scanner   | 🔜 Upcoming    |
+| Phase 8       | AI Analytics, Suspicious Alerts | 🔜 Upcoming    |
 
 ---
 

@@ -86,6 +86,7 @@ enum AuditAction {
   CREATE_VISIT
   UPDATE_VISIT
   GENERATE_QR
+  MANUAL_RESEND_QR_EMAIL
   CHECK_IN
   CHECK_OUT
   FAILED_QR_SCAN
@@ -147,6 +148,18 @@ enum NotificationResourceType {
   verification
 }
 
+enum QrEmailDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+enum QrEmailDeliveryTriggerType {
+  AUTO
+  MANUAL_RESEND
+}
+
 // ── Models ──────────────────────────────────────────
 
 model Property {
@@ -160,35 +173,36 @@ model Property {
   updated_at DateTime       @updatedAt
   deleted_at DateTime?
 
-  units      Unit[]
-  users      User[]
-  visitors   Visitor[]
-  visits     Visit[]
-  qrCodes    QRCode[]
-  auditLogs  AuditLog[]
-  blocklists Blocklist[]
-  invitations Invitation[]
-  badges     Badge[]
-  verifications Verification[]
-  notifications Notification[]
+  units             Unit[]
+  users             User[]
+  visitors          Visitor[]
+  visits            Visit[]
+  qrCodes           QRCode[]
+  auditLogs         AuditLog[]
+  blocklists        Blocklist[]
+  invitations       Invitation[]
+  badges            Badge[]
+  verifications     Verification[]
+  notifications     Notification[]
+  qrEmailDeliveries QrEmailDelivery[]
 
   @@index([status])
   @@map("properties")
 }
 
 model Unit {
-  id          String       @id @default(uuid())
+  id          String     @id @default(uuid())
   property_id String
   unit_no     String
   floor       Int
   status      UnitStatus
-  created_at  DateTime     @default(now())
-  updated_at  DateTime     @updatedAt
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
   deleted_at  DateTime?
 
-  property Property @relation(fields: [property_id], references: [id])
-  users    User[]
-  visits   Visit[]
+  property    Property     @relation(fields: [property_id], references: [id])
+  users       User[]
+  visits      Visit[]
   invitations Invitation[]
 
   @@unique([property_id, unit_no])
@@ -210,16 +224,17 @@ model User {
   updated_at    DateTime   @updatedAt
   deleted_at    DateTime?
 
-  property    Property?   @relation(fields: [property_id], references: [id])
-  unit        Unit?       @relation(fields: [unit_id], references: [id])
-  visits      Visit[]     @relation("hostedVisits")
-  auditLogs   AuditLog[]
-  blocklists  Blocklist[]
-  invitations           Invitation[] @relation("invitedBy")
-  approvedInvitations   Invitation[] @relation("approvedBy")
-  approvals             Approval[]
-  verifications         Verification[]
-  notifications         Notification[]
+  property            Property?         @relation(fields: [property_id], references: [id])
+  unit                Unit?             @relation(fields: [unit_id], references: [id])
+  visits              Visit[]           @relation("hostedVisits")
+  auditLogs           AuditLog[]
+  blocklists          Blocklist[]
+  invitations         Invitation[]      @relation("invitedBy")
+  approvedInvitations Invitation[]      @relation("approvedBy")
+  approvals           Approval[]
+  verifications       Verification[]
+  notifications       Notification[]
+  qrEmailDeliveries   QrEmailDelivery[] @relation("QrEmailDeliveryCreatedBy")
 
   @@index([property_id])
   @@index([unit_id])
@@ -231,19 +246,19 @@ model User {
 }
 
 model Visitor {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   property_id String
   name        String
   phone       String
   id_type     IdType
   id_number   String
   photo_url   String?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
   deleted_at  DateTime?
 
-  property Property @relation(fields: [property_id], references: [id])
-  visits   Visit[]
+  property      Property       @relation(fields: [property_id], references: [id])
+  visits        Visit[]
   verifications Verification[]
 
   @@index([property_id])
@@ -255,29 +270,30 @@ model Visitor {
 }
 
 model Visit {
-  id                  String       @id @default(uuid())
-  property_id         String
-  visitor_id          String?
-  unit_id             String
-  host_user_id        String?
-  purpose             VisitPurpose
-  notes               String?
-  vehicle_number      String?
+  id                    String       @id @default(uuid())
+  property_id           String
+  visitor_id            String?
+  unit_id               String
+  host_user_id          String?
+  purpose               VisitPurpose
+  notes                 String?
+  vehicle_number        String?
   expected_checkin_time DateTime?
-  checkin_time        DateTime?
-  checkout_time       DateTime?
-  status              VisitStatus
-  created_at          DateTime     @default(now())
-  updated_at          DateTime     @updatedAt
-  deleted_at          DateTime?
+  checkin_time          DateTime?
+  checkout_time         DateTime?
+  status                VisitStatus
+  created_at            DateTime     @default(now())
+  updated_at            DateTime     @updatedAt
+  deleted_at            DateTime?
 
-  property Property @relation(fields: [property_id], references: [id])
-  visitor  Visitor?  @relation(fields: [visitor_id], references: [id])
-  unit     Unit     @relation(fields: [unit_id], references: [id])
-  host     User?    @relation("hostedVisits", fields: [host_user_id], references: [id])
-  qrCodes  QRCode[]  @relation("VisitQRCodes")
-  invitations Invitation[]  @relation("VisitInvitations")
-  verification Verification?
+  property          Property          @relation(fields: [property_id], references: [id])
+  visitor           Visitor?          @relation(fields: [visitor_id], references: [id])
+  unit              Unit              @relation(fields: [unit_id], references: [id])
+  host              User?             @relation("hostedVisits", fields: [host_user_id], references: [id])
+  qrCodes           QRCode[]          @relation("VisitQRCodes")
+  invitations       Invitation[]      @relation("VisitInvitations")
+  verification      Verification?
+  qrEmailDeliveries QrEmailDelivery[]
 
   @@index([property_id])
   @@index([visitor_id])
@@ -305,8 +321,9 @@ model QRCode {
   created_at  DateTime  @default(now())
   updated_at  DateTime  @updatedAt
 
-  property Property @relation(fields: [property_id], references: [id])
-  visit    Visit    @relation("VisitQRCodes", fields: [visit_id], references: [id])
+  property          Property          @relation(fields: [property_id], references: [id])
+  visit             Visit             @relation("VisitQRCodes", fields: [visit_id], references: [id])
+  qrEmailDeliveries QrEmailDelivery[]
 
   @@index([property_id])
   @@index([visit_id])
@@ -317,7 +334,7 @@ model QRCode {
 }
 
 model AuditLog {
-  id            String       @id @default(uuid())
+  id            String      @id @default(uuid())
   property_id   String
   user_id       String?
   action        AuditAction
@@ -326,7 +343,7 @@ model AuditLog {
   ip_address    String
   user_agent    String
   metadata      Json?
-  created_at    DateTime     @default(now())
+  created_at    DateTime    @default(now())
 
   property Property @relation(fields: [property_id], references: [id])
   user     User?    @relation(fields: [user_id], references: [id])
@@ -393,35 +410,36 @@ model Notification {
 }
 
 model Invitation {
-  id               String           @id @default(uuid())
-  property_id      String
-  invited_by       String
-  visitor_name     String
-  visitor_phone    String
-  visitor_email    String?
-  visitor_id_type  IdType?
+  id                String           @id @default(uuid())
+  property_id       String
+  invited_by        String
+  visitor_name      String
+  visitor_phone     String
+  visitor_email     String?
+  visitor_id_type   IdType?
   visitor_id_number String?
-  visitor_type     VisitorType
-  unit_id          String
-  expected_date    DateTime
-  expected_time    String?
-  notes            String?
-  status           InvitationStatus
-  reason           String?
-  approved_by      String?
-  approved_at      DateTime?
-  visit_id         String?
-  created_at       DateTime         @default(now())
-  updated_at       DateTime         @updatedAt
-  deleted_at       DateTime?
+  visitor_type      VisitorType
+  unit_id           String
+  expected_date     DateTime
+  expected_time     String?
+  notes             String?
+  status            InvitationStatus
+  reason            String?
+  approved_by       String?
+  approved_at       DateTime?
+  visit_id          String?
+  created_at        DateTime         @default(now())
+  updated_at        DateTime         @updatedAt
+  deleted_at        DateTime?
 
-  property Property @relation(fields: [property_id], references: [id])
-  inviter  User     @relation("invitedBy", fields: [invited_by], references: [id])
-  approver User?    @relation("approvedBy", fields: [approved_by], references: [id])
-  unit     Unit     @relation(fields: [unit_id], references: [id])
-  visit    Visit?    @relation("VisitInvitations", fields: [visit_id], references: [id])
-  approvals Approval[]
-  badges   Badge[]
+  property          Property          @relation(fields: [property_id], references: [id])
+  inviter           User              @relation("invitedBy", fields: [invited_by], references: [id])
+  approver          User?             @relation("approvedBy", fields: [approved_by], references: [id])
+  unit              Unit              @relation(fields: [unit_id], references: [id])
+  visit             Visit?            @relation("VisitInvitations", fields: [visit_id], references: [id])
+  approvals         Approval[]
+  badges            Badge[]
+  qrEmailDeliveries QrEmailDelivery[]
 
   @@index([property_id])
   @@index([status])
@@ -433,14 +451,54 @@ model Invitation {
   @@map("invitations")
 }
 
+model QrEmailDelivery {
+  id                  String                     @id @default(uuid())
+  property_id         String
+  invitation_id       String
+  visit_id            String
+  qr_code_id          String
+  recipient_email     String
+  trigger_type        QrEmailDeliveryTriggerType
+  status              QrEmailDeliveryStatus
+  provider            String
+  provider_message_id String?
+  subject             String
+  idempotency_key     String?
+  email_access_token  String?
+  failure_code        String?
+  failure_message     String?
+  sent_at             DateTime?
+  expires_at          DateTime?
+  created_by          String?
+  created_at          DateTime                   @default(now())
+  updated_at          DateTime                   @updatedAt
+
+  property   Property   @relation(fields: [property_id], references: [id])
+  invitation Invitation @relation(fields: [invitation_id], references: [id])
+  visit      Visit      @relation(fields: [visit_id], references: [id])
+  qrCode     QRCode     @relation(fields: [qr_code_id], references: [id])
+  creator    User?      @relation("QrEmailDeliveryCreatedBy", fields: [created_by], references: [id])
+
+  @@unique([idempotency_key])
+  @@unique([email_access_token])
+  @@index([property_id])
+  @@index([invitation_id])
+  @@index([visit_id])
+  @@index([qr_code_id])
+  @@index([status])
+  @@index([created_at])
+  @@index([qr_code_id, trigger_type, created_at])
+  @@map("qr_email_deliveries")
+}
+
 model Approval {
-  id             String         @id @default(uuid())
-  invitation_id  String
-  status         ApprovalStatus
-  approved_by    String
-  note           String?
-  created_at     DateTime       @default(now())
-  updated_at     DateTime       @updatedAt
+  id            String         @id @default(uuid())
+  invitation_id String
+  status        ApprovalStatus
+  approved_by   String
+  note          String?
+  created_at    DateTime       @default(now())
+  updated_at    DateTime       @updatedAt
 
   invitation Invitation @relation(fields: [invitation_id], references: [id])
   approver   User       @relation(fields: [approved_by], references: [id])
@@ -451,18 +509,18 @@ model Approval {
 }
 
 model Badge {
-  id            String   @id @default(uuid())
+  id            String    @id @default(uuid())
   property_id   String
   invitation_id String?
   visit_id      String?
   visitor_id    String?
   badge_type    String
   badge_data    Json?
-  generated_at  DateTime @default(now())
+  generated_at  DateTime  @default(now())
   printed_at    DateTime?
   expires_at    DateTime?
 
-  property   Property   @relation(fields: [property_id], references: [id])
+  property   Property    @relation(fields: [property_id], references: [id])
   invitation Invitation? @relation(fields: [invitation_id], references: [id])
 
   @@index([property_id])
@@ -472,18 +530,18 @@ model Badge {
 }
 
 model Verification {
-  id                String   @id @default(uuid())
-  property_id       String
-  visit_id          String
-  visitor_id        String?
-  photo_url         String?
-  vehicle_number    String?
-  nda_signed        Boolean  @default(false)
-  safety_form_signed Boolean @default(false)
-  verified_by       String
-  verified_at       DateTime @default(now())
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
+  id                 String   @id @default(uuid())
+  property_id        String
+  visit_id           String
+  visitor_id         String?
+  photo_url          String?
+  vehicle_number     String?
+  nda_signed         Boolean  @default(false)
+  safety_form_signed Boolean  @default(false)
+  verified_by        String
+  verified_at        DateTime @default(now())
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
 
   property Property @relation(fields: [property_id], references: [id])
   visit    Visit    @relation(fields: [visit_id], references: [id])

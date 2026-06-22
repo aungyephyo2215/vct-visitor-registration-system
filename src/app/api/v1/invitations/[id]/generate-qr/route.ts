@@ -6,6 +6,34 @@ import { successResponse, errorResponse, notFoundResponse } from "@/lib/api-resp
 import { requirePropertyAccess, requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { sendNotification } from "@/lib/notifications/service";
+import { sendInvitationQrEmail } from "@/lib/email/qr-delivery";
+
+function sanitizeToken(value: string, rawToken: string): string {
+  return value.replaceAll(rawToken, "[REDACTED]");
+}
+
+function buildSafeEmailDeliverySummary(
+  summary: {
+    status: string;
+    provider: string;
+    deliveryId: string | null;
+    failureCode?: string | null;
+  } | null,
+) {
+  if (!summary) return null;
+
+  return {
+    status: summary.status,
+    provider: summary.provider,
+    deliveryId: summary.deliveryId,
+    ...(summary.status === "SKIPPED" && summary.failureCode
+      ? { skippedReason: summary.failureCode }
+      : {}),
+    ...(summary.status === "FAILED" && summary.failureCode
+      ? { failureCode: summary.failureCode }
+      : {}),
+  };
+}
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -96,18 +124,51 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       { invitation_id: id },
     );
 
+    let emailDelivery = null;
+
+    try {
+      const deliverySummary = await sendInvitationQrEmail(prisma, {
+        invitationId: id,
+        qrCodeId: qrCode.id,
+        rawToken: token,
+        triggerType: "AUTO",
+        createdBy: user.id,
+      });
+
+      emailDelivery = buildSafeEmailDeliverySummary({
+        status: deliverySummary.status,
+        provider: deliverySummary.provider,
+        deliveryId: deliverySummary.deliveryId,
+        failureCode: deliverySummary.failureCode,
+      });
+    } catch (error) {
+      const safeMessage = sanitizeToken(
+        error instanceof Error ? error.message : "Unknown QR email delivery error",
+        token,
+      );
+
+      console.error("QR email delivery failed after QR generation:", safeMessage);
+      emailDelivery = buildSafeEmailDeliverySummary({
+        status: "FAILED",
+        provider: "unknown",
+        deliveryId: null,
+        failureCode: "QR_EMAIL_DELIVERY_FAILED",
+      });
+    }
+
     return successResponse(
       {
-        token,
         expires_at: expiresAt,
         visit_id: visit.id,
         qr_code_id: qrCode.id,
+        ...(emailDelivery ? { emailDelivery } : {}),
       },
       201,
     );
   } catch (error) {
     if (error instanceof Response) return error;
-    console.error("Generate QR from invitation error:", error);
+    const safeMessage = error instanceof Error ? error.message : "Unknown generate QR error";
+    console.error("Generate QR from invitation error:", safeMessage);
     return errorResponse("Internal server error", 500);
   }
 }

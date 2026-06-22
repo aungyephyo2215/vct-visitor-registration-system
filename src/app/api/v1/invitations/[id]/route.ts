@@ -1,10 +1,16 @@
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
+
 import { requireAuth } from "@/lib/auth";
-import { successResponse, errorResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response";
-import { invitationUpdateSchema, formatZodErrors } from "@/lib/validations";
-import { requirePropertyAccess, requireRole } from "@/lib/rbac";
+import {
+  successResponse,
+  errorResponse,
+  notFoundResponse,
+  validationErrorResponse,
+} from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
+import { prisma } from "@/lib/prisma";
+import { requirePropertyAccess } from "@/lib/rbac";
+import { invitationUpdateSchema, formatZodErrors } from "@/lib/validations";
 
 async function findInvitation(id: string) {
   return prisma.invitation.findFirst({
@@ -17,10 +23,66 @@ async function findInvitation(id: string) {
   });
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+async function buildSafeQrMetadata(invitation: Awaited<ReturnType<typeof findInvitation>>) {
+  if (!invitation?.visit_id) {
+    return {
+      qrCode: { hasActive: false, expiresAt: null as string | null },
+      qrEmailDelivery: null,
+    };
+  }
+
+  const [activeQrCode, latestQrEmailDelivery] = await Promise.all([
+    prisma.qRCode.findFirst({
+      where: {
+        property_id: invitation.property_id,
+        visit_id: invitation.visit_id,
+        status: "ACTIVE",
+        used_at: null,
+        revoked_at: null,
+        expires_at: { gt: new Date() },
+      },
+      orderBy: { created_at: "desc" },
+      select: {
+        expires_at: true,
+      },
+    }),
+    prisma.qrEmailDelivery.findFirst({
+      where: {
+        invitation_id: invitation.id,
+      },
+      orderBy: { created_at: "desc" },
+      select: {
+        id: true,
+        status: true,
+        provider: true,
+        trigger_type: true,
+        failure_code: true,
+        sent_at: true,
+        created_at: true,
+      },
+    }),
+  ]);
+
+  return {
+    qrCode: {
+      hasActive: Boolean(activeQrCode),
+      expiresAt: activeQrCode?.expires_at?.toISOString() ?? null,
+    },
+    qrEmailDelivery: latestQrEmailDelivery
+      ? {
+          deliveryId: latestQrEmailDelivery.id,
+          status: latestQrEmailDelivery.status,
+          provider: latestQrEmailDelivery.provider,
+          triggerType: latestQrEmailDelivery.trigger_type,
+          failureCode: latestQrEmailDelivery.failure_code,
+          sentAt: latestQrEmailDelivery.sent_at?.toISOString() ?? null,
+          createdAt: latestQrEmailDelivery.created_at.toISOString(),
+        }
+      : null,
+  };
+}
+
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth(request);
     const { id } = await params;
@@ -30,12 +92,17 @@ export async function GET(
 
     requirePropertyAccess(user, invitation.property_id);
 
-    // RESIDENT can only view own invitations
     if (user.role === "RESIDENT" && invitation.invited_by !== user.id) {
       return errorResponse("Not authorized", 403);
     }
 
-    return successResponse(invitation);
+    const safeQrMetadata = await buildSafeQrMetadata(invitation);
+
+    return successResponse({
+      ...invitation,
+      qrCode: safeQrMetadata.qrCode,
+      qrEmailDelivery: safeQrMetadata.qrEmailDelivery,
+    });
   } catch (error) {
     if (error instanceof Response) return error;
     console.error("Get invitation error:", error);
@@ -43,10 +110,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth(request);
     const { id } = await params;
@@ -56,12 +120,10 @@ export async function PATCH(
 
     requirePropertyAccess(user, invitation.property_id);
 
-    // Only creator, PROPERTY_ADMIN, SUPER_ADMIN can update
     if (user.role === "RESIDENT" && invitation.invited_by !== user.id) {
       return errorResponse("Not authorized", 403);
     }
 
-    // Cannot update non-pending invitations
     if (invitation.status !== "PENDING") {
       return errorResponse("Only pending invitations can be edited", 400);
     }
@@ -76,9 +138,12 @@ export async function PATCH(
     const updateData: Record<string, unknown> = {};
     if (parsed.data.visitor_name) updateData.visitor_name = parsed.data.visitor_name;
     if (parsed.data.visitor_phone) updateData.visitor_phone = parsed.data.visitor_phone;
-    if (parsed.data.visitor_email !== undefined) updateData.visitor_email = parsed.data.visitor_email;
-    if (parsed.data.visitor_id_type !== undefined) updateData.visitor_id_type = parsed.data.visitor_id_type;
-    if (parsed.data.visitor_id_number !== undefined) updateData.visitor_id_number = parsed.data.visitor_id_number;
+    if (parsed.data.visitor_email !== undefined)
+      updateData.visitor_email = parsed.data.visitor_email;
+    if (parsed.data.visitor_id_type !== undefined)
+      updateData.visitor_id_type = parsed.data.visitor_id_type;
+    if (parsed.data.visitor_id_number !== undefined)
+      updateData.visitor_id_number = parsed.data.visitor_id_number;
     if (parsed.data.visitor_type) updateData.visitor_type = parsed.data.visitor_type;
     if (parsed.data.unit_id) {
       const unit = await prisma.unit.findFirst({
@@ -88,9 +153,9 @@ export async function PATCH(
       updateData.unit_id = parsed.data.unit_id;
     }
     if (parsed.data.expected_date) updateData.expected_date = new Date(parsed.data.expected_date);
-    if (parsed.data.expected_time !== undefined) updateData.expected_time = parsed.data.expected_time;
+    if (parsed.data.expected_time !== undefined)
+      updateData.expected_time = parsed.data.expected_time;
     if (parsed.data.notes !== undefined) updateData.notes = parsed.data.notes;
-    if (parsed.data.status) updateData.status = parsed.data.status;
 
     const updated = await prisma.invitation.update({
       where: { id },
@@ -127,7 +192,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -140,12 +205,10 @@ export async function DELETE(
 
     requirePropertyAccess(user, invitation.property_id);
 
-    // Only creator, PROPERTY_ADMIN, SUPER_ADMIN can delete
     if (user.role === "RESIDENT" && invitation.invited_by !== user.id) {
       return errorResponse("Not authorized", 403);
     }
 
-    // Soft delete
     await prisma.invitation.update({
       where: { id },
       data: { deleted_at: new Date(), status: "CANCELLED" },
