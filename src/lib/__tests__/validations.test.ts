@@ -177,12 +177,24 @@ describe("invitationCreateSchema", () => {
 // ─── invitationUpdateSchema ─────────────────────────────────────
 
 describe("invitationUpdateSchema", () => {
-  it("accepts partial update", () => {
-    expect(invitationUpdateSchema.safeParse({ status: "APPROVED" }).success).toBe(true);
+  it("accepts partial update with visitor fields", () => {
+    expect(invitationUpdateSchema.safeParse({ visitor_name: "Jane" }).success).toBe(true);
   });
 
-  it("rejects invalid status", () => {
-    expect(invitationUpdateSchema.safeParse({ status: "DELETED" }).success).toBe(false);
+  it("accepts visitor_email update", () => {
+    expect(invitationUpdateSchema.safeParse({ visitor_email: "jane@test.com" }).success).toBe(true);
+  });
+
+  it("accepts notes update", () => {
+    expect(invitationUpdateSchema.safeParse({ notes: "New notes" }).success).toBe(true);
+  });
+
+  it("strips status field (not in schema)", () => {
+    const result = invitationUpdateSchema.safeParse({ status: "APPROVED" });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("status");
+    }
   });
 });
 
