@@ -1,21 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
-import { ArrowLeft, CheckCircle, XCircle, ShieldCheck, QrCodeIcon, Printer } from "lucide-react";
-import { api } from "@/lib/api-client";
-import { useAuth } from "@/lib/auth-context";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft, CheckCircle, Printer, ShieldCheck, XCircle } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { api } from "@/lib/api-client";
+import { useAuth } from "@/lib/auth-context";
+
+import { InvitationQrEmailCard, type SafeQrEmailDelivery } from "./qr-email-card";
 
 interface Invitation {
   id: string;
@@ -36,6 +37,11 @@ interface Invitation {
   inviter: { id: string; name: string; email: string };
   approver: { id: string; name: string } | null;
   unit: { id: string; unit_no: string; floor: number };
+  qrCode: {
+    hasActive: boolean;
+    expiresAt: string | null;
+  };
+  qrEmailDelivery: SafeQrEmailDelivery | null;
 }
 
 interface Approval {
@@ -74,45 +80,57 @@ export default function InvitationDetailPage() {
   const [rejectReason, setRejectReason] = useState("");
   const [showReject, setShowReject] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-
-  // QR state
-  const [qrToken, setQrToken] = useState("");
-  const [qrImage, setQrImage] = useState("");
-  const [qrExpires, setQrExpires] = useState("");
   const [generatingQr, setGeneratingQr] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [cooldownRemainingSeconds, setCooldownRemainingSeconds] = useState(0);
 
-  // Badge state
   const [generatingBadge, setGeneratingBadge] = useState(false);
 
   const isApproved = invitation?.status === "APPROVED";
   const isPending = invitation?.status === "PENDING";
-  const hasQr = invitation?.visit_id != null;
+  const hasActiveQr = invitation?.qrCode?.hasActive === true;
   const canApprove =
     isPending && user && ["SUPER_ADMIN", "PROPERTY_ADMIN", "OFFICE_STAFF"].includes(user.role);
   const canGenerateQr =
     isApproved &&
     user &&
     ["SUPER_ADMIN", "PROPERTY_ADMIN", "OFFICE_STAFF", "SECURITY_GUARD"].includes(user.role);
+  const canResendQrEmail = Boolean(
+    hasActiveQr &&
+    user &&
+    ["SUPER_ADMIN", "PROPERTY_ADMIN", "OFFICE_STAFF", "SECURITY_GUARD"].includes(user.role),
+  );
+
+  async function loadInvitationDetails() {
+    const invData = await api.get<Invitation>(`/api/v1/invitations/${id}`);
+    setInvitation(invData);
+    return invData;
+  }
+
+  async function loadApprovals() {
+    const appData = await api.get<Approval[]>(`/api/v1/invitations/${id}/approvals`);
+    setApprovals(appData);
+  }
+
+  async function loadBadgesIfApproved(invitationData: Invitation) {
+    if (invitationData.status !== "APPROVED") {
+      setBadges([]);
+      return;
+    }
+
+    try {
+      const badgesData = await api.get<Badge[]>(`/api/v1/badges?invitation_id=${id}`);
+      setBadges(Array.isArray(badgesData) ? badgesData : []);
+    } catch {
+      setBadges([]);
+    }
+  }
 
   useEffect(() => {
     async function load() {
       try {
-        const [invData, appData] = await Promise.all([
-          api.get<Invitation>(`/api/v1/invitations/${id}`),
-          api.get<Approval[]>(`/api/v1/invitations/${id}/approvals`),
-        ]);
-        setInvitation(invData);
-        setApprovals(appData);
-
-        // Fetch badges if invitation is approved
-        if (invData.status === "APPROVED") {
-          try {
-            const badgesData = await api.get<Badge[]>(`/api/v1/badges?invitation_id=${id}`);
-            setBadges(Array.isArray(badgesData) ? badgesData : []);
-          } catch (e) {
-            // badges endpoint unavailable — not critical
-          }
-        }
+        const [invData] = await Promise.all([loadInvitationDetails(), loadApprovals()]);
+        await loadBadgesIfApproved(invData);
       } catch {
         toast.error("Invitation not found");
         router.push("/invitations");
@@ -123,13 +141,30 @@ export default function InvitationDetailPage() {
     load();
   }, [id, router]);
 
+  useEffect(() => {
+    if (cooldownRemainingSeconds <= 0) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setCooldownRemainingSeconds((current) => {
+        if (current <= 1) {
+          window.clearInterval(timer);
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [cooldownRemainingSeconds]);
+
   async function handleApprove() {
     setActionLoading(true);
     try {
-      const updated = await api.post<Invitation>(`/api/v1/invitations/${id}/approve`, {});
-      setInvitation(updated);
-      const appData = await api.get<Approval[]>(`/api/v1/invitations/${id}/approvals`);
-      setApprovals(appData);
+      await api.post<Invitation>(`/api/v1/invitations/${id}/approve`, {});
+      const updatedInvitation = await loadInvitationDetails();
+      await Promise.all([loadApprovals(), loadBadgesIfApproved(updatedInvitation)]);
       toast.success("Invitation approved");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to approve");
@@ -145,12 +180,10 @@ export default function InvitationDetailPage() {
     }
     setActionLoading(true);
     try {
-      const updated = await api.post<Invitation>(`/api/v1/invitations/${id}/reject`, {
+      await api.post<Invitation>(`/api/v1/invitations/${id}/reject`, {
         reason: rejectReason,
       });
-      setInvitation(updated);
-      const appData = await api.get<Approval[]>(`/api/v1/invitations/${id}/approvals`);
-      setApprovals(appData);
+      await Promise.all([loadInvitationDetails(), loadApprovals()]);
       setShowReject(false);
       setRejectReason("");
       toast.success("Invitation rejected");
@@ -164,34 +197,83 @@ export default function InvitationDetailPage() {
   async function handleGenerateQR() {
     setGeneratingQr(true);
     try {
-      const result = await api.post<{ token: string; expires_at: string; visit_id: string }>(
-        `/api/v1/invitations/${id}/generate-qr`,
-        {},
-      );
-      setQrToken(result.token);
-      setQrExpires(result.expires_at);
+      const result = await api.post<{
+        expires_at: string;
+        visit_id: string;
+        qr_code_id: string;
+        emailDelivery?: {
+          status: "SENT" | "FAILED" | "SKIPPED";
+          provider: string;
+          deliveryId: string | null;
+          skippedReason?: string;
+          failureCode?: string;
+        };
+      }>(`/api/v1/invitations/${id}/generate-qr`, {});
 
-      // Update invitation with visit_id
-      setInvitation((prev) => (prev ? { ...prev, visit_id: result.visit_id } : prev));
+      await loadInvitationDetails();
 
-      // Render QR client-side
-      try {
-        const QRCodeMod = await import("qrcode");
-        const qrDataUrl = await QRCodeMod.default.toDataURL(result.token, {
-          width: 200,
-          margin: 2,
-          color: { dark: "#000", light: "#fff" },
-        });
-        setQrImage(qrDataUrl);
-      } catch {
-        // QR rendering fails, still show token
+      if (result.emailDelivery?.status === "SENT") {
+        toast.success("QR code generated and QR email sent");
+      } else if (result.emailDelivery?.status === "SKIPPED") {
+        toast.success(
+          `QR code generated. QR email skipped${result.emailDelivery.skippedReason ? `: ${result.emailDelivery.skippedReason}` : ""}`,
+        );
+      } else if (result.emailDelivery?.status === "FAILED") {
+        toast.error(
+          `QR code generated, but email delivery failed${result.emailDelivery.failureCode ? `: ${result.emailDelivery.failureCode}` : ""}`,
+        );
+      } else {
+        toast.success("QR code generated");
       }
-
-      toast.success("QR code generated");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to generate QR");
     } finally {
       setGeneratingQr(false);
+    }
+  }
+
+  async function handleResendQrEmail() {
+    setResendLoading(true);
+    try {
+      const result = await api.post<{
+        emailDelivery: {
+          status: "SENT" | "FAILED" | "SKIPPED";
+          provider: string;
+          deliveryId: string | null;
+          skippedReason?: string;
+          failureCode?: string;
+        };
+      }>(`/api/v1/invitations/${id}/resend-qr-email`, {});
+
+      await loadInvitationDetails();
+
+      if (result.emailDelivery.status === "SENT") {
+        toast.success("QR email sent successfully");
+      } else if (result.emailDelivery.status === "SKIPPED") {
+        toast.success(
+          `QR email resend skipped${result.emailDelivery.skippedReason ? `: ${result.emailDelivery.skippedReason}` : ""}`,
+        );
+      } else {
+        toast.error(
+          `QR email resend failed${result.emailDelivery.failureCode ? `: ${result.emailDelivery.failureCode}` : ""}`,
+        );
+      }
+    } catch (err) {
+      const apiError = err as Error & {
+        status?: number;
+        details?: { retryAfterSeconds?: number; cooldownSeconds?: number };
+      };
+
+      if (apiError.status === 429 && apiError.details?.retryAfterSeconds) {
+        setCooldownRemainingSeconds(apiError.details.retryAfterSeconds);
+        toast.error(
+          `QR email resend is on cooldown. Try again in ${apiError.details.retryAfterSeconds} seconds.`,
+        );
+      } else {
+        toast.error(apiError.message || "Failed to resend QR email");
+      }
+    } finally {
+      setResendLoading(false);
     }
   }
 
@@ -337,65 +419,20 @@ export default function InvitationDetailPage() {
         </Card>
       </div>
 
-      {/* QR Code Section — only for APPROVED invitations */}
-      {isApproved && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <QrCodeIcon className="h-5 w-5" />
-              QR Code
-            </CardTitle>
-            <CardDescription>Generate QR code for visitor check-in</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {!hasQr && (
-              <Button onClick={handleGenerateQR} disabled={generatingQr}>
-                {generatingQr ? "Generating..." : "Generate QR Code"}
-              </Button>
-            )}
-
-            {qrToken && (
-              <div className="space-y-4 rounded-lg border p-4">
-                <div className="flex items-center justify-center">
-                  {qrImage ? (
-                    <Image
-                      src={qrImage}
-                      alt="QR Code"
-                      width={192}
-                      height={192}
-                      className="h-48 w-48"
-                    />
-                  ) : (
-                    <div className="bg-muted flex h-48 w-48 items-center justify-center rounded-lg">
-                      <QrCodeIcon className="text-muted-foreground h-12 w-12" />
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label>QR Token</Label>
-                  <Input readOnly value={qrToken} className="font-mono text-xs" />
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  Expires: {qrExpires ? new Date(qrExpires).toLocaleString() : "—"}
-                </p>
-              </div>
-            )}
-
-            {hasQr && !qrToken && (
-              <div>
-                <p className="text-muted-foreground mb-3 text-sm">
-                  QR code has been generated. View linked visit for QR details.
-                </p>
-                <Link href={`/visits/${invitation.visit_id}`}>
-                  <Button variant="outline" size="sm">
-                    View Visit
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      <InvitationQrEmailCard
+        isApproved={Boolean(isApproved)}
+        canGenerateQr={Boolean(canGenerateQr)}
+        hasActiveQr={hasActiveQr}
+        visitId={invitation.visit_id}
+        qrCodeExpiresAt={invitation.qrCode?.expiresAt ?? null}
+        qrEmailDelivery={invitation.qrEmailDelivery}
+        generatingQr={generatingQr}
+        resendLoading={resendLoading}
+        canResendQrEmail={canResendQrEmail}
+        cooldownRemainingSeconds={cooldownRemainingSeconds}
+        onGenerateQr={handleGenerateQR}
+        onResendQrEmail={handleResendQrEmail}
+      />
 
       {/* Badge Section — only for APPROVED */}
       {isApproved && (

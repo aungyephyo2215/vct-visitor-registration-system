@@ -42,3 +42,6 @@ coverage/
 # --- Misc ---
 *.tgz
 .cache/
+
+# --- Hermes agent --- 
+.hermes/

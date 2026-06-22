@@ -10,6 +10,7 @@ type AuditAction =
   | "CREATE_VISIT"
   | "UPDATE_VISIT"
   | "GENERATE_QR"
+  | "MANUAL_RESEND_QR_EMAIL"
   | "CHECK_IN"
   | "CHECK_OUT"
   | "FAILED_QR_SCAN"
@@ -41,8 +42,7 @@ async function getDefaultPropertyId(prisma: PrismaClient): Promise<string> {
 }
 
 export async function createAuditLog(params: CreateAuditLogParams) {
-  const property_id =
-    params.property_id || (await getDefaultPropertyId(params.prisma));
+  const property_id = params.property_id || (await getDefaultPropertyId(params.prisma));
 
   return params.prisma.auditLog.create({
     data: {
