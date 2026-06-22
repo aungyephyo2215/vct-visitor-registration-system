@@ -267,6 +267,10 @@ async function finalizeClaimedDelivery(
       failure_code: args.failureCode ?? null,
       failure_message: args.failureMessage ?? null,
       sent_at: args.sentAt ?? null,
+      ...(args.status === "SKIPPED" && {
+        email_access_token: null,
+        expires_at: null,
+      }),
     },
     select: {
       id: true,
@@ -584,8 +588,8 @@ export async function sendInvitationQrEmail(
       provider: "none",
       subject,
       idempotencyKey,
-      emailAccessToken,
-      expiresAt,
+      emailAccessToken: null,
+      expiresAt: null,
       failureCode: "QR_EMAIL_DISABLED",
       failureMessage: "QR email delivery is disabled",
     });
@@ -602,8 +606,8 @@ export async function sendInvitationQrEmail(
       provider: "none",
       subject,
       idempotencyKey,
-      emailAccessToken,
-      expiresAt,
+      emailAccessToken: null,
+      expiresAt: null,
       failureCode: "MISSING_RECIPIENT_EMAIL",
       failureMessage: "Invitation has no visitor email",
     });

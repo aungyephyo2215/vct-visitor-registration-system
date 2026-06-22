@@ -156,7 +156,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (parsed.data.expected_time !== undefined)
       updateData.expected_time = parsed.data.expected_time;
     if (parsed.data.notes !== undefined) updateData.notes = parsed.data.notes;
-    if (parsed.data.status) updateData.status = parsed.data.status;
 
     const updated = await prisma.invitation.update({
       where: { id },
