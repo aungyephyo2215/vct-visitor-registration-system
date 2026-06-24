@@ -99,6 +99,10 @@ enum AuditAction {
   REJECT_INVITATION
   VERIFY_VISITOR
   ATTACH_VISITOR
+  CREATE_VEHICLE
+  UPDATE_VEHICLE
+  DELETE_VEHICLE
+  BLOCK_VEHICLE
 }
 
 enum InvitationStatus {
@@ -160,6 +164,27 @@ enum QrEmailDeliveryTriggerType {
   MANUAL_RESEND
 }
 
+enum VehicleType {
+  CAR
+  MOTORCYCLE
+  TRUCK
+  VAN
+  BUS
+  BICYCLE
+  ELECTRIC_SCOOTER
+  OTHER
+}
+
+enum VehicleOwnerType {
+  RESIDENT
+  VISITOR
+}
+
+enum VehicleStatus {
+  ACTIVE
+  BLOCKED
+}
+
 // ── Models ──────────────────────────────────────────
 
 model Property {
@@ -185,6 +210,8 @@ model Property {
   verifications     Verification[]
   notifications     Notification[]
   qrEmailDeliveries QrEmailDelivery[]
+  vehicles          Vehicle[]
+  vehicleBlacklists VehicleBlacklist[]
 
   @@index([status])
   @@map("properties")
@@ -235,6 +262,8 @@ model User {
   verifications       Verification[]
   notifications       Notification[]
   qrEmailDeliveries   QrEmailDelivery[] @relation("QrEmailDeliveryCreatedBy")
+  ownedVehicles       Vehicle[]         @relation("VehicleOwner")
+  createdBlacklists   VehicleBlacklist[] @relation("VehicleBlacklistCreatedBy")
 
   @@index([property_id])
   @@index([unit_id])
@@ -260,6 +289,7 @@ model Visitor {
   property      Property       @relation(fields: [property_id], references: [id])
   visits        Visit[]
   verifications Verification[]
+  ownedVehicles Vehicle[]      @relation("VehicleOwner")
 
   @@index([property_id])
   @@index([phone])
@@ -275,6 +305,7 @@ model Visit {
   visitor_id            String?
   unit_id               String
   host_user_id          String?
+  vehicle_id            String?
   purpose               VisitPurpose
   notes                 String?
   vehicle_number        String?
@@ -290,6 +321,7 @@ model Visit {
   visitor           Visitor?          @relation(fields: [visitor_id], references: [id])
   unit              Unit              @relation(fields: [unit_id], references: [id])
   host              User?             @relation("hostedVisits", fields: [host_user_id], references: [id])
+  vehicle           Vehicle?          @relation(fields: [vehicle_id], references: [id])
   qrCodes           QRCode[]          @relation("VisitQRCodes")
   invitations       Invitation[]      @relation("VisitInvitations")
   verification      Verification?
@@ -299,6 +331,7 @@ model Visit {
   @@index([visitor_id])
   @@index([unit_id])
   @@index([host_user_id])
+  @@index([vehicle_id])
   @@index([status])
   @@index([expected_checkin_time])
   @@index([checkin_time])
@@ -554,4 +587,52 @@ model Verification {
   @@index([property_id])
   @@index([verified_by])
   @@map("verifications")
+}
+
+model Vehicle {
+  id               String           @id @default(uuid())
+  property_id      String
+  plate_number     String
+  vehicle_type     VehicleType
+  brand            String?
+  color            String?
+  owner_type       VehicleOwnerType
+  owner_user_id    String?
+  owner_visitor_id String?
+  status           VehicleStatus    @default(ACTIVE)
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+  deleted_at       DateTime?
+
+  property      Property  @relation(fields: [property_id], references: [id])
+  ownerUser     User?     @relation("VehicleOwner", fields: [owner_user_id], references: [id])
+  ownerVisitor  Visitor?  @relation("VehicleOwner", fields: [owner_visitor_id], references: [id])
+  visits        Visit[]
+
+  @@unique([property_id, plate_number])
+  @@index([property_id])
+  @@index([plate_number])
+  @@index([owner_user_id])
+  @@index([owner_visitor_id])
+  @@index([property_id, status])
+  @@map("vehicles")
+}
+
+model VehicleBlacklist {
+  id           String        @id @default(uuid())
+  property_id  String
+  plate_number String
+  reason       String?
+  status       BlocklistStatus @default(ACTIVE)
+  created_by   String?
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+
+  property Property @relation(fields: [property_id], references: [id])
+  creator  User?    @relation("VehicleBlacklistCreatedBy", fields: [created_by], references: [id])
+
+  @@unique([property_id, plate_number])
+  @@index([property_id])
+  @@index([plate_number])
+  @@map("vehicle_blacklists")
 }
