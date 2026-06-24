@@ -14,7 +14,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { ID_TYPES, type VerificationFormData } from "@/types/security-workflow";
+import { ID_TYPES } from "@/types/security-workflow";
 
 interface VerificationFormProps {
   initialName?: string;
@@ -24,6 +24,17 @@ interface VerificationFormProps {
   onCancel?: () => void;
   submitLabel?: string;
   showPhotoField?: boolean;
+}
+
+export interface VerificationFormData {
+  visitor_name: string;
+  visitor_phone: string;
+  visitor_id_type?: string;
+  visitor_id_number?: string;
+  photo_url?: string;
+  vehicle_number?: string;
+  nda_signed: boolean;
+  safety_form_signed: boolean;
 }
 
 /**

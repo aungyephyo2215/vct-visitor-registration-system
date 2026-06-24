@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { VisitInfoCard } from "@/components/security/visit-info-card";
 import { VerificationForm } from "@/components/security/verification-form";
 import { useSecurityWorkflow } from "@/hooks/use-security-workflow";
-import type { VerificationFormData } from "@/types/security-workflow";
+import type { VerificationFormData } from "@/components/security/verification-form";
 import { toast } from "sonner";
 
 export default function SecurityVerifyPage() {
