@@ -1,11 +1,11 @@
 import { NextRequest } from "next/server";
-import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { requirePropertyAccess, requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { sendNotification } from "@/lib/notifications/service";
+import { resolveQrToken } from "@/lib/qr-token-resolver";
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,12 +18,7 @@ export async function POST(request: NextRequest) {
       return errorResponse("QR token is required", 400);
     }
 
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-
-    const qrCode = await prisma.qRCode.findUnique({
-      where: { token_hash: tokenHash },
-      include: { visit: true },
-    });
+    const qrCode = await resolveQrToken(prisma, token);
 
     if (!qrCode) return errorResponse("Invalid QR code", 404);
 
@@ -53,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     await createAuditLog({
       prisma,
-      property_id: qrCode.visit.property_id,
+      property_id: qrCode.property_id,
       user_id: user.id,
       action: "CHECK_OUT",
       resource_type: "visit",
@@ -71,7 +66,7 @@ export async function POST(request: NextRequest) {
         hostUserId: qrCode.visit.host_user_id,
       },
       { visitor: updated.visitor?.name ?? "Visitor" },
-      qrCode.visit.property_id,
+      qrCode.property_id,
       qrCode.visit.id,
     );
 
