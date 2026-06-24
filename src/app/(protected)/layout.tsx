@@ -30,6 +30,7 @@ const navItems = [
   { href: "/visits", label: "Visits", icon: CalendarClock },
   { href: "/invitations", label: "Invitations", icon: Mail },
   { href: "/security/verify", label: "Security", icon: ShieldCheck },
+  { href: "/security/scan", label: "Scanner", icon: QrCode },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
