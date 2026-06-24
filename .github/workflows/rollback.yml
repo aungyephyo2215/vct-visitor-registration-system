@@ -1,0 +1,100 @@
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Rollback target"
+        required: true
+        default: "previous"
+        type: choice
+        options:
+          - previous
+          - custom
+      custom_sha:
+        description: "Custom commit SHA (only if target=custom)"
+        required: false
+        type: string
+      reason:
+        description: "Reason for rollback"
+        required: true
+        type: string
+
+jobs:
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate inputs
+        run: |
+          if [ "${{ inputs.target }}" = "custom" ] && [ -z "${{ inputs.custom_sha }}" ]; then
+            echo "Error: custom_sha is required when target=custom"
+            exit 1
+          fi
+
+      - name: Determine target commit
+        id: target
+        run: |
+          if [ "${{ inputs.target }}" = "previous" ]; then
+            SHA=$(git rev-parse HEAD~1)
+          else
+            SHA="${{ inputs.custom_sha }}"
+          fi
+
+          # Validate commit exists
+          if ! git cat-file -e "$SHA" 2>/dev/null; then
+            echo "Error: Commit $SHA not found"
+            exit 1
+          fi
+
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+          echo "## Rollback Target" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** \`$SHA\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Message:** $(git log --oneline -1 $SHA)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Reason:** ${{ inputs.reason }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Create revert commit
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git revert HEAD --no-edit
+          git push origin main
+
+      - name: Rollback summary
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Result" >> $GITHUB_STEP_SUMMARY
+          echo "Revert commit pushed to \`main\`. Vercel will auto-deploy." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### What this does" >> $GITHUB_STEP_SUMMARY
+          echo "- Reverts the last commit on \`main\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Pushes the revert, triggering a Vercel redeployment" >> $GITHUB_STEP_SUMMARY
+          echo "- The previous code will be live within ~2 minutes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### What this does NOT do" >> $GITHUB_STEP_SUMMARY
+          echo "- Does NOT rollback database migrations" >> $GITHUB_STEP_SUMMARY
+          echo "- Does NOT restore deleted data" >> $GITHUB_STEP_SUMMARY
+          echo "- Does NOT revert other branches" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Database Rollback (Manual)" >> $GITHUB_STEP_SUMMARY
+          echo "If the reverted commit included a migration:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "# Check which migration was applied" >> $GITHUB_STEP_SUMMARY
+          echo "npx prisma migrate status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# If migration is reversible" >> $GITHUB_STEP_SUMMARY
+          echo "npx prisma migrate resolve --rolled-back <migration_name>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# If migration is NOT reversible" >> $GITHUB_STEP_SUMMARY
+          echo "# Restore from database backup" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Required GitHub Secret" >> $GITHUB_STEP_SUMMARY
+          echo "- \`PRODUCTION_DATABASE_URL\` — Direct database connection string" >> $GITHUB_STEP_SUMMARY

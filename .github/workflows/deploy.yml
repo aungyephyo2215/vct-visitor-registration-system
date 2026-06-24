@@ -1,0 +1,218 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  # ── Pre-deploy checks ────────────────────────────────
+  pre-deploy:
+    name: Pre-Deploy Checks
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: vrs_user
+          POSTGRES_PASSWORD: vrs_password
+          POSTGRES_DB: vrs_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://vrs_user:vrs_password@localhost:5432/vrs_db
+      JWT_SECRET: ci-jwt-secret-for-testing-only
+      JWT_REFRESH_SECRET: ci-jwt-refresh-secret-for-testing-only
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Apply migrations
+        run: npx prisma migrate deploy
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  # ── Database migration ────────────────────────────────
+  #
+  # Applies Prisma migrations to the production database.
+  # Uses a direct (non-pooled) connection to avoid issues
+  # with connection poolers that don't support prepared statements.
+  #
+  # Required GitHub Secret:
+  #   PRODUCTION_DATABASE_URL — Direct database connection string
+  #
+  migrate:
+    name: Deploy Database Migration
+    runs-on: ubuntu-latest
+    needs: pre-deploy
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply migrations to production
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        run: |
+          echo "Applying migrations to production database..."
+          npx prisma migrate deploy
+          echo "Migrations applied successfully"
+
+      - name: Verify migration status
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        run: |
+          echo "Migration status:"
+          npx prisma migrate status 2>&1 | head -20
+
+      - name: Record migration in summary
+        if: success()
+        run: |
+          COMMIT="${{ github.sha }}"
+          echo "## Migration Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** \`${COMMIT:0:8}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Migrations:** applied via \`prisma migrate deploy\`" >> $GITHUB_STEP_SUMMARY
+
+  # ── Post-deploy verification ──────────────────────────
+  #
+  # Polls the production URL until the API responds.
+  # Retries with 15s intervals, up to 10 attempts.
+  #
+  # Required GitHub Secret:
+  #   VERCEL_URL — Production URL (e.g. https://app.vercel.app)
+  #
+  verify:
+    name: Post-Deploy Verification
+    runs-on: ubuntu-latest
+    needs: migrate
+
+    steps:
+      - name: Wait for deployment to stabilize
+        run: |
+          echo "Waiting 30s for Vercel deployment to begin..."
+          sleep 30
+
+      - name: Health check with retry
+        run: |
+          URL="${{ secrets.VERCEL_URL }}"
+          if [ -z "$URL" ]; then
+            echo "VERCEL_URL not set, skipping health check"
+            exit 0
+          fi
+
+          echo "Checking: $URL/api/v1/auth/me"
+          MAX_ATTEMPTS=10
+          DELAY=15
+
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              --max-time 10 \
+              "$URL/api/v1/auth/me" 2>/dev/null || echo "000")
+
+            if [ "$STATUS" = "401" ]; then
+              echo "Attempt $i/$MAX_ATTEMPTS: API responding (401)"
+              echo "Health check passed"
+              exit 0
+            fi
+
+            echo "Attempt $i/$MAX_ATTEMPTS: Status $STATUS (expected 401)"
+
+            if [ $i -lt $MAX_ATTEMPTS ]; then
+              echo "Retrying in ${DELAY}s..."
+              sleep $DELAY
+            fi
+          done
+
+          echo "Health check failed after $MAX_ATTEMPTS attempts"
+          echo "Last status: $STATUS"
+          echo ""
+          echo "Possible causes:"
+          echo "  - Vercel deployment still building"
+          echo "  - Database connection issue"
+          echo "  - Environment variable misconfiguration"
+          exit 1
+
+      - name: Verify security headers
+        run: |
+          URL="${{ secrets.VERCEL_URL }}"
+          if [ -z "$URL" ]; then
+            echo "VERCEL_URL not set, skipping header check"
+            exit 0
+          fi
+
+          HEADERS=$(curl -sI --max-time 10 "$URL/login" 2>/dev/null)
+          ERRORS=0
+
+          check_header() {
+            local name="$1"
+            local pattern="$2"
+            if echo "$HEADERS" | grep -qi "$pattern"; then
+              echo "  $name"
+            else
+              echo "  MISSING: $name"
+              ERRORS=$((ERRORS + 1))
+            fi
+          }
+
+          echo "Security headers:"
+          check_header "X-Frame-Options: DENY" "x-frame-options: DENY"
+          check_header "X-Content-Type-Options: nosniff" "x-content-type-options: nosniff"
+          check_header "Content-Security-Policy" "content-security-policy:"
+          check_header "Referrer-Policy" "referrer-policy:"
+
+          echo ""
+          if [ $ERRORS -gt 0 ]; then
+            echo "WARNING: $ERRORS security header(s) missing"
+          else
+            echo "All security headers present"
+          fi
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          echo "## Deployment Verification" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** ${{ secrets.VERCEL_URL }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY

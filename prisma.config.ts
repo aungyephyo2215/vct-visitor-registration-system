@@ -10,6 +10,12 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
+    // DATABASE_URL is read from environment variables.
+    //
+    // Local development: .env file
+    // CI testing: hardcoded local PostgreSQL
+    // Production migrations: GitHub secret PRODUCTION_DATABASE_URL
+    // Production runtime: Vercel environment variable
     url: process.env["DATABASE_URL"],
   },
 });
