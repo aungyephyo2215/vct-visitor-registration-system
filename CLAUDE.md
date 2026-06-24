@@ -66,10 +66,8 @@ Completed
 - Phase 3 — Dashboard & Reports ✅
 - Phase 4 — Universal Workflow Planning ✅
 - Phase 5 — MVP Finalization ✅
-
-In Progress
-
-- Phase 6 — Invitation & Approval Workflow 🚧
+- Phase 6 — Invitation & Approval Workflow ✅
+- Phase 6.1 — Security Hardening ✅
 
 Future
 
