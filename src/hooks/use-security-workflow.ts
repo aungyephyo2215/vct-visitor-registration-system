@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { api } from "@/lib/api-client";
-import type { VisitData, VerificationData } from "@/types/security-workflow";
+import type { VisitData, VerificationData, VerificationFormData } from "@/types/security-workflow";
 
 interface UseSecurityWorkflowOptions {
   token: string;
@@ -33,8 +33,7 @@ interface UseSecurityWorkflowReturn {
 
   // Actions
   lookup: () => Promise<void>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  verify: (payload: any) => Promise<VerificationData | null>;
+  verify: (payload: VerificationFormData) => Promise<VerificationData | null>;
   checkIn: () => Promise<boolean>;
   checkOut: () => Promise<boolean>;
   refresh: () => Promise<void>;
@@ -120,8 +119,7 @@ export function useSecurityWorkflow({
   }, [token, fetchVisitData, fetchVerification]);
 
   const verify = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async (payload: any): Promise<VerificationData | null> => {
+    async (payload: VerificationFormData): Promise<VerificationData | null> => {
       if (!visitData) return null;
 
       setLoading(true);

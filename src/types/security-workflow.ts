@@ -48,3 +48,14 @@ export const ID_TYPES = [
 ] as const;
 
 export type ScannerStep = "scan" | "result" | "verify" | "success";
+
+export interface VerificationFormData {
+  visitor_name: string;
+  visitor_phone: string;
+  visitor_id_type?: string;
+  visitor_id_number?: string;
+  photo_url?: string;
+  vehicle_number?: string;
+  nda_signed: boolean;
+  safety_form_signed: boolean;
+}
