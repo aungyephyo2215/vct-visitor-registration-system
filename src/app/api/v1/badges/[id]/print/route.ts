@@ -4,10 +4,7 @@ import { requireAuth } from "@/lib/auth";
 import { errorResponse, notFoundResponse } from "@/lib/api-response";
 import { requirePropertyAccess } from "@/lib/rbac";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth(request);
     const { id } = await params;
@@ -64,7 +61,6 @@ export async function GET(
     <div class="date">${new Date(inv.expected_date).toLocaleDateString()}${inv.expected_time ? ` ${inv.expected_time}` : ""}</div>
     <div class="date">ID: ${badge.id.slice(0, 8)}...</div>
   </div>
-  <script>window.print();</script>
 </body>
 </html>`;
 
