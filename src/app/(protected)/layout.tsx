@@ -14,6 +14,7 @@ import {
   Menu,
   QrCode,
   ShieldCheck,
+  Car,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { NotificationBell } from "@/components/notification-bell";
@@ -25,6 +26,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/visitors", label: "Visitors", icon: Users },
+  { href: "/vehicles", label: "Vehicles", icon: Car },
   { href: "/visits", label: "Visits", icon: CalendarClock },
   { href: "/invitations", label: "Invitations", icon: Mail },
   { href: "/security/verify", label: "Security", icon: ShieldCheck },
