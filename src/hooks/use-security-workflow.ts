@@ -119,8 +119,8 @@ export function useSecurityWorkflow({
     }
   }, [token, fetchVisitData, fetchVerification]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const verify = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async (payload: any): Promise<VerificationData | null> => {
       if (!visitData) return null;
 
