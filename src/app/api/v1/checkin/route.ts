@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
+import { requireRole } from "@/lib/rbac";
 import { successResponse, errorResponse, validationErrorResponse } from "@/lib/api-response";
 import { checkinSchema, formatZodErrors } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
@@ -8,6 +10,9 @@ import { sendNotification } from "@/lib/notifications/service";
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await requireAuth(request);
+    requireRole(user, "SUPER_ADMIN", "PROPERTY_ADMIN", "SECURITY_GUARD");
+
     const body = await request.json();
     const parsed = checkinSchema.safeParse(body);
 
@@ -70,21 +75,27 @@ export async function POST(request: NextRequest) {
     }
 
     // Check blocklist
-    const blocked = await prisma.blocklist.findFirst({
-      where: {
-        property_id: qrCode.visit.property_id,
-        status: "ACTIVE",
-        OR: [
-          { phone: qrCode.visit.visitor.phone },
-          { id_number: qrCode.visit.visitor.id_number },
-        ].filter((c) => c.phone || c.id_number),
-      },
-    });
+    const blocklistConditions = [
+      qrCode.visit.visitor.phone ? { phone: qrCode.visit.visitor.phone } : null,
+      qrCode.visit.visitor.id_number ? { id_number: qrCode.visit.visitor.id_number } : null,
+    ].filter(Boolean);
+
+    let blocked = null;
+    if (blocklistConditions.length > 0) {
+      blocked = await prisma.blocklist.findFirst({
+        where: {
+          property_id: qrCode.visit.property_id,
+          status: "ACTIVE",
+          OR: blocklistConditions as Array<{ phone: string } | { id_number: string }>,
+        },
+      });
+    }
 
     if (blocked) {
       await createAuditLog({
         prisma,
         property_id: qrCode.visit.property_id,
+        user_id: user.id,
         action: "BLOCKLIST_MATCH",
         resource_type: "visit",
         resource_id: qrCode.visit.id,
@@ -111,6 +122,7 @@ export async function POST(request: NextRequest) {
     await createAuditLog({
       prisma,
       property_id: qrCode.visit.property_id,
+      user_id: user.id,
       action: "CHECK_IN",
       resource_type: "visit",
       resource_id: qrCode.visit.id,

@@ -5,6 +5,7 @@ import { successResponse, errorResponse, validationErrorResponse } from "@/lib/a
 import { checkoutSchema, formatZodErrors } from "@/lib/validations";
 import { requirePropertyAccess, requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
+import { sendNotification } from "@/lib/notifications/service";
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,6 +57,18 @@ export async function POST(request: NextRequest) {
       ip_address: request.headers.get("x-forwarded-for") || undefined,
       user_agent: request.headers.get("user-agent") || undefined,
     });
+
+    await sendNotification(
+      prisma,
+      "CHECKED_OUT",
+      {
+        kind: "visit",
+        hostUserId: visit.host_user_id,
+      },
+      { visitor: updated.visitor?.name ?? "Visitor" },
+      visit.property_id,
+      visit_id,
+    );
 
     return successResponse(updated);
   } catch (error) {

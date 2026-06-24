@@ -22,7 +22,11 @@ type AuditAction =
   | "APPROVE_INVITATION"
   | "REJECT_INVITATION"
   | "VERIFY_VISITOR"
-  | "ATTACH_VISITOR";
+  | "ATTACH_VISITOR"
+  | "CREATE_VEHICLE"
+  | "UPDATE_VEHICLE"
+  | "DELETE_VEHICLE"
+  | "BLOCK_VEHICLE";
 
 interface CreateAuditLogParams {
   prisma: PrismaClient;
