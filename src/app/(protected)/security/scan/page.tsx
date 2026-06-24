@@ -1,214 +1,202 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { QrCode, Search, CheckCircle, LogOut, UserCheck, ExternalLink, Camera } from "lucide-react";
+import {
+  QrCode,
+  Search,
+  CheckCircle,
+  XCircle,
+  Clock,
+  UserCheck,
+  LogOut,
+  AlertTriangle,
+  ExternalLink,
+} from "lucide-react";
+import { api } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { QrScanner } from "@/components/qr-scanner";
-import { VisitInfoCard } from "@/components/security/visit-info-card";
-import { VerificationForm } from "@/components/security/verification-form";
-import { useSecurityWorkflow } from "@/hooks/use-security-workflow";
-import type { ScannerStep, VerificationFormData } from "@/types/security-workflow";
 import { toast } from "sonner";
+
+interface VisitData {
+  qr: { id: string; status: string; expires_at: string };
+  visit: {
+    id: string;
+    status: string;
+    unit: { unit_no: string; floor: number };
+    host: { name: string } | null;
+    visitor: { id: string; name: string; phone: string } | null;
+    invitations: {
+      id: string;
+      visitor_name: string;
+      visitor_phone: string;
+      visitor_type: string;
+      status: string;
+    }[];
+  };
+}
+
+type ScanStep = "scan" | "result";
 
 export default function ScannerPage() {
   const router = useRouter();
   const [manualToken, setManualToken] = useState("");
-  const [step, setStep] = useState<ScannerStep>("scan");
+  const [visitData, setVisitData] = useState<VisitData | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [step, setStep] = useState<ScanStep>("scan");
+  const [checkingIn, setCheckingIn] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
   const [scannerPaused, setScannerPaused] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
-  const countdownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const workflow = useSecurityWorkflow({
-    token: manualToken,
-  });
+  const handleLookup = useCallback(async (token: string) => {
+    if (!token.trim()) return;
 
-  // Cleanup countdown timer on unmount
-  useEffect(() => {
-    return () => {
-      if (countdownRef.current) clearTimeout(countdownRef.current);
-    };
-  }, []);
+    setSearching(true);
+    setVisitData(null);
 
-  // ─── QR Scan & Lookup ─────────────────────────────────
-
-  const handleScanResult = useCallback(
-    async (token: string) => {
-      setManualToken(token);
-      setScannerPaused(true);
-      await workflow.lookup();
-      if (workflow.visitData) {
-        setStep("result");
-      }
-    },
-    [workflow],
-  );
-
-  const handleManualLookup = async () => {
-    if (!manualToken.trim()) return;
-    await workflow.lookup();
-    if (workflow.visitData) {
+    try {
+      const data = await api.get<VisitData>("/api/v1/qr/lookup", {
+        token: token.trim(),
+      });
+      setVisitData(data);
       setStep("result");
       setScannerPaused(true);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Invalid QR code");
+    } finally {
+      setSearching(false);
     }
+  }, []);
+
+  const handleScanResult = useCallback(
+    (token: string) => {
+      setManualToken(token);
+      handleLookup(token);
+    },
+    [handleLookup],
+  );
+
+  const handleManualLookup = () => {
+    handleLookup(manualToken);
   };
-
-  // ─── Verification ─────────────────────────────────────
-
-  const handleStartVerify = () => {
-    setStep("verify");
-  };
-
-  const handleCancelVerify = () => {
-    setStep("result");
-  };
-
-  const handleCompleteVerification = async (data: VerificationFormData) => {
-    const verification = await workflow.verify(data);
-    if (verification) {
-      toast.success("Visitor verified");
-      // Auto proceed to check-in
-      await handleCheckIn();
-    }
-  };
-
-  // ─── Check-In ─────────────────────────────────────────
 
   const handleCheckIn = async () => {
-    const success = await workflow.checkIn();
-    if (success) {
-      const name = workflow.visitData?.visit.visitor?.name || "Visitor";
-      setSuccessMessage(`${name} checked in successfully. Host notified.`);
-      setStep("success");
-      startAutoReturn();
+    if (!visitData) return;
+    setCheckingIn(true);
+    try {
+      await api.post("/api/v1/checkin", { token: manualToken });
+      toast.success("Visitor checked in");
+      // Refresh data
+      const updated = await api.get<VisitData>("/api/v1/qr/lookup", {
+        token: manualToken,
+      });
+      setVisitData(updated);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Check-in failed");
+    } finally {
+      setCheckingIn(false);
     }
   };
-
-  // ─── Check-Out ────────────────────────────────────────
 
   const handleCheckOut = async () => {
-    const success = await workflow.checkOut();
-    if (success) {
-      const name = workflow.visitData?.visit.visitor?.name || "Visitor";
-      setSuccessMessage(`${name} checked out successfully.`);
-      setStep("success");
-      startAutoReturn();
+    if (!visitData) return;
+    setCheckingOut(true);
+    try {
+      await api.post("/api/v1/checkout/qr", { token: manualToken });
+      toast.success("Visitor checked out");
+      const updated = await api.get<VisitData>("/api/v1/qr/lookup", {
+        token: manualToken,
+      });
+      setVisitData(updated);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Check-out failed");
+    } finally {
+      setCheckingOut(false);
     }
-  };
-
-  // ─── Navigation ───────────────────────────────────────
-
-  const startAutoReturn = () => {
-    if (countdownRef.current) clearTimeout(countdownRef.current);
-    countdownRef.current = setTimeout(() => {
-      handleReset();
-    }, 3000);
-  };
-
-  const handleReturnNow = () => {
-    if (countdownRef.current) clearTimeout(countdownRef.current);
-    handleReset();
   };
 
   const handleReset = () => {
     setStep("scan");
+    setVisitData(null);
     setManualToken("");
     setScannerPaused(false);
-    setSuccessMessage("");
-    workflow.reset();
   };
 
-  const handleViewDetails = () => {
-    if (manualToken) {
-      router.push(`/security/verify?token=${encodeURIComponent(manualToken)}`);
+  const handleGoToVerify = () => {
+    if (visitData) {
+      router.push(`/security/verify`);
     }
   };
 
-  // ─── Primary Action ───────────────────────────────────
+  const isExpired = visitData ? new Date(visitData.qr.expires_at) < new Date() : false;
+  const isQrActive = visitData?.qr.status === "ACTIVE" && !isExpired;
+  const isVerified = !!visitData?.visit.visitor;
+  const isCheckedIn = visitData?.visit.status === "CHECKED_IN";
+  const isCheckedOut = visitData?.visit.status === "CHECKED_OUT";
+  const isCancelled = visitData?.visit.status === "CANCELLED";
 
-  const getPrimaryAction = () => {
-    if (!workflow.visitData || workflow.isExpired || workflow.isCancelled) return null;
-
-    if (workflow.isCheckedOut) {
+  const getStatusBadge = () => {
+    if (!visitData) return null;
+    if (isExpired)
       return (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-center">
-          <CheckCircle className="mx-auto mb-2 h-8 w-8 text-gray-400" />
-          <p className="font-medium text-gray-600">Visit completed</p>
-          <p className="text-sm text-gray-500">
-            {workflow.visitData.visit.visitor?.name || "Visitor"} checked out
-          </p>
-        </div>
+        <Badge variant="destructive">
+          <Clock className="mr-1 h-3 w-3" />
+          Expired
+        </Badge>
       );
-    }
-
-    if (workflow.needsCheckOut) {
+    if (isCheckedOut)
       return (
-        <Button
-          onClick={handleCheckOut}
-          disabled={workflow.loading}
-          className="w-full"
-          size="lg"
-          variant="outline"
-        >
-          {workflow.loading ? (
-            "Processing..."
-          ) : (
-            <>
-              <LogOut className="mr-2 h-5 w-5" />
-              Check Out {workflow.visitData.visit.visitor?.name || "Visitor"}
-            </>
-          )}
-        </Button>
+        <Badge variant="secondary">
+          <LogOut className="mr-1 h-3 w-3" />
+          Checked Out
+        </Badge>
       );
-    }
-
-    if (workflow.needsVerification) {
+    if (isCheckedIn)
       return (
-        <Button onClick={handleStartVerify} className="w-full" size="lg">
-          <UserCheck className="mr-2 h-5 w-5" />
-          Verify Visitor
-        </Button>
+        <Badge variant="default" className="bg-green-600">
+          <CheckCircle className="mr-1 h-3 w-3" />
+          Checked In
+        </Badge>
       );
-    }
-
-    if (workflow.needsCheckIn) {
+    if (isVerified)
       return (
-        <Button onClick={handleCheckIn} disabled={workflow.loading} className="w-full" size="lg">
-          {workflow.loading ? (
-            "Checking in..."
-          ) : (
-            <>
-              <CheckCircle className="mr-2 h-5 w-5" />
-              Check In {workflow.visitData.visit.visitor?.name || "Visitor"}
-            </>
-          )}
-        </Button>
+        <Badge variant="default">
+          <UserCheck className="mr-1 h-3 w-3" />
+          Verified
+        </Badge>
       );
-    }
-
-    return null;
+    if (isCancelled)
+      return (
+        <Badge variant="destructive">
+          <XCircle className="mr-1 h-3 w-3" />
+          Cancelled
+        </Badge>
+      );
+    return (
+      <Badge variant="outline">
+        <Clock className="mr-1 h-3 w-3" />
+        Expected
+      </Badge>
+    );
   };
-
-  // ─── Render ───────────────────────────────────────────
 
   return (
     <div className="mx-auto max-w-lg space-y-4 pb-20">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Security Gate</h1>
-        <p className="text-muted-foreground">
-          Scan QR code to verify, check in, or check out visitors
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight">QR Scanner</h1>
+        <p className="text-muted-foreground">Scan a visitor QR code to verify and check in</p>
       </div>
 
-      {/* ─── Step 1: Scanner ─────────────────────────── */}
+      {/* Step 1: Scanner */}
       {step === "scan" && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Camera className="h-5 w-5" />
+              <QrCode className="h-5 w-5" />
               Scan QR Code
             </CardTitle>
           </CardHeader>
@@ -231,33 +219,115 @@ export default function ScannerPage() {
                 onChange={(e) => setManualToken(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleManualLookup()}
               />
-              <Button
-                onClick={handleManualLookup}
-                disabled={workflow.loading || !manualToken.trim()}
-              >
-                {workflow.loading ? "Looking up..." : <Search className="h-4 w-4" />}
+              <Button onClick={handleManualLookup} disabled={searching || !manualToken.trim()}>
+                {searching ? "Looking up..." : <Search className="h-4 w-4" />}
               </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* ─── Step 2: Visitor Found ───────────────────── */}
-      {step === "result" && workflow.visitData && (
+      {/* Step 2: Result */}
+      {step === "result" && visitData && (
         <div className="space-y-4">
-          <VisitInfoCard
-            visitData={workflow.visitData}
-            hasVerification={workflow.hasVerification}
-          />
+          {/* Status Card */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <QrCode className="h-5 w-5" />
+                  Visit Status
+                </CardTitle>
+                {getStatusBadge()}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {visitData.visit.invitations?.[0] && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-sm">Visitor</span>
+                  <span className="font-medium">{visitData.visit.invitations[0].visitor_name}</span>
+                </div>
+              )}
+              {visitData.visit.visitor && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-sm">Registered</span>
+                  <span className="font-medium">{visitData.visit.visitor.name}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground text-sm">Unit</span>
+                <span className="font-medium">
+                  {visitData.visit.unit.unit_no} (Floor {visitData.visit.unit.floor})
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground text-sm">Host</span>
+                <span className="font-medium">{visitData.visit.host?.name || "—"}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground text-sm">QR Status</span>
+                <span className="font-medium">{visitData.qr.status}</span>
+              </div>
+              {isExpired && (
+                <div className="bg-destructive/10 text-destructive flex items-center gap-2 rounded-md px-3 py-2 text-sm">
+                  <AlertTriangle className="h-4 w-4" />
+                  QR code has expired. A new QR code must be generated.
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
+          {/* Action Buttons */}
           <Card>
             <CardContent className="pt-6">
               <div className="space-y-3">
-                {getPrimaryAction()}
+                {!isVerified && !isCheckedIn && !isCheckedOut && !isCancelled && (
+                  <Button onClick={handleGoToVerify} className="w-full" size="lg">
+                    <UserCheck className="mr-2 h-5 w-5" />
+                    Verify Visitor
+                  </Button>
+                )}
 
-                <Button onClick={handleViewDetails} variant="outline" className="w-full">
+                {isVerified && !isCheckedIn && !isCheckedOut && !isCancelled && isQrActive && (
+                  <Button
+                    onClick={handleCheckIn}
+                    disabled={checkingIn}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {checkingIn ? (
+                      "Checking in..."
+                    ) : (
+                      <>
+                        <CheckCircle className="mr-2 h-5 w-5" />
+                        Check In Visitor
+                      </>
+                    )}
+                  </Button>
+                )}
+
+                {isCheckedIn && (
+                  <Button
+                    onClick={handleCheckOut}
+                    disabled={checkingOut}
+                    variant="outline"
+                    className="w-full"
+                    size="lg"
+                  >
+                    {checkingOut ? (
+                      "Checking out..."
+                    ) : (
+                      <>
+                        <LogOut className="mr-2 h-5 w-5" />
+                        Check Out Visitor
+                      </>
+                    )}
+                  </Button>
+                )}
+
+                <Button onClick={handleGoToVerify} variant="outline" className="w-full">
                   <ExternalLink className="mr-2 h-4 w-4" />
-                  View Full Details
+                  Open Full Verification Page
                 </Button>
 
                 <Button onClick={handleReset} variant="ghost" className="w-full">
@@ -267,53 +337,6 @@ export default function ScannerPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      )}
-
-      {/* ─── Step 3: Inline Verification ─────────────── */}
-      {step === "verify" && workflow.visitData && (
-        <VerificationForm
-          initialName={
-            workflow.visitData.visit.invitations?.[0]?.visitor_name ||
-            workflow.visitData.visit.visitor?.name ||
-            ""
-          }
-          initialPhone={
-            workflow.visitData.visit.invitations?.[0]?.visitor_phone ||
-            workflow.visitData.visit.visitor?.phone ||
-            ""
-          }
-          loading={workflow.loading}
-          onSubmit={handleCompleteVerification}
-          onCancel={handleCancelVerify}
-          submitLabel="Verify & Check In"
-        />
-      )}
-
-      {/* ─── Step 4: Success ─────────────────────────── */}
-      {step === "success" && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-4 text-center">
-              <CheckCircle className="mx-auto h-12 w-12 text-green-600" />
-              <div>
-                <p className="text-lg font-medium text-green-800">{successMessage}</p>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  Returning to scanner in 3 seconds...
-                </p>
-              </div>
-              <Button onClick={handleReturnNow} variant="outline">
-                Return to Scanner Now
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ─── Error Display ───────────────────────────── */}
-      {workflow.error && step !== "scan" && (
-        <div className="bg-destructive/10 text-destructive rounded-md px-3 py-2 text-sm">
-          {workflow.error}
         </div>
       )}
     </div>
