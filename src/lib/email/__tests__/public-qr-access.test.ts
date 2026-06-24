@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { resolvePublicQrAccessByToken } from "../public-qr-access";
+import { hashToken } from "@/lib/crypto";
 
 const mockQrEmailDeliveryFindUnique = vi.fn();
 
@@ -13,13 +14,13 @@ const mockPrisma = {
 function buildDelivery(overrides: Record<string, unknown> = {}) {
   return {
     id: "delivery-1",
-    email_access_token: "opaque-token",
+    email_access_token_hash: hashToken("opaque-token"),
     status: "SENT",
-    expires_at: new Date("2026-06-23T10:30:00.000Z"),
+    expires_at: new Date("2099-12-31T23:59:59.000Z"),
     invitation: {
       id: "inv-1",
       visitor_name: "Aung Kyaw",
-      expected_date: new Date("2026-06-22T00:00:00.000Z"),
+      expected_date: new Date("2099-12-30T00:00:00.000Z"),
       expected_time: "10:30 AM",
       status: "APPROVED",
       deleted_at: null,
@@ -37,7 +38,7 @@ function buildDelivery(overrides: Record<string, unknown> = {}) {
     visit: {
       id: "visit-1",
       status: "EXPECTED",
-      expected_checkin_time: new Date("2026-06-22T10:30:00.000Z"),
+      expected_checkin_time: new Date("2099-12-30T10:30:00.000Z"),
       host: {
         id: "user-1",
         name: "Daw Mya",
@@ -46,7 +47,7 @@ function buildDelivery(overrides: Record<string, unknown> = {}) {
     qrCode: {
       id: "qr-1",
       status: "ACTIVE",
-      expires_at: new Date("2026-06-23T10:30:00.000Z"),
+      expires_at: new Date("2099-12-31T23:59:59.000Z"),
       used_at: null,
       revoked_at: null,
     },
