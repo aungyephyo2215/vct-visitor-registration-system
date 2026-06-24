@@ -65,4 +65,40 @@ test.describe("RBAC Enforcement", () => {
     await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
     await expect(page.locator("h1")).toContainText("Dashboard");
   });
+
+  test("SECURITY_GUARD cannot list users", async ({ page }) => {
+    await loginForm(page, "guard");
+    const res = await page.request.get("/api/v1/users");
+    expect(res.status()).toBe(403);
+  });
+
+  test("RESIDENT cannot list users", async ({ page }) => {
+    await loginForm(page, "resident");
+    const res = await page.request.get("/api/v1/users");
+    expect(res.status()).toBe(403);
+  });
+
+  test("PROPERTY_ADMIN can list users", async ({ page }) => {
+    await loginForm(page, "property");
+    const res = await page.request.get("/api/v1/users");
+    expect(res.ok()).toBeTruthy();
+  });
+
+  test("SECURITY_GUARD cannot list units", async ({ page }) => {
+    await loginForm(page, "guard");
+    const res = await page.request.get("/api/v1/units");
+    expect(res.status()).toBe(403);
+  });
+
+  test("RESIDENT cannot list units", async ({ page }) => {
+    await loginForm(page, "resident");
+    const res = await page.request.get("/api/v1/units");
+    expect(res.status()).toBe(403);
+  });
+
+  test("PROPERTY_ADMIN can list units", async ({ page }) => {
+    await loginForm(page, "property");
+    const res = await page.request.get("/api/v1/units");
+    expect(res.ok()).toBeTruthy();
+  });
 });

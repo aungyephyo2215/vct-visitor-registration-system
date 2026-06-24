@@ -3,11 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { successResponse, errorResponse, validationErrorResponse } from "@/lib/api-response";
 import { paginationSchema, formatZodErrors } from "@/lib/validations";
-import { requirePropertyAccess } from "@/lib/rbac";
+import { requireRole, requirePropertyAccess } from "@/lib/rbac";
 
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
+    requireRole(user, "SUPER_ADMIN", "PROPERTY_ADMIN", "OFFICE_STAFF");
     const { searchParams } = new URL(request.url);
     const query = paginationSchema.safeParse(Object.fromEntries(searchParams));
 
