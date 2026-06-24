@@ -4,6 +4,7 @@ import { format } from "date-fns";
 
 import type { PrismaClient } from "@/generated/prisma/client";
 import { QrEmailDeliveryStatus, QrEmailDeliveryTriggerType } from "@/generated/prisma/enums";
+import { hashToken } from "@/lib/crypto";
 
 import { getEmailProvider } from "./provider";
 import { buildVisitorQrEmailTemplate } from "./template";
@@ -25,12 +26,12 @@ type DeliveryRow = {
   failure_message: string | null;
   sent_at: Date | null;
   status: QrEmailDeliveryStatusValue;
-  email_access_token: string | null;
+  email_access_token_hash: string | null;
   expires_at: Date | null;
 };
 
 type AutoClaimResult =
-  | { kind: "claimed"; delivery: DeliveryRow }
+  | { kind: "claimed"; delivery: DeliveryRow; rawToken: string }
   | { kind: "existing-sent"; delivery: DeliveryRow }
   | { kind: "in-progress"; delivery: DeliveryRow };
 
@@ -159,6 +160,7 @@ async function createDeliveryRecord(
       subject: args.subject,
       idempotency_key: args.idempotencyKey ?? null,
       email_access_token: args.emailAccessToken ?? null,
+      email_access_token_hash: args.emailAccessToken ? hashToken(args.emailAccessToken) : null,
       failure_code: args.failureCode ?? null,
       failure_message: args.failureMessage ?? null,
       sent_at: args.sentAt ?? null,
@@ -238,7 +240,7 @@ async function getExistingAutoDelivery(
       failure_message: true,
       sent_at: true,
       status: true,
-      email_access_token: true,
+      email_access_token_hash: true,
       expires_at: true,
     },
   }) as Promise<DeliveryRow | null>;
@@ -269,6 +271,7 @@ async function finalizeClaimedDelivery(
       sent_at: args.sentAt ?? null,
       ...(args.status === "SKIPPED" && {
         email_access_token: null,
+        email_access_token_hash: null,
         expires_at: null,
       }),
     },
@@ -281,7 +284,7 @@ async function finalizeClaimedDelivery(
       failure_message: true,
       sent_at: true,
       status: true,
-      email_access_token: true,
+      email_access_token_hash: true,
       expires_at: true,
     },
   }) as Promise<DeliveryRow>;
@@ -326,6 +329,7 @@ async function claimAutoDelivery(
         provider_message_id: null,
         subject: args.subject,
         email_access_token: emailAccessToken,
+        email_access_token_hash: hashToken(emailAccessToken),
         failure_code: null,
         failure_message: null,
         sent_at: null,
@@ -337,6 +341,7 @@ async function claimAutoDelivery(
     if (reclaimed.count === 1) {
       return {
         kind: "claimed",
+        rawToken: emailAccessToken,
         delivery: {
           ...existing,
           status: "PENDING",
@@ -346,7 +351,7 @@ async function claimAutoDelivery(
           failure_code: null,
           failure_message: null,
           sent_at: null,
-          email_access_token: emailAccessToken,
+          email_access_token_hash: hashToken(emailAccessToken),
           expires_at: args.expiresAt,
         },
       };
@@ -380,6 +385,7 @@ async function claimAutoDelivery(
         subject: args.subject,
         idempotency_key: args.idempotencyKey,
         email_access_token: emailAccessToken,
+        email_access_token_hash: hashToken(emailAccessToken),
         expires_at: args.expiresAt,
         created_by: args.createdBy ?? null,
       },
@@ -392,12 +398,12 @@ async function claimAutoDelivery(
         failure_message: true,
         sent_at: true,
         status: true,
-        email_access_token: true,
+        email_access_token_hash: true,
         expires_at: true,
       },
     })) as DeliveryRow;
 
-    return { kind: "claimed", delivery: created };
+    return { kind: "claimed", delivery: created, rawToken: emailAccessToken };
   } catch (error) {
     if (!isUniqueConstraintError(error)) {
       throw error;
@@ -504,8 +510,8 @@ export async function sendInvitationQrEmail(
       const provider = getEmailProvider();
       resolvedProvider = provider.name;
 
-      const qrAccessUrl = buildQrAccessUrl(claimResult.delivery.email_access_token || "");
-      const qrImageUrl = buildQrImageUrl(claimResult.delivery.email_access_token || "");
+      const qrAccessUrl = buildQrAccessUrl(claimResult.rawToken);
+      const qrImageUrl = buildQrImageUrl(claimResult.rawToken);
       const template = buildVisitorQrEmailTemplate({
         visitorName: invitation.visitor_name,
         propertyName: invitation.property.name,

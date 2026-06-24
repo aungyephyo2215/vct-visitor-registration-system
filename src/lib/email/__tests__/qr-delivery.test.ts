@@ -105,6 +105,7 @@ function buildDelivery(overrides: Record<string, unknown> = {}) {
     status: "PENDING",
     trigger_type: "AUTO",
     email_access_token: "opaque-token",
+    email_access_token_hash: "hash-of-opaque-token",
     expires_at: new Date("2026-06-23T10:30:00.000Z"),
     ...overrides,
   };
@@ -181,6 +182,7 @@ describe("sendInvitationQrEmail", () => {
           status: "PENDING",
           idempotency_key: "AUTO:qr-1",
           email_access_token: expect.any(String),
+          email_access_token_hash: expect.any(String),
           expires_at: new Date("2026-06-23T10:30:00.000Z"),
         }),
       }),
