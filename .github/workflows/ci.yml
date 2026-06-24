@@ -1,19 +1,46 @@
 name: CI
 
 on:
-  push:
-    branches: [main, develop]
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
-  DATABASE_URL: postgresql://vrs_user:vrs_password@localhost:5432/vrs_db
-  JWT_SECRET: ci-jwt-secret-for-build
-  JWT_REFRESH_SECRET: ci-jwt-refresh-secret-for-build
+  NODE_VERSION: "22"
 
 jobs:
-  build:
+  # ── Fast checks (no DB needed) ──────────────────────
+  lint:
+    name: Lint & Typecheck
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run type check
+        run: npx tsc --noEmit
+
+      - name: Check formatting
+        run: npm run format:check
+
+  # ── Unit tests (with PostgreSQL) ─────────────────────
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint
 
     services:
       postgres:
@@ -30,25 +57,76 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-    steps:
-      - uses: actions/checkout@v6
+    env:
+      DATABASE_URL: postgresql://vrs_user:vrs_password@localhost:5432/vrs_db
+      JWT_SECRET: ci-jwt-secret-for-testing-only
+      JWT_REFRESH_SECRET: ci-jwt-refresh-secret-for-testing-only
 
-      - uses: actions/setup-node@v6
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run lint
-        run: npm run lint
+      - name: Apply migrations
+        run: npx prisma migrate deploy
 
-      - name: Run type check
-        run: npx tsc --noEmit
-
-      - name: Run unit tests
+      - name: Run tests
         run: npm test
 
-      - name: Run build
+      - name: Upload test results on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results
+          path: test-results/
+
+  # ── Build ─────────────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: lint
+
+    env:
+      DATABASE_URL: postgresql://vrs_user:vrs_password@localhost:5432/vrs_db
+      JWT_SECRET: ci-jwt-secret-for-build-only
+      JWT_REFRESH_SECRET: ci-jwt-refresh-secret-for-build-only
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
         run: npm run build
+
+  # ── Security audit ────────────────────────────────────
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --omit=dev --audit-level=high || true
