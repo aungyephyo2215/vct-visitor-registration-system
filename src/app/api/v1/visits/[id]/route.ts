@@ -1,10 +1,17 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { successResponse, errorResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response";
+import {
+  successResponse,
+  errorResponse,
+  notFoundResponse,
+  validationErrorResponse,
+} from "@/lib/api-response";
 import { visitUpdateSchema, formatZodErrors } from "@/lib/validations";
 import { requirePropertyAccess, requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
+import { isValidTransition } from "@/lib/visit-transitions";
+import { VisitStatus } from "@/generated/prisma/enums";
 
 const visitIncludes = {
   visitor: { select: { id: true, name: true, phone: true, id_type: true, id_number: true } },
@@ -13,17 +20,18 @@ const visitIncludes = {
   qrCodes: { select: { id: true, status: true, expires_at: true } },
   verification: {
     select: {
-      id: true, photo_url: true, vehicle_number: true,
-      nda_signed: true, safety_form_signed: true, verified_at: true,
+      id: true,
+      photo_url: true,
+      vehicle_number: true,
+      nda_signed: true,
+      safety_form_signed: true,
+      verified_at: true,
       verifier: { select: { name: true } },
     },
   },
 };
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth(request);
     requireRole(user, "SUPER_ADMIN", "PROPERTY_ADMIN", "SECURITY_GUARD", "OFFICE_STAFF");
@@ -46,10 +54,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth(request);
     requireRole(user, "SUPER_ADMIN", "PROPERTY_ADMIN", "SECURITY_GUARD", "OFFICE_STAFF");
@@ -99,13 +104,22 @@ export async function PATCH(
     }
     if (parsed.data.purpose) updateData.purpose = parsed.data.purpose;
     if (parsed.data.notes !== undefined) updateData.notes = parsed.data.notes;
-    if (parsed.data.vehicle_number !== undefined) updateData.vehicle_number = parsed.data.vehicle_number;
+    if (parsed.data.vehicle_number !== undefined)
+      updateData.vehicle_number = parsed.data.vehicle_number;
     if (parsed.data.expected_checkin_time !== undefined) {
       updateData.expected_checkin_time = parsed.data.expected_checkin_time
         ? new Date(parsed.data.expected_checkin_time)
         : null;
     }
-    if (parsed.data.status) updateData.status = parsed.data.status;
+    if (parsed.data.status) {
+      if (!isValidTransition(visit.status as VisitStatus, parsed.data.status as VisitStatus)) {
+        return errorResponse(
+          `Invalid status transition: ${visit.status} -> ${parsed.data.status}`,
+          400,
+        );
+      }
+      updateData.status = parsed.data.status;
+    }
 
     const updated = await prisma.visit.update({
       where: { id },

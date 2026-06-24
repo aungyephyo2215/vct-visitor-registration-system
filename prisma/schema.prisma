@@ -464,8 +464,9 @@ model QrEmailDelivery {
   provider_message_id String?
   subject             String
   idempotency_key     String?
-  email_access_token  String?
-  failure_code        String?
+  email_access_token      String?
+  email_access_token_hash String?
+  failure_code            String?
   failure_message     String?
   sent_at             DateTime?
   expires_at          DateTime?
@@ -481,6 +482,7 @@ model QrEmailDelivery {
 
   @@unique([idempotency_key])
   @@unique([email_access_token])
+  @@unique([email_access_token_hash])
   @@index([property_id])
   @@index([invitation_id])
   @@index([visit_id])

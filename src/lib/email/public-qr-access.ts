@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 
 import type { PrismaClient } from "@/generated/prisma/client";
+import { hashToken } from "@/lib/crypto";
 
 type PublicQrAccessRecord = {
   emailAccessToken: string;
@@ -44,10 +45,12 @@ export async function resolvePublicQrAccessByToken(
   const token = emailAccessToken.trim();
   if (!token) return null;
 
+  const tokenHash = hashToken(token);
+
   const delivery = await prisma.qrEmailDelivery.findUnique({
-    where: { email_access_token: token },
+    where: { email_access_token_hash: tokenHash },
     select: {
-      email_access_token: true,
+      email_access_token_hash: true,
       status: true,
       expires_at: true,
       invitation: {
@@ -81,7 +84,7 @@ export async function resolvePublicQrAccessByToken(
     },
   });
 
-  if (!delivery?.email_access_token) return null;
+  if (!delivery?.email_access_token_hash) return null;
   if (delivery.status !== "SENT") return null;
   if (!delivery.expires_at || delivery.expires_at <= now) return null;
   if (delivery.invitation.deleted_at) return null;
@@ -92,7 +95,7 @@ export async function resolvePublicQrAccessByToken(
   if (delivery.qrCode.expires_at <= now) return null;
 
   return {
-    emailAccessToken: delivery.email_access_token,
+    emailAccessToken: token,
     visitorName: delivery.invitation.visitor_name,
     propertyName: delivery.invitation.property.name,
     propertyAddress: delivery.invitation.property.address,
@@ -100,7 +103,7 @@ export async function resolvePublicQrAccessByToken(
     hostName: delivery.visit.host?.name || "Host",
     visitDateLabel: format(delivery.invitation.expected_date, "yyyy-MM-dd"),
     visitTimeLabel: delivery.invitation.expected_time || "Time to be confirmed",
-    qrImageUrl: buildQrImageUrl(delivery.email_access_token),
-    qrPayloadUrl: buildQrAccessUrl(delivery.email_access_token),
+    qrImageUrl: buildQrImageUrl(token),
+    qrPayloadUrl: buildQrAccessUrl(token),
   };
 }
