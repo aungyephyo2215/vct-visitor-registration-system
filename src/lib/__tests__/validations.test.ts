@@ -136,7 +136,7 @@ describe("invitationCreateSchema", () => {
     visitor_phone: "+959111222333",
     visitor_type: "GUEST",
     unit_id: "u1",
-    expected_date: "2026-06-20",
+    expected_date: "2026-06-20T10:00:00.000Z",
   } as const;
 
   it("accepts valid invitation", () => {

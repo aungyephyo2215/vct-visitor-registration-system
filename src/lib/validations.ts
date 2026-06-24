@@ -93,7 +93,7 @@ export const invitationCreateSchema = z.object({
     "GOVERNMENT",
   ]),
   unit_id: z.string().min(1, "Unit is required"),
-  expected_date: z.string().min(1, "Expected date is required"),
+  expected_date: z.string().datetime("Invalid date format"),
   expected_time: z.string().max(50).optional().nullable(),
   notes: z.string().max(500).optional().nullable(),
 });
@@ -132,6 +132,48 @@ export const paginationSchema = z.object({
   visitor_id: z.string().min(1).optional(),
   unit_id: z.string().min(1).optional(),
 });
+
+// ─── Vehicle ────────────────────────────────────────
+
+export const vehicleCreateSchema = z.object({
+  plate_number: z.string().min(1, "Plate number is required").max(20),
+  vehicle_type: z.enum([
+    "CAR",
+    "MOTORCYCLE",
+    "TRUCK",
+    "VAN",
+    "BUS",
+    "BICYCLE",
+    "ELECTRIC_SCOOTER",
+    "OTHER",
+  ]),
+  brand: z.string().max(50).optional().nullable(),
+  color: z.string().max(30).optional().nullable(),
+  owner_type: z.enum(["RESIDENT", "VISITOR"]),
+  owner_user_id: z.string().uuid().optional().nullable(),
+  owner_visitor_id: z.string().uuid().optional().nullable(),
+  property_id: z.string().uuid().optional(),
+});
+
+export const vehicleUpdateSchema = z.object({
+  plate_number: z.string().min(1).max(20).optional(),
+  vehicle_type: z
+    .enum(["CAR", "MOTORCYCLE", "TRUCK", "VAN", "BUS", "BICYCLE", "ELECTRIC_SCOOTER", "OTHER"])
+    .optional(),
+  brand: z.string().max(50).optional().nullable(),
+  color: z.string().max(30).optional().nullable(),
+  owner_type: z.enum(["RESIDENT", "VISITOR"]).optional(),
+  owner_user_id: z.string().uuid().optional().nullable(),
+  owner_visitor_id: z.string().uuid().optional().nullable(),
+  status: z.enum(["ACTIVE", "BLOCKED"]).optional(),
+});
+
+export const vehicleBlacklistCreateSchema = z.object({
+  plate_number: z.string().min(1, "Plate number is required").max(20),
+  reason: z.string().max(500).optional().nullable(),
+});
+
+// ─── Utilities ──────────────────────────────────────
 
 export function formatZodErrors(error: z.ZodError) {
   return error.errors.map((e) => ({

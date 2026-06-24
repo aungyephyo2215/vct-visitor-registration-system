@@ -58,10 +58,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return errorResponse("Visit already verified. Use PATCH to update.", 400);
     }
 
+    // Verify visit is in EXPECTED status
+    if (visit.status !== "EXPECTED") {
+      return errorResponse(`Cannot verify a visit with status ${visit.status}`, 400);
+    }
+
     const body = await request.json();
 
     if (!body.visitor_name || !body.visitor_phone) {
       return errorResponse("Visitor name and phone are required", 400);
+    }
+
+    // Validate photo size (max 1MB base64 ≈ 1.37MB raw)
+    if (body.photo_url && typeof body.photo_url === "string" && body.photo_url.length > 1_500_000) {
+      return errorResponse("Photo is too large. Maximum size is 1MB.", 400);
     }
 
     // Find or create visitor

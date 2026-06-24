@@ -139,19 +139,23 @@ export async function POST(request: NextRequest) {
     });
 
     // Fire-and-forget notification to all approvers
-    const approverIds = await getApproverRecipients(prisma, property_id);
-    await sendBulkNotifications(
-      prisma,
-      approverIds,
-      "INVITATION_CREATED",
-      {
-        inviter: user.name,
-        visitor: parsed.data.visitor_name,
-        type: parsed.data.visitor_type,
-      },
-      property_id,
-      invitation.id,
-    );
+    try {
+      const approverIds = await getApproverRecipients(prisma, property_id);
+      await sendBulkNotifications(
+        prisma,
+        approverIds,
+        "INVITATION_CREATED",
+        {
+          inviter: user.name,
+          visitor: parsed.data.visitor_name,
+          type: parsed.data.visitor_type,
+        },
+        property_id,
+        invitation.id,
+      );
+    } catch (notifError) {
+      console.error("Failed to send invitation notifications:", notifError);
+    }
 
     return successResponse(invitation, 201);
   } catch (error) {
