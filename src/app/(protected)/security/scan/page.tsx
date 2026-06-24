@@ -11,8 +11,7 @@ import { QrScanner } from "@/components/qr-scanner";
 import { VisitInfoCard } from "@/components/security/visit-info-card";
 import { VerificationForm } from "@/components/security/verification-form";
 import { useSecurityWorkflow } from "@/hooks/use-security-workflow";
-import type { ScannerStep } from "@/types/security-workflow";
-import type { VerificationFormData } from "@/components/security/verification-form";
+import type { ScannerStep, VerificationFormData } from "@/types/security-workflow";
 import { toast } from "sonner";
 
 export default function ScannerPage() {
