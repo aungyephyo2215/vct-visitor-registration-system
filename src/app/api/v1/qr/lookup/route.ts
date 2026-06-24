@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
-import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { requirePropertyAccess, requireRole } from "@/lib/rbac";
+import { resolveQrToken } from "@/lib/qr-token-resolver";
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,29 +15,7 @@ export async function GET(request: NextRequest) {
       return errorResponse("token query parameter is required", 400);
     }
 
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-
-    const qrCode = await prisma.qRCode.findUnique({
-      where: { token_hash: tokenHash },
-      include: {
-        visit: {
-          include: {
-            unit: { select: { id: true, unit_no: true, floor: true } },
-            host: { select: { id: true, name: true } },
-            visitor: { select: { id: true, name: true, phone: true } },
-            invitations: {
-              select: {
-                id: true,
-                visitor_name: true,
-                visitor_phone: true,
-                visitor_type: true,
-                status: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const qrCode = await resolveQrToken(prisma, token);
 
     if (!qrCode) return errorResponse("Invalid QR code", 404);
 

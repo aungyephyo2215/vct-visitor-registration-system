@@ -1,5 +1,4 @@
 import { NextRequest } from "next/server";
-import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { requireRole } from "@/lib/rbac";
@@ -7,6 +6,7 @@ import { successResponse, errorResponse, validationErrorResponse } from "@/lib/a
 import { checkinSchema, formatZodErrors } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
 import { sendNotification } from "@/lib/notifications/service";
+import { resolveQrToken } from "@/lib/qr-token-resolver";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,19 +21,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { token } = parsed.data;
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-
-    const qrCode = await prisma.qRCode.findUnique({
-      where: { token_hash: tokenHash },
-      include: {
-        visit: {
-          include: {
-            visitor: true,
-            verification: { select: { id: true } },
-          },
-        },
-      },
-    });
+    const qrCode = await resolveQrToken(prisma, token);
 
     if (!qrCode) return errorResponse("Invalid QR code", 404);
 
@@ -130,7 +118,7 @@ export async function POST(request: NextRequest) {
       user_agent: request.headers.get("user-agent") || undefined,
     });
 
-    // Notify host — qrCode.visit includes visitor relation for name
+    // Notify host
     await sendNotification(
       prisma,
       "CHECKED_IN",
