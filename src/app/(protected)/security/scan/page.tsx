@@ -28,6 +28,10 @@ export default function ScannerPage() {
   const workflow = useSecurityWorkflow();
   const [manualToken, setManualToken] = useState("");
   const [verificationOpen, setVerificationOpen] = useState(false);
+  const [scannerState, setScannerState] = useState<{ hasCamera: boolean; error: string | null }>({
+    hasCamera: true,
+    error: null,
+  });
   const [countdownState, setCountdownState] = useState<{
     mode: "checkin" | "checkout";
     secondsLeft: number;
@@ -153,8 +157,23 @@ export default function ScannerPage() {
     }
   };
 
+  const scannerStatus = useMemo(() => {
+    if (currentStatus.kind !== "idle" || currentVisit || scannerState.hasCamera) {
+      return currentStatus;
+    }
+
+    return {
+      kind: "error" as const,
+      tone: "warning" as const,
+      title: "Camera unavailable",
+      description:
+        scannerState.error || "Camera could not be started. Use manual QR entry to continue.",
+      primaryAction: { type: "none" as const, label: "Manual Lookup" },
+    };
+  }, [currentStatus, currentVisit, scannerState.error, scannerState.hasCamera]);
+
   const statusPanelClass = useMemo(() => {
-    switch (currentStatus.tone) {
+    switch (scannerStatus.tone) {
       case "success":
         return "border-emerald-200 bg-emerald-50 text-emerald-900";
       case "warning":
@@ -166,7 +185,7 @@ export default function ScannerPage() {
       default:
         return "border-border bg-background text-foreground";
     }
-  }, [currentStatus.tone]);
+  }, [scannerStatus.tone]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 pb-20">
@@ -210,11 +229,12 @@ export default function ScannerPage() {
               paused={!!countdownState}
               autoStart
               processing={workflow.loading}
+              onCameraStateChange={setScannerState}
             />
 
             <div className={`rounded-lg border px-4 py-3 text-sm ${statusPanelClass}`}>
-              <div className="font-medium">{currentStatus.title}</div>
-              <div className="mt-1">{currentStatus.description}</div>
+              <div className="font-medium">{scannerStatus.title}</div>
+              <div className="mt-1">{scannerStatus.description}</div>
             </div>
 
             <div className="relative">

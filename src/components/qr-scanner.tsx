@@ -10,6 +10,7 @@ interface QrScannerProps {
   paused?: boolean;
   autoStart?: boolean;
   processing?: boolean;
+  onCameraStateChange?: (state: { hasCamera: boolean; error: string | null }) => void;
 }
 
 function pickDefaultCamera(cameras: CameraDevice[]) {
@@ -58,6 +59,7 @@ export function QrScanner({
   paused = false,
   autoStart = true,
   processing = false,
+  onCameraStateChange,
 }: QrScannerProps) {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const containerId = `qr-scanner-${useId()}`;
@@ -235,6 +237,10 @@ export function QrScanner({
     startScanner,
     stopScanner,
   ]);
+
+  useEffect(() => {
+    onCameraStateChange?.({ hasCamera, error });
+  }, [error, hasCamera, onCameraStateChange]);
 
   const cycleCamera = useCallback(async () => {
     if (cameraDevices.length < 2 || !selectedCameraId) return;
