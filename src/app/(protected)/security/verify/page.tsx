@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, CheckCircle, LogOut, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { VisitInfoCard } from "@/components/security/visit-info-card";
+import { GateVisitorSummary } from "@/components/security/gate-visitor-summary";
 import { VerificationForm } from "@/components/security/verification-form";
 import { useSecurityWorkflow } from "@/hooks/use-security-workflow";
 import type { VerificationFormData } from "@/components/security/verification-form";
@@ -16,29 +16,30 @@ import { toast } from "sonner";
 export default function SecurityVerifyPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [token, setToken] = useState(searchParams.get("token") || "");
   const autoLookupDone = useRef(false);
+  const [token, setToken] = useState(searchParams.get("token") || "");
 
-  const workflow = useSecurityWorkflow({
-    token,
-  });
+  const workflow = useSecurityWorkflow();
 
-  // Auto-lookup when token is provided via URL
   useEffect(() => {
     const urlToken = searchParams.get("token");
-    if (urlToken && !autoLookupDone.current) {
-      autoLookupDone.current = true;
-      setToken(urlToken);
-      workflow.lookup();
-    }
+    if (!urlToken || autoLookupDone.current) return;
+
+    autoLookupDone.current = true;
+    setToken(urlToken);
+    void workflow.lookup(urlToken);
   }, [searchParams, workflow]);
 
-  const handleLookup = () => {
+  const handleLookup = async () => {
     if (!token.trim()) {
       toast.error("QR token is required");
       return;
     }
-    workflow.lookup();
+
+    const success = await workflow.lookup(token);
+    if (!success) {
+      toast.error(workflow.currentStatus.description || "Unable to look up visitor");
+    }
   };
 
   const handleVerify = async (data: VerificationFormData) => {
@@ -67,12 +68,11 @@ export default function SecurityVerifyPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Security Verification</h1>
         <p className="text-muted-foreground">
-          Verify visitor identity and manage check-in/check-out
+          Look up a visitor, complete verification, and manage check-in / check-out.
         </p>
       </div>
 
-      {/* Token Input */}
-      {!workflow.visitData && (
+      {!workflow.currentVisit && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -86,7 +86,7 @@ export default function SecurityVerifyPage() {
                 placeholder="Enter QR token or paste URL"
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleLookup()}
+                onKeyDown={(e) => e.key === "Enter" && void handleLookup()}
               />
               <Button onClick={handleLookup} disabled={workflow.loading || !token.trim()}>
                 {workflow.loading ? "Looking up..." : "Look Up"}
@@ -96,44 +96,39 @@ export default function SecurityVerifyPage() {
         </Card>
       )}
 
-      {/* Loading State */}
-      {workflow.loading && !workflow.visitData && (
-        <div className="flex items-center justify-center py-12">
-          <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
-        </div>
-      )}
-
-      {/* Visit Found */}
-      {workflow.visitData && (
+      {workflow.currentVisit && (
         <>
-          <VisitInfoCard
-            visitData={workflow.visitData}
-            hasVerification={workflow.hasVerification}
-            showDetailedStatus
-          />
+          <GateVisitorSummary visit={workflow.currentVisit} status={workflow.currentStatus} />
 
-          {/* Verification Form (if needed) */}
           {workflow.needsVerification && (
             <VerificationForm
-              initialName={
-                workflow.visitData.visit.invitations?.[0]?.visitor_name ||
-                workflow.visitData.visit.visitor?.name ||
-                ""
-              }
-              initialPhone={
-                workflow.visitData.visit.invitations?.[0]?.visitor_phone ||
-                workflow.visitData.visit.visitor?.phone ||
-                ""
-              }
+              key={workflow.currentVisit.visit.id}
+              initialData={{
+                visitor_name:
+                  workflow.currentVisit.visit.visitor?.name ||
+                  workflow.currentVisit.visit.invitations?.[0]?.visitor_name ||
+                  "",
+                visitor_phone:
+                  workflow.currentVisit.visit.visitor?.phone ||
+                  workflow.currentVisit.visit.invitations?.[0]?.visitor_phone ||
+                  "",
+                visitor_id_type: workflow.currentVisit.visit.visitor?.id_type || undefined,
+                visitor_id_number: workflow.currentVisit.visit.visitor?.id_number || undefined,
+                photo_url:
+                  workflow.existingVerification?.photo_url ||
+                  workflow.currentVisit.visit.visitor?.photo_url ||
+                  undefined,
+                vehicle_number: workflow.existingVerification?.vehicle_number || undefined,
+                nda_signed: workflow.existingVerification?.nda_signed ?? false,
+                safety_form_signed: workflow.existingVerification?.safety_form_signed ?? false,
+              }}
               loading={workflow.loading}
               onSubmit={handleVerify}
               submitLabel="Complete Verification"
-              showPhotoField
             />
           )}
 
-          {/* Verification Summary (if already verified) */}
-          {workflow.hasVerification && workflow.existingVerification && (
+          {workflow.existingVerification && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -174,7 +169,6 @@ export default function SecurityVerifyPage() {
             </Card>
           )}
 
-          {/* Action Buttons */}
           <Card>
             <CardContent className="pt-6">
               <div className="space-y-3">
@@ -190,7 +184,7 @@ export default function SecurityVerifyPage() {
                     ) : (
                       <>
                         <CheckCircle className="mr-2 h-5 w-5" />
-                        Check In {workflow.visitData.visit.visitor?.name || "Visitor"}
+                        Check In {workflow.currentVisit.visit.visitor?.name || "Visitor"}
                       </>
                     )}
                   </Button>
@@ -209,7 +203,7 @@ export default function SecurityVerifyPage() {
                     ) : (
                       <>
                         <LogOut className="mr-2 h-5 w-5" />
-                        Check Out {workflow.visitData.visit.visitor?.name || "Visitor"}
+                        Check Out {workflow.currentVisit.visit.visitor?.name || "Visitor"}
                       </>
                     )}
                   </Button>
@@ -217,7 +211,7 @@ export default function SecurityVerifyPage() {
 
                 <Button
                   variant="outline"
-                  onClick={() => router.push(`/visits/${workflow.visitData?.visit.id}`)}
+                  onClick={() => router.push(`/visits/${workflow.currentVisit?.visit.id}`)}
                   className="w-full"
                 >
                   <ExternalLink className="mr-2 h-4 w-4" />
@@ -241,10 +235,9 @@ export default function SecurityVerifyPage() {
         </>
       )}
 
-      {/* Error Display */}
       {workflow.error && (
         <div className="bg-destructive/10 text-destructive rounded-md px-3 py-2 text-sm">
-          {workflow.error}
+          {workflow.currentStatus.description}
         </div>
       )}
     </div>

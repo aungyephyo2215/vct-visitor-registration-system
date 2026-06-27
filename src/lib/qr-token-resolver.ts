@@ -5,13 +5,8 @@ import { hashToken } from "@/lib/crypto";
  * Input token formats supported by the resolver:
  *
  * 1. Raw QR token (base64url, 32 bytes)
- *    Example: "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789_-"
- *
  * 2. Full QR access URL
- *    Example: "https://domain.com/qr-access/550e8400-e29b-41d4-a716-446655440000"
- *
  * 3. Email access token (UUID v4)
- *    Example: "550e8400-e29b-41d4-a716-446655440000"
  */
 
 type QrCodeWithVisit = {
@@ -28,11 +23,28 @@ type QrCodeWithVisit = {
     visitor_id: string | null;
     unit_id: string;
     host_user_id: string | null;
+    purpose: string;
+    notes: string | null;
+    expected_checkin_time: Date | null;
     status: string;
     checkin_time: Date | null;
     checkout_time: Date | null;
-    visitor: { id: string; name: string; phone: string; id_number: string | null } | null;
-    verification: { id: string } | null;
+    property: { id: string; name: string };
+    visitor: {
+      id: string;
+      name: string;
+      phone: string;
+      id_type: string;
+      id_number: string | null;
+      photo_url: string | null;
+    } | null;
+    verification: {
+      id: string;
+      photo_url: string | null;
+      vehicle_number: string | null;
+      nda_signed: boolean;
+      safety_form_signed: boolean;
+    } | null;
     unit: { id: string; unit_no: string; floor: number };
     host: { id: string; name: string } | null;
     invitations: {
@@ -41,19 +53,16 @@ type QrCodeWithVisit = {
       visitor_phone: string;
       visitor_type: string;
       status: string;
+      expected_date: Date;
+      expected_time: string | null;
     }[];
   };
 };
 
-/**
- * Extract a token from user input.
- * Handles: raw token, full URL with /qr-access/ path, or UUID.
- */
 export function extractToken(input: string): string {
   const trimmed = input.trim();
   if (!trimmed) return "";
 
-  // Try to extract token from URL: https://domain.com/qr-access/{token}
   const urlMatch = trimmed.match(/\/qr-access\/([^/?#]+)/);
   if (urlMatch) {
     return decodeURIComponent(urlMatch[1]);
@@ -62,16 +71,68 @@ export function extractToken(input: string): string {
   return trimmed;
 }
 
-/**
- * Determine if a token looks like a UUID (email access token format).
- */
 function isUuidFormat(token: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token);
 }
 
-/**
- * Look up a QR code by raw token hash.
- */
+const qrCodeLookupSelect = {
+  id: true,
+  property_id: true,
+  visit_id: true,
+  status: true,
+  expires_at: true,
+  used_at: true,
+  revoked_at: true,
+  visit: {
+    select: {
+      id: true,
+      property_id: true,
+      visitor_id: true,
+      unit_id: true,
+      host_user_id: true,
+      purpose: true,
+      notes: true,
+      expected_checkin_time: true,
+      status: true,
+      checkin_time: true,
+      checkout_time: true,
+      property: { select: { id: true, name: true } },
+      visitor: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          id_type: true,
+          id_number: true,
+          photo_url: true,
+        },
+      },
+      verification: {
+        select: {
+          id: true,
+          photo_url: true,
+          vehicle_number: true,
+          nda_signed: true,
+          safety_form_signed: true,
+        },
+      },
+      unit: { select: { id: true, unit_no: true, floor: true } },
+      host: { select: { id: true, name: true } },
+      invitations: {
+        select: {
+          id: true,
+          visitor_name: true,
+          visitor_phone: true,
+          visitor_type: true,
+          status: true,
+          expected_date: true,
+          expected_time: true,
+        },
+      },
+    },
+  },
+} as const;
+
 async function lookupByQrToken(
   prisma: PrismaClient,
   rawToken: string,
@@ -80,32 +141,10 @@ async function lookupByQrToken(
 
   return prisma.qRCode.findUnique({
     where: { token_hash: tokenHash },
-    include: {
-      visit: {
-        include: {
-          visitor: { select: { id: true, name: true, phone: true, id_number: true } },
-          verification: { select: { id: true } },
-          unit: { select: { id: true, unit_no: true, floor: true } },
-          host: { select: { id: true, name: true } },
-          invitations: {
-            select: {
-              id: true,
-              visitor_name: true,
-              visitor_phone: true,
-              visitor_type: true,
-              status: true,
-            },
-          },
-        },
-      },
-    },
+    select: qrCodeLookupSelect,
   });
 }
 
-/**
- * Look up a QR code via email access token.
- * Finds the delivery record by email_access_token_hash, then returns the associated QR code.
- */
 async function lookupByEmailToken(
   prisma: PrismaClient,
   emailToken: string,
@@ -124,47 +163,12 @@ async function lookupByEmailToken(
 
   if (!delivery) return null;
 
-  // Look up the QR code via the delivery's qr_code_id
   return prisma.qRCode.findUnique({
     where: { id: delivery.qr_code_id },
-    include: {
-      visit: {
-        include: {
-          visitor: { select: { id: true, name: true, phone: true, id_number: true } },
-          verification: { select: { id: true } },
-          unit: { select: { id: true, unit_no: true, floor: true } },
-          host: { select: { id: true, name: true } },
-          invitations: {
-            select: {
-              id: true,
-              visitor_name: true,
-              visitor_phone: true,
-              visitor_type: true,
-              status: true,
-            },
-          },
-        },
-      },
-    },
+    select: qrCodeLookupSelect,
   });
 }
 
-/**
- * Resolve a QR code from user input.
- *
- * Supports three input formats:
- * 1. Raw QR token (base64url) — looked up directly by token_hash
- * 2. Full URL containing /qr-access/{token} — token extracted, then looked up
- * 3. Email access token (UUID) — looked up via email_access_token_hash
- *
- * Strategy:
- * - Extract token from input (handles URLs)
- * - If token looks like UUID, try email access token lookup first
- * - Otherwise, try raw QR token lookup first
- * - If first lookup fails, try the other
- *
- * @returns QR code with visit data, or null if not found
- */
 export async function resolveQrToken(
   prisma: PrismaClient,
   input: string,
@@ -175,13 +179,11 @@ export async function resolveQrToken(
   const isUuid = isUuidFormat(token);
 
   if (isUuid) {
-    // UUID format: try email token first, then raw token
     const result = await lookupByEmailToken(prisma, token);
     if (result) return result;
     return lookupByQrToken(prisma, token);
   }
 
-  // Non-UUID format: try raw token first, then email token
   const result = await lookupByQrToken(prisma, token);
   if (result) return result;
   return lookupByEmailToken(prisma, token);
