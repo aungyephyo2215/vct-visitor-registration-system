@@ -14,63 +14,47 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { ID_TYPES } from "@/types/security-workflow";
+import { ID_TYPES, type VerificationFormPayload } from "@/types/security-workflow";
 
 interface VerificationFormProps {
-  initialName?: string;
-  initialPhone?: string;
+  initialData?: Partial<VerificationFormPayload>;
   loading?: boolean;
-  onSubmit: (data: VerificationFormData) => void;
+  onSubmit: (data: VerificationFormPayload) => void;
   onCancel?: () => void;
   submitLabel?: string;
-  showPhotoField?: boolean;
 }
 
-export interface VerificationFormData {
-  visitor_name: string;
-  visitor_phone: string;
-  visitor_id_type?: string;
-  visitor_id_number?: string;
-  photo_url?: string;
-  vehicle_number?: string;
-  nda_signed: boolean;
-  safety_form_signed: boolean;
-}
+export type VerificationFormData = VerificationFormPayload;
 
-/**
- * Reusable verification form for the security gate workflow.
- *
- * Pre-fills from invitation data (initialName, initialPhone).
- * Validates photo size (max 1MB base64).
- * Returns structured data via onSubmit callback.
- */
 export function VerificationForm({
-  initialName = "",
-  initialPhone = "",
+  initialData,
   loading = false,
   onSubmit,
   onCancel,
-  submitLabel = "Verify & Check In",
-  showPhotoField = false,
+  submitLabel = "Verify Visitor",
 }: VerificationFormProps) {
-  const [visitorName, setVisitorName] = useState(initialName);
-  const [visitorPhone, setVisitorPhone] = useState(initialPhone);
-  const [visitorIdType, setVisitorIdType] = useState("");
-  const [visitorIdNumber, setVisitorIdNumber] = useState("");
-  const [photoUrl, setPhotoUrl] = useState("");
-  const [vehicleNumber, setVehicleNumber] = useState("");
-  const [ndaSigned, setNdaSigned] = useState(false);
-  const [safetySigned, setSafetySigned] = useState(false);
+  const [visitorName, setVisitorName] = useState(initialData?.visitor_name ?? "");
+  const [visitorPhone, setVisitorPhone] = useState(initialData?.visitor_phone ?? "");
+  const [visitorIdType, setVisitorIdType] = useState(initialData?.visitor_id_type ?? "");
+  const [visitorIdNumber, setVisitorIdNumber] = useState(initialData?.visitor_id_number ?? "");
+  const [photoUrl, setPhotoUrl] = useState(initialData?.photo_url ?? "");
+  const [vehicleNumber, setVehicleNumber] = useState(initialData?.vehicle_number ?? "");
+  const [ndaSigned, setNdaSigned] = useState(initialData?.nda_signed ?? false);
+  const [safetySigned, setSafetySigned] = useState(initialData?.safety_form_signed ?? false);
+  const [photoSizeError, setPhotoSizeError] = useState<string | null>(null);
 
   const handleSubmit = () => {
     if (!visitorName.trim() || !visitorPhone.trim()) return;
 
-    // Validate photo size
     if (photoUrl && photoUrl.startsWith("data:")) {
       const sizeBytes = (photoUrl.length * 3) / 4;
-      if (sizeBytes > 1024 * 1024) return; // 1MB limit
+      if (sizeBytes > 1024 * 1024) {
+        setPhotoSizeError("Photo is too large. Maximum size is 1MB.");
+        return;
+      }
     }
 
+    setPhotoSizeError(null);
     onSubmit({
       visitor_name: visitorName.trim(),
       visitor_phone: visitorPhone.trim(),
@@ -84,38 +68,40 @@ export function VerificationForm({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <Card className="border-0 shadow-none">
+      <CardHeader className="px-0 pt-0">
+        <CardTitle className="flex items-center gap-2 text-lg">
           <FileText className="h-5 w-5" />
           Verify Visitor Identity
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="visitorName">Visitor Name *</Label>
-          <Input
-            id="visitorName"
-            value={visitorName}
-            onChange={(e) => setVisitorName(e.target.value)}
-            placeholder="Full name"
-          />
-        </div>
+      <CardContent className="space-y-4 px-0 pb-0">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="visitorName">Visitor Name *</Label>
+            <Input
+              id="visitorName"
+              value={visitorName}
+              onChange={(e) => setVisitorName(e.target.value)}
+              placeholder="Full name"
+            />
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="visitorPhone">Phone Number *</Label>
-          <Input
-            id="visitorPhone"
-            value={visitorPhone}
-            onChange={(e) => setVisitorPhone(e.target.value)}
-            placeholder="+959..."
-          />
+          <div className="space-y-2">
+            <Label htmlFor="visitorPhone">Phone Number *</Label>
+            <Input
+              id="visitorPhone"
+              value={visitorPhone}
+              onChange={(e) => setVisitorPhone(e.target.value)}
+              placeholder="+959..."
+            />
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="idType">ID Type</Label>
-            <Select value={visitorIdType} onValueChange={(v) => setVisitorIdType(v ?? "")}>
+            <Select value={visitorIdType} onValueChange={(value) => setVisitorIdType(value ?? "")}>
               <SelectTrigger>
                 <SelectValue placeholder="Select ID type" />
               </SelectTrigger>
@@ -128,6 +114,7 @@ export function VerificationForm({
               </SelectContent>
             </Select>
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="idNumber">ID Number</Label>
             <Input
@@ -139,19 +126,19 @@ export function VerificationForm({
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="vehicleNumber">Vehicle Number</Label>
-          <Input
-            id="vehicleNumber"
-            value={vehicleNumber}
-            onChange={(e) => setVehicleNumber(e.target.value)}
-            placeholder="e.g. ABC-1234"
-          />
-        </div>
-
-        {showPhotoField && (
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="photoUrl">Photo (Base64 or URL)</Label>
+            <Label htmlFor="vehicleNumber">Vehicle</Label>
+            <Input
+              id="vehicleNumber"
+              value={vehicleNumber}
+              onChange={(e) => setVehicleNumber(e.target.value)}
+              placeholder="e.g. ABC-1234"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="photoUrl">Visitor Photo</Label>
             <Input
               id="photoUrl"
               value={photoUrl}
@@ -159,32 +146,38 @@ export function VerificationForm({
               placeholder="data:image/... or https://..."
             />
           </div>
+        </div>
+
+        {photoSizeError && (
+          <div className="text-destructive border-destructive/20 bg-destructive/5 rounded-md border px-3 py-2 text-sm">
+            {photoSizeError}
+          </div>
         )}
 
-        <div className="flex items-center gap-6">
-          <label className="flex items-center gap-2">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
             <input
               type="checkbox"
               checked={ndaSigned}
               onChange={(e) => setNdaSigned(e.target.checked)}
               className="h-4 w-4 rounded"
             />
-            <span className="text-sm">NDA Signed</span>
+            <span>NDA Signed</span>
           </label>
-          <label className="flex items-center gap-2">
+          <label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
             <input
               type="checkbox"
               checked={safetySigned}
               onChange={(e) => setSafetySigned(e.target.checked)}
               className="h-4 w-4 rounded"
             />
-            <span className="text-sm">Safety Form Signed</span>
+            <span>Safety Form Signed</span>
           </label>
         </div>
 
         <Separator />
 
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <Button
             onClick={handleSubmit}
             disabled={loading || !visitorName.trim() || !visitorPhone.trim()}
