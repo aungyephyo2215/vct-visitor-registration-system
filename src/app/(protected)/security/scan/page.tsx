@@ -28,9 +28,16 @@ export default function ScannerPage() {
   const workflow = useSecurityWorkflow();
   const [manualToken, setManualToken] = useState("");
   const [verificationOpen, setVerificationOpen] = useState(false);
-  const [scannerState, setScannerState] = useState<{ hasCamera: boolean; error: string | null }>({
+  const [scannerState, setScannerState] = useState<{
+    hasCamera: boolean;
+    error: string | null;
+    isScanning: boolean;
+    isPreparingCamera: boolean;
+  }>({
     hasCamera: true,
     error: null,
+    isScanning: false,
+    isPreparingCamera: true,
   });
   const [countdownState, setCountdownState] = useState<{
     mode: "checkin" | "checkout";
@@ -158,7 +165,13 @@ export default function ScannerPage() {
   };
 
   const scannerStatus = useMemo(() => {
-    if (currentStatus.kind !== "idle" || currentVisit || scannerState.hasCamera) {
+    if (
+      currentStatus.kind !== "idle" ||
+      currentVisit ||
+      scannerState.hasCamera ||
+      scannerState.isScanning ||
+      scannerState.isPreparingCamera
+    ) {
       return currentStatus;
     }
 
@@ -170,7 +183,14 @@ export default function ScannerPage() {
         scannerState.error || "Camera could not be started. Use manual QR entry to continue.",
       primaryAction: { type: "none" as const, label: "Manual Lookup" },
     };
-  }, [currentStatus, currentVisit, scannerState.error, scannerState.hasCamera]);
+  }, [
+    currentStatus,
+    currentVisit,
+    scannerState.error,
+    scannerState.hasCamera,
+    scannerState.isPreparingCamera,
+    scannerState.isScanning,
+  ]);
 
   const statusPanelClass = useMemo(() => {
     switch (scannerStatus.tone) {
@@ -243,7 +263,9 @@ export default function ScannerPage() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-background text-muted-foreground px-2">
-                  Manual fallback only
+                  {!scannerState.hasCamera && !scannerState.isScanning
+                    ? "Manual fallback only"
+                    : "Manual QR entry"}
                 </span>
               </div>
             </div>
