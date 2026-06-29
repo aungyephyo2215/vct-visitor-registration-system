@@ -45,3 +45,5 @@ coverage/
 
 # --- Hermes agent --- 
 .hermes/
+.vercel
+.env*
