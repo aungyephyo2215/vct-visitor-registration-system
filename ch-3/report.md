@@ -4,7 +4,7 @@
 
 github_username: aungyephyo2215
 personal_repo_url: https://github.com/aungyephyo2215/vct-visitor-registration-system
-project_summary: Visitor Registration System — QR-based digital visitor management for condos, apartments, offices, and warehouses with JWT auth, 5-role RBAC, QR check-in/out, invitation/approval workflow, notification bell, and 180 automated tests.
+project_summary: Visitor Registration System — QR-based digital visitor management for condos, apartments, offices, and warehouses with JWT auth, 5-role RBAC, QR check-in/out, invitation/approval workflow, notification bell, vehicle management, QR camera scanner, and 314 automated tests.
 slides_url: https://github.com/aungyephyo2215/vct-visitor-registration-system/blob/main/slides/ch3-pechakucha-20x20.md
 slides_url: https://github.com/aungyephyo2215/vct-visitor-registration-system/blob/main/slides/ch3-pechakucha-6x20.md
 
@@ -12,7 +12,7 @@ slides_url: https://github.com/aungyephyo2215/vct-visitor-registration-system/bl
 
 <!-- How you worked: project-based approach + your git workflow (commit as you build). 2-4 sentences. -->
 
-I followed spec-driven development documented in `.claude/methodology.md` — 10 core principles with the rule "Never Code First." Every feature went through Requirements → Architecture → Database → API → UI before any code was written. I committed incrementally across 30 commits on `main`, each a self-contained logical step. Three semantic-version releases (v1.0.0 → v1.1.0 → v1.2.0) each have full GitHub Release notes. Claude Code agents, subagents, MCP servers, and multi-agent workflows were used at every phase — architecture review, database validation, implementation, testing, and release management.
+I followed spec-driven development documented in `.claude/methodology.md` — 10 core principles with the rule "Never Code First." Every feature went through Requirements → Architecture → Database → API → UI before any code was written. I committed incrementally across 50 commits on `main`, each a self-contained logical step. Five semantic-version releases (v1.0.0 → v1.1.0 → v1.2.0 → v1.3.0 → v1.5.0) each have full GitHub Release notes. Claude Code agents, subagents, MCP servers, and multi-agent workflows were used at every phase — architecture review, database validation, implementation, testing, and release management.
 
 ## Evidence — Claude Code usage
 
@@ -26,7 +26,7 @@ I followed spec-driven development documented in `.claude/methodology.md` — 10
 ### Skill
 
 - path: .claude/skills/database-design/SKILL.md
-- what: Defines PostgreSQL + Prisma design rules — UUID primary keys, multi-tenancy with `property_id` on every table, soft delete via `deleted_at`, composite indexes on query patterns, foreign key constraints. Used to enforce schema consistency across 14 models and 16 enums in the Visitor Registration System.
+- what: Defines PostgreSQL + Prisma design rules — UUID primary keys, multi-tenancy with `property_id` on every table, soft delete via `deleted_at`, composite indexes on query patterns, foreign key constraints. Used to enforce schema consistency across 16 models and 21 enums in the Visitor Registration System.
 
 ### Agent
 

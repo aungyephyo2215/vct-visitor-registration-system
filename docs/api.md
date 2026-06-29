@@ -114,7 +114,8 @@ Create a visit.
   "host_user_id": "uuid",
   "purpose": "FAMILY_VISIT",
   "notes": "Optional notes",
-  "vehicle_number": "ABC-123"
+  "vehicle_number": "ABC-123",
+  "vehicle_id": "uuid"
 }
 ```
 
@@ -128,6 +129,45 @@ Update visit.
 
 ---
 
+## Visit Verification
+
+### POST /api/v1/visits/:id/verification
+
+Create or update verification for a visit. Requires `SUPER_ADMIN`, `PROPERTY_ADMIN`, or `SECURITY_GUARD`.
+
+**Body:**
+
+```json
+{
+  "photo_url": "https://example.com/photo.jpg",
+  "vehicle_number": "ABC-123",
+  "nda_signed": true,
+  "safety_form_signed": true,
+  "visitor_id": "uuid"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "visit_id": "uuid",
+    "visitor_id": "uuid",
+    "photo_url": "https://example.com/photo.jpg",
+    "vehicle_number": "ABC-123",
+    "nda_signed": true,
+    "safety_form_signed": true,
+    "verified_by": "uuid",
+    "verified_at": "2026-06-25T10:00:00.000Z"
+  }
+}
+```
+
+---
+
 ## QR & Check-In/Out
 
 ### POST /api/v1/qr/generate
@@ -137,6 +177,37 @@ Generate QR code for visit. Requires `SUPER_ADMIN`, `PROPERTY_ADMIN`, or `SECURI
 **Body:** `{ "visit_id": "uuid" }`
 
 **Response:** Returns raw token, expiry time, and QR code ID.
+
+### GET /api/v1/qr/lookup
+
+Look up a QR code by token. Used by the security scanner to resolve a scanned QR token.
+
+**Query params:** `token`
+
+**Roles:** `SUPER_ADMIN`, `PROPERTY_ADMIN`, `SECURITY_GUARD`
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "qrCode": {
+      "id": "uuid",
+      "status": "ACTIVE",
+      "expires_at": "2026-06-26T10:00:00.000Z"
+    },
+    "visit": {
+      "id": "uuid",
+      "status": "EXPECTED",
+      "purpose": "FAMILY_VISIT",
+      "visitor": { "id": "uuid", "name": "John Doe", "phone": "+95912345678" },
+      "unit": { "id": "uuid", "unit_no": "A-101" },
+      "host": { "id": "uuid", "name": "Jane Smith" }
+    }
+  }
+}
+```
 
 ### GET /api/v1/qr/email-image/:emailAccessToken
 
@@ -167,15 +238,48 @@ Check out a visit. Requires `SUPER_ADMIN`, `PROPERTY_ADMIN`, or `SECURITY_GUARD`
 
 **Body:** `{ "visit_id": "uuid" }`
 
+### POST /api/v1/checkout/qr
+
+Check out using QR token. Requires `SUPER_ADMIN`, `PROPERTY_ADMIN`, or `SECURITY_GUARD`.
+
+**Body:** `{ "token": "qr-token-string" }`
+
+Validates: token exists, linked visit is CHECKED_IN, not already checked out.
+
 ---
 
 ## Invitations
+
+### GET /api/v1/invitations
+
+List invitations with filters.
+
+**Query params:** `page`, `limit`, `status`
+
+### POST /api/v1/invitations
+
+Create an invitation.
+
+**Body:**
+
+```json
+{
+  "visitor_name": "John Doe",
+  "visitor_phone": "+95912345678",
+  "visitor_email": "john@example.com",
+  "visitor_type": "GUEST",
+  "unit_id": "uuid",
+  "expected_date": "2026-06-30",
+  "expected_time": "14:00",
+  "notes": "Business meeting"
+}
+```
 
 ### GET /api/v1/invitations/:id
 
 Get invitation details.
 
-For approved invitations with a linked visit, the response now includes safe QR email metadata:
+For approved invitations with a linked visit, the response includes safe QR email metadata:
 
 ```json
 {
@@ -207,9 +311,42 @@ For approved invitations with a linked visit, the response now includes safe QR 
 - does **not** include `email_access_token`
 - does **not** include `provider_message_id`
 
+### POST /api/v1/invitations/:id/approve
+
+Approve an invitation. Requires `SUPER_ADMIN` or `PROPERTY_ADMIN`.
+
+**Body:** `{ "note": "Optional approval note" }`
+
+### POST /api/v1/invitations/:id/reject
+
+Reject an invitation. Requires `SUPER_ADMIN` or `PROPERTY_ADMIN`.
+
+**Body:** `{ "reason": "Rejection reason (required)" }`
+
+### GET /api/v1/invitations/:id/approvals
+
+List approval history for an invitation.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "status": "APPROVED",
+      "approved_by": { "id": "uuid", "name": "Admin User" },
+      "note": "Approved for visit",
+      "created_at": "2026-06-22T09:00:00.000Z"
+    }
+  ]
+}
+```
+
 ### POST /api/v1/invitations/:id/generate-qr
 
-Generate an invitation QR code for an approved invitation. Requires authenticated access plus property-scoped authorization. Roles aligned with QR generation UI: `SUPER_ADMIN`, `PROPERTY_ADMIN`, `OFFICE_STAFF`, `SECURITY_GUARD`.
+Generate an invitation QR code for an approved invitation. Requires authenticated access plus property-scoped authorization. Roles: `SUPER_ADMIN`, `PROPERTY_ADMIN`, `OFFICE_STAFF`, `SECURITY_GUARD`.
 
 On success, QR generation still succeeds even if email delivery fails.
 
@@ -294,20 +431,184 @@ Manually resend the hosted QR email for an invitation with an active QR.
 
 - `Retry-After: <seconds>`
 
-### GET /qr-access/:emailAccessToken
+---
 
-Visitor-facing hosted QR access page used from email links.
+## Badges
 
-**Auth:** none
+### GET /api/v1/badges
 
-**Validation:**
+List badges.
 
-- access token exists
-- access token is not expired
-- linked invitation, visit, and QR are still valid
-- linked delivery status is `SENT`
+**Query params:** `page`, `limit`
 
-The page shows visit and property context plus the hosted QR image. It never exposes the raw QR token in the URL.
+**Roles:** `SUPER_ADMIN`, `PROPERTY_ADMIN`, `SECURITY_GUARD`
+
+### POST /api/v1/badges
+
+Create a badge.
+
+**Body:**
+
+```json
+{
+  "invitation_id": "uuid",
+  "visit_id": "uuid",
+  "visitor_id": "uuid",
+  "badge_type": "VISITOR",
+  "badge_data": { "custom_field": "value" }
+}
+```
+
+### GET /api/v1/badges/:id
+
+Get badge details.
+
+### GET /api/v1/badges/:id/print
+
+Get printable badge data/PDF.
+
+---
+
+## Notifications
+
+### GET /api/v1/notifications
+
+List notifications for current user.
+
+**Query params:** `page`, `limit`, `unreadOnly`
+
+### GET /api/v1/notifications/unread-count
+
+Get unread notification count.
+
+**Response:**
+
+```json
+{ "success": true, "data": { "count": 5 } }
+```
+
+### PATCH /api/v1/notifications/:id/read
+
+Mark a notification as read.
+
+### POST /api/v1/notifications/mark-all-read
+
+Mark all notifications as read for current user.
+
+---
+
+## Vehicles
+
+All vehicle endpoints require role: `SUPER_ADMIN`, `PROPERTY_ADMIN`, or `SECURITY_GUARD`.
+
+### GET /api/v1/vehicles
+
+List vehicles with search and pagination.
+
+**Query params:** `page`, `limit`, `search` (plate number), `owner_type`, `status`
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "vehicles": [
+      {
+        "id": "uuid",
+        "plate_number": "ABC-1234",
+        "vehicle_type": "CAR",
+        "brand": "Toyota",
+        "color": "White",
+        "owner_type": "RESIDENT",
+        "owner_user": { "id": "uuid", "name": "John Doe" },
+        "status": "ACTIVE",
+        "created_at": "2026-06-25T10:00:00.000Z"
+      }
+    ],
+    "total": 50,
+    "page": 1,
+    "limit": 20
+  }
+}
+```
+
+### POST /api/v1/vehicles
+
+Register a vehicle.
+
+**Body:**
+
+```json
+{
+  "plate_number": "ABC-1234",
+  "vehicle_type": "CAR",
+  "brand": "Toyota",
+  "color": "White",
+  "owner_type": "RESIDENT",
+  "owner_user_id": "uuid"
+}
+```
+
+**For visitor vehicles:**
+
+```json
+{
+  "plate_number": "XYZ-5678",
+  "vehicle_type": "MOTORCYCLE",
+  "brand": "Honda",
+  "color": "Black",
+  "owner_type": "VISITOR",
+  "owner_visitor_id": "uuid"
+}
+```
+
+### GET /api/v1/vehicles/:id
+
+Get vehicle details with owner and recent visits.
+
+### PATCH /api/v1/vehicles/:id
+
+Update vehicle.
+
+**Body:** Any subset of vehicle fields.
+
+### DELETE /api/v1/vehicles/:id
+
+Soft-delete vehicle.
+
+---
+
+## Vehicle Blacklist
+
+### GET /api/v1/vehicles/blacklist
+
+List blacklisted vehicle plates.
+
+**Query params:** `page`, `limit`, `search`
+
+**Roles:** `SUPER_ADMIN`, `PROPERTY_ADMIN`
+
+### POST /api/v1/vehicles/blacklist
+
+Add a plate to the blacklist.
+
+**Body:**
+
+```json
+{
+  "plate_number": "ABC-1234",
+  "reason": "Unauthorized vehicle"
+}
+```
+
+### PATCH /api/v1/vehicles/blacklist/:id
+
+Update blacklist entry (e.g., change status to REMOVED).
+
+### DELETE /api/v1/vehicles/blacklist/:id
+
+Remove from blacklist.
 
 ---
 
@@ -324,3 +625,28 @@ List units scoped to user's property.
 List users scoped to user's property.
 
 **Query params:** `page`, `limit`, `search`, `role` (comma-separated, e.g. `?role=RESIDENT,PROPERTY_ADMIN`)
+
+---
+
+## Public Endpoints (No Auth)
+
+### GET /qr-access/:emailAccessToken
+
+Visitor-facing hosted QR access page used from email links.
+
+**Validation:**
+
+- access token exists
+- access token is not expired
+- linked invitation, visit, and QR are still valid
+- linked delivery status is `SENT`
+
+The page shows visit and property context plus the hosted QR image. It never exposes the raw QR token in the URL.
+
+### POST /api/v1/checkin
+
+Check in with QR token (kiosk/public use).
+
+### GET /api/v1/qr/email-image/:emailAccessToken
+
+Public QR image for email delivery.

@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.2.0-blue?style=for-the-badge" alt="Version 1.2.0">
+  <img src="https://img.shields.io/badge/version-1.5.0-blue?style=for-the-badge" alt="Version 1.5.0">
 
   <img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge" alt="Build Passing">
-  <img src="https://img.shields.io/badge/tests-180%20passing-success?style=for-the-badge" alt="180 Tests Passing">
+  <img src="https://img.shields.io/badge/tests-314%20passing-success?style=for-the-badge" alt="314 Tests Passing">
   <img src="https://img.shields.io/badge/audit-0%20vulns-brightgreen?style=for-the-badge" alt="0 Vulnerabilities">
 </p>
 
@@ -78,6 +78,16 @@
       <h3>🏢 Multi-Property</h3>
       <p>Single system supports unlimited properties. Each with isolated users, units, visitors, and data.</p>
     </td>
+    <td>
+      <h3>🚗 Vehicle Management</h3>
+      <p>Register vehicles linked to residents or visitors. Vehicle blacklist with automatic check-in rejection for blocked plates.</p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <h3>📷 QR Camera Scanner</h3>
+      <p>Browser-based camera QR scanning with inline visitor verification, check-in/check-out, and gate workflow.</p>
+    </td>
     <td></td>
   </tr>
 </table>
@@ -105,10 +115,24 @@
   <img src="https://img.shields.io/badge/PostgreSQL-16-4169e1?logo=postgresql&logoColor=white&style=flat-square" alt="PostgreSQL">
   <img src="https://img.shields.io/badge/Prisma-7-2d3748?logo=prisma&logoColor=white&style=flat-square" alt="Prisma">
   <img src="https://img.shields.io/badge/JWT-jose-000000?logo=jsonwebtokens&logoColor=white&style=flat-square" alt="JWT">
-  <img src="https://img.shields.io/badge/Vitest-147_tests-729b1b?logo=vitest&logoColor=white&style=flat-square" alt="Vitest">
-  <img src="https://img.shields.io/badge/Playwright-33_e2e-45ba4b?logo=playwright&logoColor=white&style=flat-square" alt="Playwright">
+  <img src="https://img.shields.io/badge/Vitest-264_tests-729b1b?logo=vitest&logoColor=white&style=flat-square" alt="Vitest">
+  <img src="https://img.shields.io/badge/Playwright-50_e2e-45ba4b?logo=playwright&logoColor=white&style=flat-square" alt="Playwright">
   <img src="https://img.shields.io/badge/Docker-Compose-2496ed?logo=docker&logoColor=white&style=flat-square" alt="Docker">
 </p>
+
+---
+
+## 🌐 Live Demo
+
+**[https://vct-visitor-registration-system.vercel.app](https://vct-visitor-registration-system.vercel.app)**
+
+| Email            |       Password | Role           |
+| :--------------- | -------------: | :------------- |
+| admin@vrs.com    |    `Admin123!` | SUPER_ADMIN    |
+| property@vrs.com |    `Admin123!` | PROPERTY_ADMIN |
+| guard@vrs.com    |    `Guard123!` | SECURITY_GUARD |
+| resident@vrs.com | `Resident123!` | RESIDENT       |
+| office@vrs.com   |   `Office123!` | OFFICE_STAFF   |
 
 ---
 
@@ -168,19 +192,20 @@ docker compose up --build -d
 ```
 src/
 ├── app/
-│   ├── (protected)/     # Dashboard, Visitors, Visits, Invitations, Security, Reports, Settings
-│   ├── api/v1/          # REST API routes (auth, visitors, visits, invitations, QR, badges, notifications)
-│   └── login/           # Login page
-├── components/          # UI components (shadcn/ui + NotificationBell, StatusBadge, ConfirmDialog)
-├── lib/                 # Business logic (auth, JWT, RBAC, validations, audit, notifications/)
-├── hooks/               # React hooks
+│   ├── (protected)/     # Dashboard, Visitors, Visits, Invitations, Security, Vehicles, Reports, Settings
+│   ├── api/v1/          # REST API routes (auth, visitors, visits, invitations, QR, badges, notifications, vehicles)
+│   ├── login/           # Login page
+│   └── qr-access/[token]/ # Public QR access page (email-delivered QR links)
+├── components/          # UI components (shadcn/ui + NotificationBell, StatusBadge, QRScanner, GateWorkflow)
+├── lib/                 # Business logic (auth, JWT, RBAC, validations, audit, notifications/, email/)
+├── hooks/               # React hooks (use-security-workflow, use-auth)
 └── generated/prisma/    # Generated Prisma client
 prisma/
-├── schema.prisma        # 14 models, 16 enums, full index coverage
+├── schema.prisma        # 16 models, 21 enums, full index coverage
 ├── seed.ts              # Property, unit, 5 users, 2 invitations, 3 notifications
-└── migrations/          # Versioned database migrations
+└── migrations/          # 13 versioned database migrations
 tests/
-├── e2e/                 # 33 Playwright tests (smoke, invitation, notification, RBAC, API, full-workflow)
+├── e2e/                 # ~50 Playwright tests (smoke, invitation, notification, RBAC, API, vehicle, security)
 └── helpers/             # Auth fixtures, test utilities
 ```
 
@@ -201,22 +226,24 @@ tests/
 ## 🧪 Testing
 
 ```bash
-npm test                  # 147 unit tests (Vitest)
+npm test                  # 264 unit tests (Vitest)
 npm run test:watch        # Watch mode
-npx playwright test       # 33 E2E tests (Playwright)
+npx playwright test       # 50 E2E tests (Playwright)
 npm run check             # TypeScript + ESLint
 ```
 
-| Suite                             | Count  | Status         |
-| :-------------------------------- | ------ | :------------- |
-| Unit Tests (`src/lib/__tests__/`) | 147    | ✅ Passing     |
-| E2E Smoke                         | 8      | ✅ Passing     |
-| E2E Invitation                    | 6      | ✅ Passing     |
-| E2E Notification                  | 8      | ✅ Passing     |
-| E2E RBAC                          | 5      | ✅ Passing     |
-| E2E API                           | 2      | ✅ Passing     |
-| E2E Full Workflow                 | 2      | ✅ Passing     |
-| **Total E2E**                     | **33** | **✅ Passing** |
+| Suite                             | Count   | Status         |
+| :-------------------------------- | ------- | :------------- |
+| Unit Tests (`src/lib/__tests__/`) | 264     | ✅ Passing     |
+| E2E Smoke                         | 8       | ✅ Passing     |
+| E2E Invitation                    | 6       | ✅ Passing     |
+| E2E Notification                  | 8       | ✅ Passing     |
+| E2E RBAC                          | 5       | ✅ Passing     |
+| E2E API                           | 2       | ✅ Passing     |
+| E2E Full Workflow                 | 2       | ✅ Passing     |
+| E2E Vehicle                       | ~10     | ✅ Passing     |
+| E2E Security Workflow             | ~9      | ✅ Passing     |
+| **Total E2E**                     | **~50** | **✅ Passing** |
 
 ---
 
@@ -232,17 +259,35 @@ All gates must pass. Playwright E2E run locally (requires Docker PostgreSQL).
 
 ## 🗺️ Roadmap
 
-| Phase         | Feature                         | Status         |
-| :------------ | :------------------------------ | :------------- |
-| Phase 1       | Core Visitor Management         | ✅ Complete    |
-| Phase 2       | QR Workflow                     | ✅ Complete    |
-| Phase 3       | Dashboard & Reports             | ✅ Complete    |
-| Phase 4       | Universal Workflow Planning     | ✅ Complete    |
-| Phase 5       | MVP Finalization                | ✅ Complete    |
-| Phase 6       | Invitation & Approval Workflow  | ✅ Complete    |
-| **Phase 6.5** | **QR Email Delivery**           | ✅ Implemented |
-| Phase 7       | Self-Kiosk, Mobile QR Scanner   | 🔜 Upcoming    |
-| Phase 8       | AI Analytics, Suspicious Alerts | 🔜 Upcoming    |
+| Phase         | Feature                             | Status      |
+| :------------ | :---------------------------------- | :---------- |
+| Phase 1       | Core Visitor Management             | ✅ Complete |
+| Phase 2       | QR Workflow                         | ✅ Complete |
+| Phase 3       | Dashboard & Reports                 | ✅ Complete |
+| Phase 4       | Universal Workflow Planning         | ✅ Complete |
+| Phase 5       | MVP Finalization                    | ✅ Complete |
+| Phase 6       | Invitation & Approval Workflow      | ✅ Complete |
+| **Phase 6.1** | **Security Hardening**              | ✅ Complete |
+| **Phase 6.5** | **QR Email Delivery**               | ✅ Complete |
+| **Phase 7**   | **Vehicle Management & QR Scanner** | ✅ Complete |
+| Phase 8       | Self-Kiosk, Mobile App              | 🔜 Upcoming |
+| Phase 9       | AI Analytics, Suspicious Alerts     | 🔜 Upcoming |
+
+---
+
+---
+
+## 👤 Author
+
+**aungyephyo2215**
+
+- GitHub: [@aungyephyo2215](https://github.com/aungyephyo2215)
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
 ---
 

@@ -55,6 +55,20 @@ Notifications
 - Future SMS Notification
 - Future Push Notification
 
+Vehicle Management
+
+- Vehicle Registration (CRUD)
+- Vehicle Owner Linking (Resident / Visitor)
+- Vehicle Blacklist
+- Vehicle-Linked Visits
+
+Security Gate Workflow
+
+- Camera-Based QR Scanner
+- Unified Token Resolver
+- Inline Visitor Verification
+- Gate Check-In / Check-Out
+
 ⸻
 
 Current Phase
@@ -68,16 +82,18 @@ Completed
 - Phase 5 — MVP Finalization ✅
 - Phase 6 — Invitation & Approval Workflow ✅
 - Phase 6.1 — Security Hardening ✅
+- Phase 6.5 — QR Email Delivery ✅
+- Phase 7 — Vehicle Management & QR Camera Scanner ✅
 
 Future
 
-Phase 7
+Phase 8
 
 - Self-Kiosk
 - Mobile QR Scanner
 - Mobile Application
 
-Phase 8
+Phase 9
 
 - AI Analytics
 - Frequent Visitor Analytics
