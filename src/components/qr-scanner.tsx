@@ -10,7 +10,12 @@ interface QrScannerProps {
   paused?: boolean;
   autoStart?: boolean;
   processing?: boolean;
-  onCameraStateChange?: (state: { hasCamera: boolean; error: string | null }) => void;
+  onCameraStateChange?: (state: {
+    hasCamera: boolean;
+    error: string | null;
+    isScanning: boolean;
+    isPreparingCamera: boolean;
+  }) => void;
 }
 
 function pickDefaultCamera(cameras: CameraDevice[]) {
@@ -105,6 +110,7 @@ export function QrScanner({
 
       const preferred = pickDefaultCamera(devices);
       setHasCamera(true);
+      setError(null);
       if (preferred) {
         setSelectedCameraId((current) => current ?? preferred.id);
       }
@@ -122,11 +128,18 @@ export function QrScanner({
       if (!scannerRef.current) return;
 
       const cameraId = cameraIdOverride ?? selectedCameraId;
-      if (!cameraId || paused || effectiveProcessing) return;
+      if (!cameraId || paused || effectiveProcessing || isPreparingCamera) return;
 
       try {
+        const scannerState = scannerRef.current.getState();
+        if (scannerState === 2) {
+          setHasCamera(true);
+          setError(null);
+          setIsScanning(true);
+          return;
+        }
+
         setIsPreparingCamera(true);
-        setError(null);
 
         await scannerRef.current.start(
           cameraId,
@@ -168,11 +181,14 @@ export function QrScanner({
           },
         );
 
+        setHasCamera(true);
+        setError(null);
         setIsScanning(true);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to start camera";
         setError(message);
         setHasCamera(false);
+        setIsScanning(false);
       } finally {
         setIsPreparingCamera(false);
       }
@@ -180,6 +196,7 @@ export function QrScanner({
     [
       effectiveProcessing,
       isInternalProcessing,
+      isPreparingCamera,
       onScanResult,
       paused,
       processing,
@@ -193,12 +210,8 @@ export function QrScanner({
     scannerRef.current = scanner;
 
     void (async () => {
-      const detectedCameraId = await loadCameras();
+      await loadCameras();
       setIsPreparingCamera(false);
-
-      if (autoStart && detectedCameraId && !paused) {
-        await startScanner(detectedCameraId);
-      }
     })();
 
     return () => {
@@ -221,7 +234,14 @@ export function QrScanner({
       return;
     }
 
-    if (autoStart && selectedCameraId && !isScanning && !effectiveProcessing && hasCamera) {
+    if (
+      autoStart &&
+      selectedCameraId &&
+      !isScanning &&
+      !effectiveProcessing &&
+      !isPreparingCamera &&
+      hasCamera
+    ) {
       window.setTimeout(() => {
         void startScanner(selectedCameraId);
       }, 0);
@@ -230,6 +250,7 @@ export function QrScanner({
     autoStart,
     effectiveProcessing,
     hasCamera,
+    isPreparingCamera,
     isScanning,
     paused,
     resumeCameraId,
@@ -239,8 +260,8 @@ export function QrScanner({
   ]);
 
   useEffect(() => {
-    onCameraStateChange?.({ hasCamera, error });
-  }, [error, hasCamera, onCameraStateChange]);
+    onCameraStateChange?.({ hasCamera, error, isScanning, isPreparingCamera });
+  }, [error, hasCamera, isPreparingCamera, isScanning, onCameraStateChange]);
 
   const cycleCamera = useCallback(async () => {
     if (cameraDevices.length < 2 || !selectedCameraId) return;
@@ -300,7 +321,7 @@ export function QrScanner({
         </div>
       )}
 
-      {error && (
+      {error && !isScanning && !isPreparingCamera && (
         <div className="bg-destructive/10 text-destructive flex items-center gap-2 rounded-md px-3 py-2 text-sm">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span>{error}</span>
@@ -341,11 +362,11 @@ export function QrScanner({
               </Button>
             )}
           </>
-        ) : (
+        ) : !isScanning ? (
           <div className="text-muted-foreground text-center text-sm">
             Camera not available. Use manual QR entry below.
           </div>
-        )}
+        ) : null}
       </div>
 
       {hasCamera && (
