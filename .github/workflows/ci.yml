@@ -27,6 +27,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check peer dependencies
+        run: |
+          echo "Checking for peer dependency conflicts..."
+          if npm ls --all 2>&1 | grep -qi "ERESOLVE\|peer dep.*missing\|invalid"; then
+            echo "::error::Peer dependency conflicts detected. Check npm ls output above."
+            exit 1
+          fi
+          echo "No peer dependency conflicts found."
+
       - name: Run lint
         run: npm run lint
 

@@ -27,6 +27,17 @@ updates:
         update-types:
           - "minor"
           - "patch"
+      # Major version bumps — grouped separately so they can be reviewed
+      # carefully for breaking changes before merging.
+      major:
+        update-types:
+          - "major"
+    # Ignore known-incompatible major bumps until upstream fixes them.
+    # eslint 10 breaks eslint-config-next (typescript-eslint crash).
+    ignore:
+      - dependency-name: "eslint"
+        update-types:
+          - "version-update:semver-major"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
