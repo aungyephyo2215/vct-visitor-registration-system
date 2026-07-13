@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/aungyephyo2215/vct-visitor-registration-system#-documentation
+    about: Check the documentation before opening an issue
+  - name: 💬 Discussions
+    url: https://github.com/aungyephyo2215/vct-visitor-registration-system/discussions
+    about: Ask questions and discuss ideas
+  - name: 🔒 Security Vulnerability
+    url: https://github.com/aungyephyo2215/vct-visitor-registration-system/security/policy
+    about: Report security vulnerabilities privately
