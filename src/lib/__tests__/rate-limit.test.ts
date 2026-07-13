@@ -26,15 +26,12 @@ describe("checkRateLimit", () => {
   });
 
   describe("rate limiting logic (non-test environment)", () => {
-    const originalEnv = process.env.NODE_ENV;
-
     beforeEach(() => {
-      // Temporarily set NODE_ENV to enable rate limiting
-      process.env.NODE_ENV = "production";
+      vi.stubEnv("NODE_ENV", "production");
     });
 
     afterEach(() => {
-      process.env.NODE_ENV = originalEnv;
+      vi.unstubAllEnvs();
     });
 
     it("allows first request within window", () => {
