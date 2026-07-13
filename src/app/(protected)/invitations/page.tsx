@@ -13,11 +13,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -28,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { INVITATION_STATUS_LABELS, INVITATION_STATUS_VARIANTS } from "@/lib/invitation-status";
 
 interface Invitation {
   id: string;
@@ -52,20 +49,11 @@ interface PaginatedResult<T> {
 
 const statuses = [
   { value: "", label: "All Statuses" },
-  { value: "PENDING", label: "Pending" },
-  { value: "APPROVED", label: "Approved" },
-  { value: "REJECTED", label: "Rejected" },
-  { value: "EXPIRED", label: "Expired" },
-  { value: "CANCELLED", label: "Cancelled" },
+  ...Object.entries(INVITATION_STATUS_LABELS).map(([value, label]) => ({
+    value,
+    label,
+  })),
 ];
-
-const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  PENDING: "outline",
-  APPROVED: "default",
-  REJECTED: "destructive",
-  EXPIRED: "secondary",
-  CANCELLED: "outline",
-};
 
 export default function InvitationsPage() {
   const router = useRouter();
@@ -83,10 +71,7 @@ export default function InvitationsPage() {
       try {
         const params: Record<string, string | number> = { page, limit: 20 };
         if (statusFilter) params.status = statusFilter;
-        const result = await api.get<PaginatedResult<Invitation>>(
-          "/api/v1/invitations",
-          params
-        );
+        const result = await api.get<PaginatedResult<Invitation>>("/api/v1/invitations", params);
         if (!cancelled) {
           setInvitations(result.data);
           setTotalPages(result.totalPages);
@@ -99,7 +84,9 @@ export default function InvitationsPage() {
       }
     }
     fetchData();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [page, statusFilter]);
 
   return (
@@ -107,9 +94,7 @@ export default function InvitationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Invitations</h1>
-          <p className="text-muted-foreground">
-            Manage visitor pre-registrations
-          </p>
+          <p className="text-muted-foreground">Manage visitor pre-registrations</p>
         </div>
         <Link href="/invitations/new">
           <Button>
@@ -122,8 +107,14 @@ export default function InvitationsPage() {
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v || ""); setPage(1); }}>
+            <Filter className="text-muted-foreground h-4 w-4" />
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => {
+                setStatusFilter(v || "");
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue />
               </SelectTrigger>
@@ -145,9 +136,7 @@ export default function InvitationsPage() {
               <Skeleton className="h-8 w-full" />
             </div>
           ) : invitations.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground">
-              No invitations found.
-            </div>
+            <div className="text-muted-foreground py-8 text-center">No invitations found.</div>
           ) : (
             <>
               <Table>
@@ -168,12 +157,8 @@ export default function InvitationsPage() {
                       className="cursor-pointer"
                       onClick={() => router.push(`/invitations/${inv.id}`)}
                     >
-                      <TableCell className="font-medium">
-                        {inv.visitor_name}
-                      </TableCell>
-                      <TableCell>
-                        {inv.visitor_type?.replace(/_/g, " ")}
-                      </TableCell>
+                      <TableCell className="font-medium">{inv.visitor_name}</TableCell>
+                      <TableCell>{inv.visitor_type?.replace(/_/g, " ")}</TableCell>
                       <TableCell>
                         Unit {inv.unit?.unit_no || "—"}
                         {inv.unit?.floor ? ` (F${inv.unit.floor})` : ""}
@@ -183,7 +168,7 @@ export default function InvitationsPage() {
                         {inv.expected_time ? ` ${inv.expected_time}` : ""}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={statusVariant[inv.status] || "outline"}>
+                        <Badge variant={INVITATION_STATUS_VARIANTS[inv.status] || "outline"}>
                           {inv.status?.replace(/_/g, " ")}
                         </Badge>
                       </TableCell>
@@ -197,9 +182,7 @@ export default function InvitationsPage() {
 
               {totalPages > 1 && (
                 <div className="flex items-center justify-between pt-4">
-                  <p className="text-sm text-muted-foreground">
-                    {total} total
-                  </p>
+                  <p className="text-muted-foreground text-sm">{total} total</p>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
