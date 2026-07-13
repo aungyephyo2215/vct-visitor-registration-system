@@ -176,7 +176,7 @@ export const vehicleBlacklistCreateSchema = z.object({
 // ─── Utilities ──────────────────────────────────────
 
 export function formatZodErrors(error: z.ZodError) {
-  return error.errors.map((e) => ({
+  return error.issues.map((e) => ({
     field: e.path.join("."),
     message: e.message,
   }));
