@@ -1,9 +1,14 @@
 <p align="center">
   <img src="https://img.shields.io/badge/version-1.5.0-blue?style=for-the-badge" alt="Version 1.5.0">
-
   <img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge" alt="Build Passing">
   <img src="https://img.shields.io/badge/tests-314%20passing-success?style=for-the-badge" alt="314 Tests Passing">
   <img src="https://img.shields.io/badge/audit-0%20vulns-brightgreen?style=for-the-badge" alt="0 Vulnerabilities">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge" alt="MIT License">
+  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge" alt="PRs Welcome">
+  <img src="https://img.shields.io/badge/contributions-welcome-brightgreen?style=for-the-badge" alt="Contributions Welcome">
 </p>
 
 <p align="center">
@@ -14,6 +19,12 @@
 <h3 align="center">QR-Based Digital Visitor Management</h3>
 <p align="center">
   <em>Replace paper visitor logs with secure QR code check-in/check-out.<br>Built for condos, apartments, offices, and warehouses.</em>
+</p>
+
+<p align="center">
+  <a href="https://github.com/aungyephyo2215/vct-visitor-registration-system/blob/main/CONTRIBUTING.md">Contributing</a> ·
+  <a href="https://github.com/aungyephyo2215/vct-visitor-registration-system/blob/main/CODE_OF_CONDUCT.md">Code of Conduct</a> ·
+  <a href="https://github.com/aungyephyo2215/vct-visitor-registration-system/blob/main/SECURITY.md">Security Policy</a>
 </p>
 
 <br>
@@ -275,11 +286,23 @@ All gates must pass. Playwright E2E run locally (requires Docker PostgreSQL).
 
 ---
 
+## 🤝 Contributing
+
+Contributions are welcome! Please read the [Contributing Guide](CONTRIBUTING.md) first.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feat/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feat/amazing-feature`)
+5. Open a Pull Request
+
+See the [Contributing Guide](CONTRIBUTING.md) for detailed instructions.
+
 ---
 
 ## 👤 Author
 
-**aungyephyo2215**
+**Aung Kyaw Myint**
 
 - GitHub: [@aungyephyo2215](https://github.com/aungyephyo2215)
 
@@ -290,6 +313,10 @@ All gates must pass. Playwright E2E run locally (requires Docker PostgreSQL).
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
 ---
+
+## 🙏 Support
+
+If you find this project helpful, please give it a ⭐ on GitHub!
 
 <p align="center">
   <sub>Built with ❤️ for secure, modern visitor management.</sub>
