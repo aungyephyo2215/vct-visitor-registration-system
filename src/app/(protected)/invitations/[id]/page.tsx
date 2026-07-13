@@ -13,8 +13,11 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { InvitationNextAction } from "@/components/invitation-next-action";
+import { InvitationWorkflowProgress } from "@/components/invitation-workflow-progress";
 import { api } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
+import { INVITATION_STATUS_VARIANTS } from "@/lib/invitation-status";
 
 import { InvitationQrEmailCard, type SafeQrEmailDelivery } from "./qr-email-card";
 
@@ -59,13 +62,12 @@ interface Badge {
   printed_at: string | null;
 }
 
-const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  PENDING: "outline",
-  APPROVED: "default",
-  REJECTED: "destructive",
-  EXPIRED: "secondary",
-  CANCELLED: "outline",
-};
+interface VisitDetail {
+  id: string;
+  status: string;
+  checked_in_at: string | null;
+  checked_out_at: string | null;
+}
 
 export default function InvitationDetailPage() {
   const params = useParams();
@@ -85,6 +87,7 @@ export default function InvitationDetailPage() {
   const [cooldownRemainingSeconds, setCooldownRemainingSeconds] = useState(0);
 
   const [generatingBadge, setGeneratingBadge] = useState(false);
+  const [visitDetail, setVisitDetail] = useState<VisitDetail | null>(null);
 
   const isApproved = invitation?.status === "APPROVED";
   const isPending = invitation?.status === "PENDING";
@@ -104,6 +107,19 @@ export default function InvitationDetailPage() {
   async function loadInvitationDetails() {
     const invData = await api.get<Invitation>(`/api/v1/invitations/${id}`);
     setInvitation(invData);
+
+    // Fetch visit details if a visit exists
+    if (invData.visit_id) {
+      try {
+        const visitData = await api.get<VisitDetail>(`/api/v1/visits/${invData.visit_id}`);
+        setVisitDetail(visitData);
+      } catch {
+        setVisitDetail(null);
+      }
+    } else {
+      setVisitDetail(null);
+    }
+
     return invData;
   }
 
@@ -322,7 +338,7 @@ export default function InvitationDetailPage() {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold tracking-tight">{invitation.visitor_name}</h1>
-            <Badge variant={statusVariant[invitation.status] || "outline"}>
+            <Badge variant={INVITATION_STATUS_VARIANTS[invitation.status] || "outline"}>
               {invitation.status?.replace(/_/g, " ")}
             </Badge>
           </div>
@@ -331,6 +347,11 @@ export default function InvitationDetailPage() {
           </p>
         </div>
       </div>
+
+      {/* Next action guidance */}
+      {user && (
+        <InvitationNextAction invitation={invitation} userRole={user.role} visit={visitDetail} />
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -579,46 +600,8 @@ export default function InvitationDetailPage() {
         </Card>
       )}
 
-      {/* Status timeline */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Status Timeline</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2 text-sm">
-            <div className="flex items-center gap-1">
-              <div
-                className={`h-2 w-2 rounded-full ${invitation.created_at ? "bg-green-500" : "bg-muted"}`}
-              />
-              <span className={invitation.created_at ? "" : "text-muted-foreground"}>Created</span>
-            </div>
-            <div className="bg-muted h-px flex-1" />
-            <div className="flex items-center gap-1">
-              <div
-                className={`h-2 w-2 rounded-full ${["APPROVED", "REJECTED"].includes(invitation.status) ? (invitation.status === "APPROVED" ? "bg-green-500" : "bg-destructive") : "bg-muted"}`}
-              />
-              <span
-                className={
-                  ["APPROVED", "REJECTED"].includes(invitation.status)
-                    ? ""
-                    : "text-muted-foreground"
-                }
-              >
-                {invitation.status === "REJECTED" ? "Rejected" : "Reviewed"}
-              </span>
-            </div>
-            <div className="bg-muted h-px flex-1" />
-            <div className="flex items-center gap-1">
-              <div
-                className={`h-2 w-2 rounded-full ${invitation.visit_id ? "bg-green-500" : "bg-muted"}`}
-              />
-              <span className={invitation.visit_id ? "" : "text-muted-foreground"}>
-                QR Generated
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Workflow progress */}
+      <InvitationWorkflowProgress invitation={invitation} visit={visitDetail} />
     </div>
   );
 }

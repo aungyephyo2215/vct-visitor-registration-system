@@ -18,6 +18,11 @@ interface QrScannerProps {
   }) => void;
 }
 
+/** Maximum number of camera start retries before surfacing a hard error. */
+const MAX_CAMERA_RETRIES = 2;
+/** Timeout (ms) for camera preparation before showing an error. */
+const CAMERA_START_TIMEOUT_MS = 15_000;
+
 function pickDefaultCamera(cameras: CameraDevice[]) {
   return (
     cameras.find((camera) => /back|rear|environment/i.test(camera.label)) ?? cameras[0] ?? null
@@ -79,10 +84,40 @@ export function QrScanner({
   const [resumeCameraId, setResumeCameraId] = useState<string | null>(null);
   const lastScanRef = useRef<string>("");
   const lastScanTimeRef = useRef<number>(0);
+  const mountedRef = useRef(true);
+  const initGuardRef = useRef(false);
 
   const canSwitchCamera = cameraDevices.length > 1;
   const effectiveProcessing = processing || isInternalProcessing;
 
+  // ── Ref mirrors for values used inside callbacks ──────────────────────────
+  // Keeping these as refs lets us reference the *latest* value inside
+  // startScanner / stopScanner without adding them to useCallback deps
+  // (which would cause the initialization effect to re-run and recreate the
+  // Html5Qrcode instance — the root cause of the infinite loop in #8).
+  // We sync via a layout-effect-style ref-capture below (React 19 linter
+  // forbids assigning refs during render).
+  const selectedCameraIdRef = useRef(selectedCameraId);
+  const effectiveProcessingRef = useRef(effectiveProcessing);
+  const isPreparingCameraRef = useRef(isPreparingCamera);
+  const pausedRef = useRef(paused);
+  const processingRef = useRef(processing);
+  const isInternalProcessingRef = useRef(isInternalProcessing);
+  const onScanResultRef = useRef(onScanResult);
+
+  // Sync all refs with latest values before effects fire.
+  // Using a useEffect with no deps so it runs after every render.
+  useEffect(() => {
+    selectedCameraIdRef.current = selectedCameraId;
+    effectiveProcessingRef.current = effectiveProcessing;
+    isPreparingCameraRef.current = isPreparingCamera;
+    pausedRef.current = paused;
+    processingRef.current = processing;
+    isInternalProcessingRef.current = isInternalProcessing;
+    onScanResultRef.current = onScanResult;
+  });
+
+  // ── stopScanner (stable — no deps that change) ───────────────────────────
   const stopScanner = useCallback(async () => {
     if (!scannerRef.current) return;
 
@@ -94,13 +129,25 @@ export function QrScanner({
     } catch {
       // ignore stop failures
     } finally {
-      setIsScanning(false);
+      if (mountedRef.current) {
+        setIsScanning(false);
+      }
     }
   }, []);
 
+  // Keep a ref so the cleanup function always calls the latest stopScanner
+  // without needing it in the effect's dependency array.
+  const stopScannerRef = useRef(stopScanner);
+  useEffect(() => {
+    stopScannerRef.current = stopScanner;
+  });
+
+  // ── loadCameras ───────────────────────────────────────────────────────────
   const loadCameras = useCallback(async () => {
     try {
       const devices = await Html5Qrcode.getCameras();
+      if (!mountedRef.current) return null;
+
       setCameraDevices(devices);
       if (devices.length === 0) {
         setHasCamera(false);
@@ -116,6 +163,7 @@ export function QrScanner({
       }
       return preferred?.id ?? null;
     } catch (err) {
+      if (!mountedRef.current) return null;
       const message = err instanceof Error ? err.message : "Unable to access camera devices";
       setHasCamera(false);
       setError(message);
@@ -123,103 +171,157 @@ export function QrScanner({
     }
   }, []);
 
+  // ── startScanner (stable — reads latest values via refs) ──────────────────
   const startScanner = useCallback(
     async (cameraIdOverride?: string) => {
       if (!scannerRef.current) return;
 
-      const cameraId = cameraIdOverride ?? selectedCameraId;
-      if (!cameraId || paused || effectiveProcessing || isPreparingCamera) return;
+      const cameraId = cameraIdOverride ?? selectedCameraIdRef.current;
+      if (!cameraId || pausedRef.current || effectiveProcessingRef.current) return;
 
+      // If already scanning, just sync state
       try {
         const scannerState = scannerRef.current.getState();
         if (scannerState === 2) {
-          setHasCamera(true);
-          setError(null);
-          setIsScanning(true);
+          if (mountedRef.current) {
+            setHasCamera(true);
+            setError(null);
+            setIsScanning(true);
+          }
           return;
         }
+      } catch {
+        // state check failed — continue with start attempt
+      }
 
+      if (mountedRef.current) {
         setIsPreparingCamera(true);
+      }
 
-        await scannerRef.current.start(
-          cameraId,
-          {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-            aspectRatio: 1,
-          },
-          async (decodedText) => {
-            const now = Date.now();
-            if (processing || isInternalProcessing) return;
-            if (decodedText === lastScanRef.current && now - lastScanTimeRef.current < 3000) {
-              return;
-            }
+      let lastError: unknown = null;
 
-            lastScanRef.current = decodedText;
-            lastScanTimeRef.current = now;
-            setLastDecodedText(decodedText);
-            setIsInternalProcessing(true);
+      for (let attempt = 0; attempt <= MAX_CAMERA_RETRIES; attempt++) {
+        // Re-check guards before each attempt (values may have changed)
+        if (pausedRef.current || effectiveProcessingRef.current) break;
+        if (!scannerRef.current) break;
 
-            await playSuccessFeedback();
-            await stopScanner();
+        try {
+          // Race the camera start against a timeout so we never hang forever.
+          await Promise.race([
+            scannerRef.current.start(
+              cameraId,
+              {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1,
+              },
+              async (decodedText) => {
+                const now = Date.now();
+                if (processingRef.current || isInternalProcessingRef.current) return;
+                if (decodedText === lastScanRef.current && now - lastScanTimeRef.current < 3000) {
+                  return;
+                }
 
-            try {
-              const success = await onScanResult(decodedText);
-              if (!success && !paused) {
-                setResumeCameraId(cameraId);
-              }
-            } catch {
-              if (!paused) {
-                setResumeCameraId(cameraId);
-              }
-            } finally {
-              setIsInternalProcessing(false);
-            }
-          },
-          () => {
-            // Ignore frame-level decode misses.
-          },
-        );
+                lastScanRef.current = decodedText;
+                lastScanTimeRef.current = now;
+                if (mountedRef.current) {
+                  setLastDecodedText(decodedText);
+                  setIsInternalProcessing(true);
+                }
 
-        setHasCamera(true);
-        setError(null);
-        setIsScanning(true);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to start camera";
-        setError(message);
-        setHasCamera(false);
-        setIsScanning(false);
-      } finally {
+                await playSuccessFeedback();
+                await stopScannerRef.current();
+
+                try {
+                  const success = await onScanResultRef.current(decodedText);
+                  if (!success && !pausedRef.current && mountedRef.current) {
+                    setResumeCameraId(cameraId);
+                  }
+                } catch {
+                  if (!pausedRef.current && mountedRef.current) {
+                    setResumeCameraId(cameraId);
+                  }
+                } finally {
+                  if (mountedRef.current) {
+                    setIsInternalProcessing(false);
+                  }
+                }
+              },
+              () => {
+                // Ignore frame-level decode misses.
+              },
+            ),
+            new Promise<never>((_, reject) =>
+              setTimeout(
+                () => reject(new Error("Camera start timed out. Please try again.")),
+                CAMERA_START_TIMEOUT_MS,
+              ),
+            ),
+          ]);
+
+          // Success
+          if (mountedRef.current) {
+            setHasCamera(true);
+            setError(null);
+            setIsScanning(true);
+          }
+          lastError = null;
+          break;
+        } catch (err) {
+          lastError = err;
+          // Brief delay before retry to let the camera hardware settle
+          if (attempt < MAX_CAMERA_RETRIES) {
+            await new Promise((r) => setTimeout(r, 500));
+          }
+        }
+      }
+
+      if (lastError) {
+        const message = lastError instanceof Error ? lastError.message : "Failed to start camera";
+        if (mountedRef.current) {
+          setError(message);
+          setHasCamera(false);
+          setIsScanning(false);
+        }
+      }
+
+      if (mountedRef.current) {
         setIsPreparingCamera(false);
       }
     },
-    [
-      effectiveProcessing,
-      isInternalProcessing,
-      isPreparingCamera,
-      onScanResult,
-      paused,
-      processing,
-      selectedCameraId,
-      stopScanner,
-    ],
+    // Only onScanResult can legitimately change and we track it via ref.
+
+    [],
   );
 
+  // ── Initialization effect (issue #8 fix) ──────────────────────────────────
+  // Only depends on containerId and loadCameras — startScanner and stopScanner
+  // are accessed via refs to break the re-initialization cycle.
   useEffect(() => {
+    // StrictMode guard: skip if already initialized
+    if (initGuardRef.current) return;
+    initGuardRef.current = true;
+    mountedRef.current = true;
+
     const scanner = new Html5Qrcode(containerId);
     scannerRef.current = scanner;
 
     void (async () => {
       await loadCameras();
-      setIsPreparingCamera(false);
+      if (mountedRef.current) {
+        setIsPreparingCamera(false);
+      }
     })();
 
     return () => {
-      void stopScanner();
+      mountedRef.current = false;
+      void stopScannerRef.current();
       scannerRef.current = null;
+      initGuardRef.current = false;
     };
-  }, [autoStart, containerId, loadCameras, paused, startScanner, stopScanner]);
+  }, [containerId, loadCameras]);
 
+  // ── Auto-start / resume effect ────────────────────────────────────────────
   useEffect(() => {
     if (paused) {
       void stopScanner();
@@ -259,10 +361,12 @@ export function QrScanner({
     stopScanner,
   ]);
 
+  // ── Camera state callback ─────────────────────────────────────────────────
   useEffect(() => {
     onCameraStateChange?.({ hasCamera, error, isScanning, isPreparingCamera });
   }, [error, hasCamera, isPreparingCamera, isScanning, onCameraStateChange]);
 
+  // ── Camera switching ──────────────────────────────────────────────────────
   const cycleCamera = useCallback(async () => {
     if (cameraDevices.length < 2 || !selectedCameraId) return;
 
