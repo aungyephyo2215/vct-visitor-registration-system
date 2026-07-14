@@ -321,3 +321,5 @@ If you find this project helpful, please give it a ⭐ on GitHub!
 <p align="center">
   <sub>Built with ❤️ for secure, modern visitor management.</sub>
 </p>
+
+> Last preview check: 2026-07-14T02:37:24Z
