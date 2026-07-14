@@ -3,9 +3,9 @@
 Standard Response
 
 {
-  "success": false,
-  "message": "Invalid Request",
-  "error_code": "BAD_REQUEST"
+"success": false,
+"message": "Invalid Request",
+"error_code": "BAD_REQUEST"
 }
 
 ---
