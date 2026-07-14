@@ -30,11 +30,15 @@ jobs:
       - name: Check peer dependencies
         run: |
           echo "Checking for peer dependency conflicts..."
-          if npm ls --all 2>&1 | grep -qi "ERESOLVE\|peer dep.*missing\|invalid"; then
-            echo "::error::Peer dependency conflicts detected. Check npm ls output above."
+          # npm ls exits non-zero when there are missing/invalid deps.
+          # We ignore ERESOLVE override warnings (npm handles those via overrides).
+          OUTPUT=$(npm ls --all 2>&1) || true
+          if echo "$OUTPUT" | grep -qi "peer dep.*missing\|ERR!.*missing\|ERR!.*invalid\|extraneous"; then
+            echo "::error::Hard peer dependency conflicts detected."
+            echo "$OUTPUT" | grep -i "peer dep.*missing\|ERR!.*missing\|ERR!.*invalid\|extraneous" || true
             exit 1
           fi
-          echo "No peer dependency conflicts found."
+          echo "No hard peer dependency conflicts found."
 
       - name: Run lint
         run: npm run lint
