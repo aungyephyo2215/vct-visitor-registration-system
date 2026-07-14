@@ -55,11 +55,14 @@ export async function POST(request: NextRequest) {
       user_agent: request.headers.get("user-agent") || undefined,
     });
 
-    return successResponse({
-      token,
-      expires_at: expiresAt,
-      qr_code_id: qrCode.id,
-    }, 201);
+    return successResponse(
+      {
+        token,
+        expires_at: expiresAt,
+        qr_code_id: qrCode.id,
+      },
+      201,
+    );
   } catch (error) {
     if (error instanceof Response) return error;
     if (error instanceof SyntaxError) {

@@ -14,13 +14,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -79,7 +73,8 @@ export default function NewVisitPage() {
         const [vResult, uResult, hResult] = await Promise.all([
           api.get<PaginatedResult<Visitor>>("/api/v1/visitors?limit=100"),
           api.get<PaginatedResult<Unit>>("/api/v1/units?limit=100").catch(() => ({ data: [] })),
-          api.get<PaginatedResult<User>>("/api/v1/users?limit=100&role=RESIDENT,PROPERTY_ADMIN")
+          api
+            .get<PaginatedResult<User>>("/api/v1/users?limit=100&role=RESIDENT,PROPERTY_ADMIN")
             .catch(() => ({ data: [] })),
         ]);
         setVisitors(vResult.data);
@@ -128,18 +123,14 @@ export default function NewVisitPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Create Visit</h1>
-          <p className="text-muted-foreground">
-            Schedule a new visitor check-in
-          </p>
+          <p className="text-muted-foreground">Schedule a new visitor check-in</p>
         </div>
       </div>
 
       <Card className="max-w-lg">
         <CardHeader>
           <CardTitle>Visit Details</CardTitle>
-          <CardDescription>
-            Select visitor and destination
-          </CardDescription>
+          <CardDescription>Select visitor and destination</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -229,9 +220,7 @@ export default function NewVisitPage() {
               <Input
                 id="vehicle"
                 value={form.vehicle_number}
-                onChange={(e) =>
-                  setForm({ ...form, vehicle_number: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, vehicle_number: e.target.value })}
                 placeholder="ABC-123"
                 disabled={loading}
               />
@@ -250,7 +239,7 @@ export default function NewVisitPage() {
             </div>
 
             {error && (
-              <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <div className="bg-destructive/10 text-destructive rounded-md px-3 py-2 text-sm">
                 {error}
               </div>
             )}

@@ -14,13 +14,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -127,26 +121,17 @@ export default function VisitorDetailPage() {
             <h1 className="text-2xl font-bold tracking-tight">
               {editing ? "Edit Visitor" : visitor.name}
             </h1>
-            <p className="text-muted-foreground">
-              Visitor ID: {visitor.id.slice(0, 8)}...
-            </p>
+            <p className="text-muted-foreground">Visitor ID: {visitor.id.slice(0, 8)}...</p>
           </div>
         </div>
         <div className="flex gap-2">
           {!editing && (
             <>
-              <Button
-                variant="outline"
-                onClick={() => setEditing(true)}
-              >
+              <Button variant="outline" onClick={() => setEditing(true)}>
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </Button>
-              <Button
-                variant="destructive"
-                size="icon"
-                onClick={() => setShowDelete(true)}
-              >
+              <Button variant="destructive" size="icon" onClick={() => setShowDelete(true)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </>
@@ -168,9 +153,7 @@ export default function VisitorDetailPage() {
                 <Label>Name *</Label>
                 <Input
                   value={form.name}
-                  onChange={(e) =>
-                    setForm({ ...form, name: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
                   disabled={saving}
                 />
               </div>
@@ -178,9 +161,7 @@ export default function VisitorDetailPage() {
                 <Label>Phone *</Label>
                 <Input
                   value={form.phone}
-                  onChange={(e) =>
-                    setForm({ ...form, phone: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   disabled={saving}
                 />
               </div>
@@ -188,9 +169,7 @@ export default function VisitorDetailPage() {
                 <Label>ID Type</Label>
                 <Select
                   value={form.id_type}
-                  onValueChange={(v) =>
-                    setForm({ ...form, id_type: v || form.id_type })
-                  }
+                  onValueChange={(v) => setForm({ ...form, id_type: v || form.id_type })}
                   disabled={saving}
                 >
                   <SelectTrigger>
@@ -209,9 +188,7 @@ export default function VisitorDetailPage() {
                 <Label>ID Number</Label>
                 <Input
                   value={form.id_number}
-                  onChange={(e) =>
-                    setForm({ ...form, id_number: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, id_number: e.target.value })}
                   disabled={saving}
                 />
               </div>
@@ -239,26 +216,24 @@ export default function VisitorDetailPage() {
           ) : (
             <dl className="space-y-4">
               <div>
-                <dt className="text-sm text-muted-foreground">Name</dt>
+                <dt className="text-muted-foreground text-sm">Name</dt>
                 <dd className="font-medium">{visitor.name}</dd>
               </div>
               <div>
-                <dt className="text-sm text-muted-foreground">Phone</dt>
+                <dt className="text-muted-foreground text-sm">Phone</dt>
                 <dd className="font-medium">{visitor.phone}</dd>
               </div>
               <div>
-                <dt className="text-sm text-muted-foreground">ID Type</dt>
-                <dd className="font-medium">
-                  {visitor.id_type.replace(/_/g, " ")}
-                </dd>
+                <dt className="text-muted-foreground text-sm">ID Type</dt>
+                <dd className="font-medium">{visitor.id_type.replace(/_/g, " ")}</dd>
               </div>
               <div>
-                <dt className="text-sm text-muted-foreground">ID Number</dt>
+                <dt className="text-muted-foreground text-sm">ID Number</dt>
                 <dd className="font-medium">{visitor.id_number}</dd>
               </div>
               {visitor.photo_url && (
                 <div>
-                  <dt className="text-sm text-muted-foreground">Photo</dt>
+                  <dt className="text-muted-foreground text-sm">Photo</dt>
                   <dd>
                     <img
                       src={visitor.photo_url}

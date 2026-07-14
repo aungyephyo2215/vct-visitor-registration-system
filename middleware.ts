@@ -22,17 +22,9 @@ const protectedPages = [
   "/settings",
 ];
 
-const publicApiPaths = [
-  "/api/v1/auth/login",
-  "/api/v1/auth/logout",
-];
+const publicApiPaths = ["/api/v1/auth/login", "/api/v1/auth/logout"];
 
-const publicPaths = [
-  "/",
-  "/login",
-  "/_next",
-  "/favicon.ico",
-];
+const publicPaths = ["/", "/login", "/_next", "/favicon.ico"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -63,7 +55,7 @@ export async function middleware(request: NextRequest) {
     if (!token) {
       return NextResponse.json(
         { success: false, error: { message: "Authentication required" } },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -71,7 +63,7 @@ export async function middleware(request: NextRequest) {
     if (!payload?.sub) {
       return NextResponse.json(
         { success: false, error: { message: "Invalid or expired token" } },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -104,7 +96,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|_next/data|images|icons|manifest\\.json|sw\\.js).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|_next/data|images|icons|manifest\\.json|sw\\.js).*)"],
 };

@@ -26,23 +26,23 @@ const features = [
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1">
+    <div className="flex flex-1 flex-col">
       <header className="border-b">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2 font-semibold text-lg">
+          <div className="flex items-center gap-2 text-lg font-semibold">
             <QrCode className="h-6 w-6" />
             <span>VRS</span>
           </div>
           <nav className="flex items-center gap-4">
             <Link
               href="/login"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground text-sm font-medium"
             >
               Sign In
             </Link>
             <Link
               href="/login"
-              className="inline-flex h-9 items-center justify-center rounded-md bg-foreground px-4 text-sm font-medium text-background hover:bg-foreground/90"
+              className="bg-foreground text-background hover:bg-foreground/90 inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium"
             >
               Sign In
             </Link>
@@ -53,18 +53,16 @@ export default function Home() {
       <main className="flex-1">
         <section className="container mx-auto px-4 py-24 text-center">
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Visitor Registration,{" "}
-            <span className="text-muted-foreground">Simplified</span>
+            Visitor Registration, <span className="text-muted-foreground">Simplified</span>
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Replace paper visitor logs with QR-based digital registration.
-            Secure, fast, and built for condos, apartments, offices, and
-            warehouses.
+          <p className="text-muted-foreground mx-auto mt-4 max-w-2xl text-lg">
+            Replace paper visitor logs with QR-based digital registration. Secure, fast, and built
+            for condos, apartments, offices, and warehouses.
           </p>
           <div className="mt-8 flex items-center justify-center gap-4">
             <Link
               href="/login"
-              className="inline-flex h-10 items-center justify-center rounded-md bg-foreground px-6 text-sm font-medium text-background hover:bg-foreground/90"
+              className="bg-foreground text-background hover:bg-foreground/90 inline-flex h-10 items-center justify-center rounded-md px-6 text-sm font-medium"
             >
               Sign In
             </Link>
@@ -74,20 +72,17 @@ export default function Home() {
         <section className="container mx-auto px-4 pb-24">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {features.map((f) => (
-              <div
-                key={f.title}
-                className="rounded-lg border p-6 text-left"
-              >
-                <f.icon className="mb-3 h-8 w-8 text-muted-foreground" />
+              <div key={f.title} className="rounded-lg border p-6 text-left">
+                <f.icon className="text-muted-foreground mb-3 h-8 w-8" />
                 <h3 className="font-semibold">{f.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{f.desc}</p>
+                <p className="text-muted-foreground mt-1 text-sm">{f.desc}</p>
               </div>
             ))}
           </div>
         </section>
       </main>
 
-      <footer className="border-t py-6 text-center text-sm text-muted-foreground">
+      <footer className="text-muted-foreground border-t py-6 text-center text-sm">
         Visitor Registration System
       </footer>
     </div>

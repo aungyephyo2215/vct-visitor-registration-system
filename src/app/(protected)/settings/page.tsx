@@ -8,23 +8,20 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">
-          System configuration and preferences
-        </p>
+        <p className="text-muted-foreground">System configuration and preferences</p>
       </div>
 
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-muted p-3">
-              <SettingsIcon className="h-6 w-6 text-muted-foreground" />
+            <div className="bg-muted rounded-lg p-3">
+              <SettingsIcon className="text-muted-foreground h-6 w-6" />
             </div>
             <div>
               <CardTitle>Available in Future Phase</CardTitle>
-              <CardContent className="p-0 pt-1 text-sm text-muted-foreground">
-                Settings are planned for a future phase. This will include
-                property management, user management, and system preferences.
-                Use the Dashboard for current visitor activity.
+              <CardContent className="text-muted-foreground p-0 pt-1 text-sm">
+                Settings are planned for a future phase. This will include property management, user
+                management, and system preferences. Use the Dashboard for current visitor activity.
               </CardContent>
             </div>
           </div>

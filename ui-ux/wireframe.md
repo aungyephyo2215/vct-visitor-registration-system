@@ -12,7 +12,7 @@ Sidebar
 - Reports
 - Settings
 
------------------------------------
+---
 
 Today's Visitors
 
@@ -22,7 +22,7 @@ Checked Out
 
 Pending
 
------------------------------------
+---
 
 Recent Activities
 

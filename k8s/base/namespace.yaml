@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: visitor-registration-system
+  labels:
+    app.kubernetes.io/name: visitor-registration-system
+    app.kubernetes.io/part-of: vrs
+    environment: base

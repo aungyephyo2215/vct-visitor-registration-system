@@ -4,10 +4,7 @@ import { requireAuth } from "@/lib/auth";
 import { successResponse, errorResponse, notFoundResponse } from "@/lib/api-response";
 import { requirePropertyAccess } from "@/lib/rbac";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth(request);
     const { id } = await params;

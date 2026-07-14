@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { loginSchema, formatZodErrors } from "@/lib/validations";
 import { verifyPassword } from "@/lib/password";
-import { signAccessToken, signRefreshToken, getAccessTokenMaxAge, getRefreshTokenMaxAge } from "@/lib/jwt";
+import {
+  signAccessToken,
+  signRefreshToken,
+  getAccessTokenMaxAge,
+  getRefreshTokenMaxAge,
+} from "@/lib/jwt";
 import { toSafeUser } from "@/lib/auth";
 import { successResponse, errorResponse, validationErrorResponse } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
@@ -22,7 +27,7 @@ export async function POST(request: NextRequest) {
           headers: {
             "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)),
           },
-        }
+        },
       );
     }
 

@@ -52,11 +52,7 @@ export function ConfirmDialog({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button
-            variant="outline"
-            disabled={loading}
-            onClick={() => onOpenChange(false)}
-          >
+          <Button variant="outline" disabled={loading} onClick={() => onOpenChange(false)}>
             {cancelLabel}
           </Button>
           <Button

@@ -13,17 +13,20 @@ function parseDuration(duration: string): number {
   if (!match) return 86400;
   const value = parseInt(match[1], 10);
   switch (match[2]) {
-    case "s": return value;
-    case "m": return value * 60;
-    case "h": return value * 3600;
-    case "d": return value * 86400;
-    default: return 86400;
+    case "s":
+      return value;
+    case "m":
+      return value * 60;
+    case "h":
+      return value * 3600;
+    case "d":
+      return value * 86400;
+    default:
+      return 86400;
   }
 }
 
-export async function signAccessToken(
-  payload: JWTPayload
-): Promise<string> {
+export async function signAccessToken(payload: JWTPayload): Promise<string> {
   const expiresIn = process.env.JWT_EXPIRES_IN || "24h";
   const seconds = parseDuration(expiresIn);
 
@@ -34,9 +37,7 @@ export async function signAccessToken(
     .sign(getSecret("JWT_SECRET"));
 }
 
-export async function verifyAccessToken(
-  token: string
-): Promise<JWTPayload | null> {
+export async function verifyAccessToken(token: string): Promise<JWTPayload | null> {
   try {
     const { payload } = await jwtVerify(token, getSecret("JWT_SECRET"));
     return payload;
@@ -45,9 +46,7 @@ export async function verifyAccessToken(
   }
 }
 
-export async function signRefreshToken(
-  payload: JWTPayload
-): Promise<string> {
+export async function signRefreshToken(payload: JWTPayload): Promise<string> {
   const expiresIn = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
   const seconds = parseDuration(expiresIn);
 
@@ -58,9 +57,7 @@ export async function signRefreshToken(
     .sign(getSecret("JWT_REFRESH_SECRET"));
 }
 
-export async function verifyRefreshToken(
-  token: string
-): Promise<JWTPayload | null> {
+export async function verifyRefreshToken(token: string): Promise<JWTPayload | null> {
   try {
     const { payload } = await jwtVerify(token, getSecret("JWT_REFRESH_SECRET"));
     return payload;

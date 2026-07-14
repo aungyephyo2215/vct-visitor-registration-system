@@ -4,7 +4,7 @@
 
     ┌────────────┼────────────┐
 
-Pre-register    Walk-in     Self-Kiosk
+Pre-register Walk-in Self-Kiosk
 
     │              │             │
 

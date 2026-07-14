@@ -1,6 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 
-const visitStatusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const visitStatusMap: Record<
+  string,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
   EXPECTED: { label: "Expected", variant: "outline" },
   CHECKED_IN: { label: "Checked In", variant: "default" },
   CHECKED_OUT: { label: "Checked Out", variant: "secondary" },

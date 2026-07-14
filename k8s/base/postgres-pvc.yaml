@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vrs-postgres-pvc
+  namespace: visitor-registration-system
+  labels:
+    app.kubernetes.io/name: visitor-registration-system
+    app.kubernetes.io/component: postgres
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  # Uncomment and set your StorageClass for production
+  # storageClassName: standard

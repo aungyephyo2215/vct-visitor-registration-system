@@ -79,7 +79,15 @@ export async function POST(request: NextRequest) {
       return validationErrorResponse(formatZodErrors(parsed.error));
     }
 
-    const { visitor_id, unit_id, host_user_id, purpose, notes, vehicle_number, expected_checkin_time } = parsed.data;
+    const {
+      visitor_id,
+      unit_id,
+      host_user_id,
+      purpose,
+      notes,
+      vehicle_number,
+      expected_checkin_time,
+    } = parsed.data;
 
     const visitor = await prisma.visitor.findFirst({
       where: { id: visitor_id, deleted_at: null },

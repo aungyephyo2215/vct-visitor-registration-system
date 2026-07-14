@@ -8,11 +8,36 @@ export interface TestUser {
 }
 
 export const USERS: Record<string, TestUser> = {
-  admin: { email: "admin@vrs.com", password: "Admin123!", role: "SUPER_ADMIN", displayName: "Super Admin" },
-  property: { email: "property@vrs.com", password: "Admin123!", role: "PROPERTY_ADMIN", displayName: "Property Manager" },
-  guard: { email: "guard@vrs.com", password: "Guard123!", role: "SECURITY_GUARD", displayName: "Security Guard" },
-  resident: { email: "resident@vrs.com", password: "Resident123!", role: "RESIDENT", displayName: "Resident Owner" },
-  office: { email: "office@vrs.com", password: "Office123!", role: "OFFICE_STAFF", displayName: "Office Staff" },
+  admin: {
+    email: "admin@vrs.com",
+    password: "Admin123!",
+    role: "SUPER_ADMIN",
+    displayName: "Super Admin",
+  },
+  property: {
+    email: "property@vrs.com",
+    password: "Admin123!",
+    role: "PROPERTY_ADMIN",
+    displayName: "Property Manager",
+  },
+  guard: {
+    email: "guard@vrs.com",
+    password: "Guard123!",
+    role: "SECURITY_GUARD",
+    displayName: "Security Guard",
+  },
+  resident: {
+    email: "resident@vrs.com",
+    password: "Resident123!",
+    role: "RESIDENT",
+    displayName: "Resident Owner",
+  },
+  office: {
+    email: "office@vrs.com",
+    password: "Office123!",
+    role: "OFFICE_STAFF",
+    displayName: "Office Staff",
+  },
 };
 
 export async function loginForm(page: Page, role: string) {

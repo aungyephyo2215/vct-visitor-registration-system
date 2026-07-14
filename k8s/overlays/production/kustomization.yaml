@@ -1,0 +1,90 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: visitor-registration-system-production
+
+resources:
+  - ../../base
+
+namespace: visitor-registration-system-production
+
+namePrefix: prod-
+nameSuffix: ""
+
+commonLabels:
+  environment: production
+
+patches:
+  # Multiple replicas for production
+  - target:
+      kind: Deployment
+      name: vrs-app
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 3
+
+  # Production resources
+  - target:
+      kind: Deployment
+      name: vrs-app
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: 250m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 512Mi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: 1000m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 1Gi
+
+  # Production ingress
+  - target:
+      kind: Ingress
+      name: vrs-ingress
+    patch: |
+      - op: replace
+        path: /spec/rules/0/host
+        value: vrs.example.com
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: vrs.example.com
+      - op: replace
+        path: /spec/tls/0/secretName
+        value: vrs-prod-tls
+
+  # Larger PVC for production
+  - target:
+      kind: PersistentVolumeClaim
+      name: vrs-postgres-pvc
+    patch: |
+      - op: replace
+        path: /spec/resources/requests/storage
+        value: 10Gi
+
+  # Production PostgreSQL resources
+  - target:
+      kind: Deployment
+      name: vrs-postgres
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: 250m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 512Mi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: 1000m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 1Gi
+
+images:
+  - name: ghcr.io/aungyephyo2215/vct-visitor-registration-system
+    newTag: v1.5.0

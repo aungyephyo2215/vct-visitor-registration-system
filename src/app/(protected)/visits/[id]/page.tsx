@@ -7,13 +7,7 @@ import { api } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -82,10 +76,9 @@ export default function VisitDetailPage() {
   async function generateQR() {
     setGenerating(true);
     try {
-      const result = await api.post<{ token: string; expires_at: string }>(
-        "/api/v1/qr/generate",
-        { visit_id: id }
-      );
+      const result = await api.post<{ token: string; expires_at: string }>("/api/v1/qr/generate", {
+        visit_id: id,
+      });
       setQrToken(result.token);
       setQrExpires(result.expires_at);
 
@@ -176,9 +169,7 @@ export default function VisitDetailPage() {
         </Link>
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight">
-              Visit Details
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tight">Visit Details</h1>
             <StatusBadge status={visit.status} />
           </div>
           <p className="text-muted-foreground">
@@ -196,51 +187,45 @@ export default function VisitDetailPage() {
           <CardContent>
             <dl className="space-y-4">
               <div>
-                <dt className="text-sm text-muted-foreground">Purpose</dt>
-                <dd className="font-medium">
-                  {visit.purpose.replace(/_/g, " ")}
-                </dd>
+                <dt className="text-muted-foreground text-sm">Purpose</dt>
+                <dd className="font-medium">{visit.purpose.replace(/_/g, " ")}</dd>
               </div>
               {visit.notes && (
                 <div>
-                  <dt className="text-sm text-muted-foreground">Notes</dt>
+                  <dt className="text-muted-foreground text-sm">Notes</dt>
                   <dd className="font-medium">{visit.notes}</dd>
                 </div>
               )}
               {visit.vehicle_number && (
                 <div>
-                  <dt className="text-sm text-muted-foreground">Vehicle</dt>
+                  <dt className="text-muted-foreground text-sm">Vehicle</dt>
                   <dd className="font-medium">{visit.vehicle_number}</dd>
                 </div>
               )}
               <div>
-                <dt className="text-sm text-muted-foreground">Unit</dt>
+                <dt className="text-muted-foreground text-sm">Unit</dt>
                 <dd className="font-medium">
                   Unit {visit.unit?.unit_no} (Floor {visit.unit?.floor})
                 </dd>
               </div>
               {visit.host && (
                 <div>
-                  <dt className="text-sm text-muted-foreground">Host</dt>
+                  <dt className="text-muted-foreground text-sm">Host</dt>
                   <dd className="font-medium">{visit.host.name}</dd>
                 </div>
               )}
               <Separator />
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <dt className="text-sm text-muted-foreground">Check In</dt>
+                  <dt className="text-muted-foreground text-sm">Check In</dt>
                   <dd className="font-medium">
-                    {visit.checkin_time
-                      ? new Date(visit.checkin_time).toLocaleString()
-                      : "—"}
+                    {visit.checkin_time ? new Date(visit.checkin_time).toLocaleString() : "—"}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Check Out</dt>
+                  <dt className="text-muted-foreground text-sm">Check Out</dt>
                   <dd className="font-medium">
-                    {visit.checkout_time
-                      ? new Date(visit.checkout_time).toLocaleString()
-                      : "—"}
+                    {visit.checkout_time ? new Date(visit.checkout_time).toLocaleString() : "—"}
                   </dd>
                 </div>
               </div>
@@ -252,10 +237,7 @@ export default function VisitDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle>
-              <Link
-                href={`/visitors/${visit.visitor?.id}`}
-                className="hover:underline"
-              >
+              <Link href={`/visitors/${visit.visitor?.id}`} className="hover:underline">
                 Visitor
               </Link>
             </CardTitle>
@@ -263,18 +245,17 @@ export default function VisitDetailPage() {
           <CardContent>
             <dl className="space-y-4">
               <div>
-                <dt className="text-sm text-muted-foreground">Name</dt>
+                <dt className="text-muted-foreground text-sm">Name</dt>
                 <dd className="font-medium">{visit.visitor?.name}</dd>
               </div>
               <div>
-                <dt className="text-sm text-muted-foreground">Phone</dt>
+                <dt className="text-muted-foreground text-sm">Phone</dt>
                 <dd className="font-medium">{visit.visitor?.phone}</dd>
               </div>
               <div>
-                <dt className="text-sm text-muted-foreground">ID</dt>
+                <dt className="text-muted-foreground text-sm">ID</dt>
                 <dd className="font-medium">
-                  {visit.visitor?.id_type?.replace(/_/g, " ")} /{" "}
-                  {visit.visitor?.id_number}
+                  {visit.visitor?.id_type?.replace(/_/g, " ")} / {visit.visitor?.id_number}
                 </dd>
               </div>
             </dl>
@@ -286,19 +267,14 @@ export default function VisitDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle>Check-In / Check-Out</CardTitle>
-          <CardDescription>
-            Manage the visit lifecycle
-          </CardDescription>
+          <CardDescription>Manage the visit lifecycle</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Generate QR */}
           {isExpected && (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <Button
-                  onClick={generateQR}
-                  disabled={generating}
-                >
+                <Button onClick={generateQR} disabled={generating}>
                   <QrCodeIcon className="mr-2 h-4 w-4" />
                   {generating ? "Generating..." : "Generate QR Code"}
                 </Button>
@@ -308,35 +284,23 @@ export default function VisitDetailPage() {
                 <div className="space-y-4 rounded-lg border p-4">
                   <div className="flex items-center justify-center">
                     {qrImage ? (
-                      <img
-                        src={qrImage}
-                        alt="QR Code"
-                        className="h-48 w-48"
-                      />
+                      <img src={qrImage} alt="QR Code" className="h-48 w-48" />
                     ) : (
-                      <div className="flex h-48 w-48 items-center justify-center bg-muted rounded-lg">
-                        <QrCodeIcon className="h-12 w-12 text-muted-foreground" />
+                      <div className="bg-muted flex h-48 w-48 items-center justify-center rounded-lg">
+                        <QrCodeIcon className="text-muted-foreground h-12 w-12" />
                       </div>
                     )}
                   </div>
                   <div className="space-y-2">
                     <Label>QR Token</Label>
                     <div className="flex gap-2">
-                      <Input
-                        readOnly
-                        value={qrToken}
-                        className="font-mono text-xs"
-                      />
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={copyToken}
-                      >
+                      <Input readOnly value={qrToken} className="font-mono text-xs" />
+                      <Button variant="outline" size="icon" onClick={copyToken}>
                         <Copy className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     Expires: {new Date(qrExpires).toLocaleString()}
                   </p>
                 </div>
@@ -358,10 +322,7 @@ export default function VisitDetailPage() {
                   disabled={checkingIn}
                   className="font-mono"
                 />
-                <Button
-                  onClick={handleCheckin}
-                  disabled={checkingIn || !checkinToken}
-                >
+                <Button onClick={handleCheckin} disabled={checkingIn || !checkinToken}>
                   {checkingIn ? (
                     "Checking in..."
                   ) : (
@@ -378,10 +339,7 @@ export default function VisitDetailPage() {
           {/* Check Out */}
           {isCheckedIn && (
             <div>
-              <Button
-                variant="outline"
-                onClick={() => setShowCheckout(true)}
-              >
+              <Button variant="outline" onClick={() => setShowCheckout(true)}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Check Out
               </Button>
@@ -390,9 +348,7 @@ export default function VisitDetailPage() {
 
           {/* Status timeline */}
           <div className="space-y-2">
-            <Label className="text-sm text-muted-foreground">
-              Status Timeline
-            </Label>
+            <Label className="text-muted-foreground text-sm">Status Timeline</Label>
             <div className="flex items-center gap-2 text-sm">
               <div className="flex items-center gap-1">
                 <div
@@ -400,37 +356,25 @@ export default function VisitDetailPage() {
                     visit.created_at ? "bg-green-500" : "bg-muted"
                   }`}
                 />
-                <span className={visit.created_at ? "" : "text-muted-foreground"}>
-                  Created
-                </span>
+                <span className={visit.created_at ? "" : "text-muted-foreground"}>Created</span>
               </div>
-              <div className="h-px flex-1 bg-muted" />
+              <div className="bg-muted h-px flex-1" />
               <div className="flex items-center gap-1">
                 <div
                   className={`h-2 w-2 rounded-full ${
-                    isCheckedIn || isCheckedOut
-                      ? "bg-green-500"
-                      : "bg-muted"
+                    isCheckedIn || isCheckedOut ? "bg-green-500" : "bg-muted"
                   }`}
                 />
-                <span
-                  className={
-                    isCheckedIn || isCheckedOut ? "" : "text-muted-foreground"
-                  }
-                >
+                <span className={isCheckedIn || isCheckedOut ? "" : "text-muted-foreground"}>
                   Checked In
                 </span>
               </div>
-              <div className="h-px flex-1 bg-muted" />
+              <div className="bg-muted h-px flex-1" />
               <div className="flex items-center gap-1">
                 <div
-                  className={`h-2 w-2 rounded-full ${
-                    isCheckedOut ? "bg-green-500" : "bg-muted"
-                  }`}
+                  className={`h-2 w-2 rounded-full ${isCheckedOut ? "bg-green-500" : "bg-muted"}`}
                 />
-                <span className={isCheckedOut ? "" : "text-muted-foreground"}>
-                  Checked Out
-                </span>
+                <span className={isCheckedOut ? "" : "text-muted-foreground"}>Checked Out</span>
               </div>
             </div>
           </div>
@@ -449,17 +393,17 @@ export default function VisitDetailPage() {
           {visit.verification ? (
             <dl className="space-y-3">
               <div className="flex justify-between">
-                <dt className="text-sm text-muted-foreground">Verified By</dt>
+                <dt className="text-muted-foreground text-sm">Verified By</dt>
                 <dd className="font-medium">{visit.verification.verifier?.name}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-sm text-muted-foreground">Verified At</dt>
+                <dt className="text-muted-foreground text-sm">Verified At</dt>
                 <dd className="font-medium">
                   {new Date(visit.verification.verified_at).toLocaleString()}
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-sm text-muted-foreground">NDA</dt>
+                <dt className="text-muted-foreground text-sm">NDA</dt>
                 <dd>
                   <Badge variant={visit.verification.nda_signed ? "default" : "secondary"}>
                     {visit.verification.nda_signed ? "Signed" : "Not signed"}
@@ -467,7 +411,7 @@ export default function VisitDetailPage() {
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-sm text-muted-foreground">Safety Form</dt>
+                <dt className="text-muted-foreground text-sm">Safety Form</dt>
                 <dd>
                   <Badge variant={visit.verification.safety_form_signed ? "default" : "secondary"}>
                     {visit.verification.safety_form_signed ? "Completed" : "Not completed"}
@@ -476,22 +420,26 @@ export default function VisitDetailPage() {
               </div>
               {visit.verification.vehicle_number && (
                 <div className="flex justify-between">
-                  <dt className="text-sm text-muted-foreground">Vehicle</dt>
+                  <dt className="text-muted-foreground text-sm">Vehicle</dt>
                   <dd className="font-medium">{visit.verification.vehicle_number}</dd>
                 </div>
               )}
               {visit.verification.photo_url && (
                 <div>
-                  <dt className="text-sm text-muted-foreground">Photo</dt>
+                  <dt className="text-muted-foreground text-sm">Photo</dt>
                   <dd>
-                    <img src={visit.verification.photo_url} alt="Visitor" className="mt-1 h-20 w-20 rounded-md object-cover" />
+                    <img
+                      src={visit.verification.photo_url}
+                      alt="Visitor"
+                      className="mt-1 h-20 w-20 rounded-md object-cover"
+                    />
                   </dd>
                 </div>
               )}
             </dl>
           ) : (
             <div>
-              <p className="text-sm text-muted-foreground mb-3">Not yet verified</p>
+              <p className="text-muted-foreground mb-3 text-sm">Not yet verified</p>
               <Link href={`/security/verify`}>
                 <Button variant="outline" size="sm">
                   Verify Visitor

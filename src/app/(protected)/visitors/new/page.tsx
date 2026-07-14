@@ -15,13 +15,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -80,18 +74,14 @@ export default function NewVisitorPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">New Visitor</h1>
-          <p className="text-muted-foreground">
-            Register a new visitor in the system
-          </p>
+          <p className="text-muted-foreground">Register a new visitor in the system</p>
         </div>
       </div>
 
       <Card className="max-w-lg">
         <CardHeader>
           <CardTitle>Visitor Details</CardTitle>
-          <CardDescription>
-            Enter the visitor&apos;s information
-          </CardDescription>
+          <CardDescription>Enter the visitor&apos;s information</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -141,9 +131,7 @@ export default function NewVisitorPage() {
               <Input
                 id="id_number"
                 value={form.id_number}
-                onChange={(e) =>
-                  setForm({ ...form, id_number: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, id_number: e.target.value })}
                 placeholder="PA123456"
                 disabled={loading}
                 required
@@ -155,15 +143,13 @@ export default function NewVisitorPage() {
                 id="photo_url"
                 type="url"
                 value={form.photo_url}
-                onChange={(e) =>
-                  setForm({ ...form, photo_url: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, photo_url: e.target.value })}
                 placeholder="https://example.com/photo.jpg"
                 disabled={loading}
               />
             </div>
             {error && (
-              <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <div className="bg-destructive/10 text-destructive rounded-md px-3 py-2 text-sm">
                 {error}
               </div>
             )}

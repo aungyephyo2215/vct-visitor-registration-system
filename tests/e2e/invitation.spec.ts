@@ -37,7 +37,7 @@ test.describe("Invitation Workflow", () => {
     await page.waitForSelector("#visitor_name");
     // Remove required attributes to bypass HTML5 validation, then click submit
     await page.evaluate(() => {
-      document.querySelectorAll("[required]").forEach(el => el.removeAttribute("required"));
+      document.querySelectorAll("[required]").forEach((el) => el.removeAttribute("required"));
     });
     await page.click('button[type="submit"]');
     await page.waitForTimeout(1000);
