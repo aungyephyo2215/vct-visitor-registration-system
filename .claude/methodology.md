@@ -54,10 +54,10 @@ Core Principles
 
 Always start with:
 
-* Requirements
-* Architecture
-* Database Design
-* API Specification
+- Requirements
+- Architecture
+- Database Design
+- API Specification
 
 ⸻
 
@@ -65,10 +65,10 @@ Always start with:
 
 Every feature must have:
 
-* Business Requirement
-* Database Design
-* API Design
-* UI Design
+- Business Requirement
+- Database Design
+- API Design
+- UI Design
 
 before coding.
 
@@ -78,9 +78,9 @@ before coding.
 
 Required reviews:
 
-* Architecture Review
-* Database Review
-* Security Review
+- Architecture Review
+- Database Review
+- Security Review
 
 Critical issues must be resolved before implementation.
 
@@ -90,13 +90,13 @@ Critical issues must be resolved before implementation.
 
 Database rules:
 
-* PostgreSQL only
-* Prisma ORM
-* UUID primary key
-* Multi-tenancy with property_id
-* Foreign key constraints
-* Soft delete support
-* Composite indexes
+- PostgreSQL only
+- Prisma ORM
+- UUID primary key
+- Multi-tenancy with property_id
+- Foreign key constraints
+- Soft delete support
+- Composite indexes
 
 Every schema change requires migration.
 
@@ -108,12 +108,12 @@ Never modify production database manually.
 
 Every API must define:
 
-* Endpoint
-* Request body
-* Response body
-* Status codes
-* Validation rules
-* Authentication requirements
+- Endpoint
+- Request body
+- Response body
+- Status codes
+- Validation rules
+- Authentication requirements
 
 API specification must exist before implementation.
 
@@ -123,13 +123,13 @@ API specification must exist before implementation.
 
 Required:
 
-* JWT Authentication
-* Refresh Token Rotation
-* Role Based Access Control (RBAC)
-* Property-level isolation
-* Rate Limiting
-* Audit Logs
-* QR Replay Protection
+- JWT Authentication
+- Refresh Token Rotation
+- Role Based Access Control (RBAC)
+- Property-level isolation
+- Rate Limiting
+- Audit Logs
+- QR Replay Protection
 
 Security review required before deployment.
 
@@ -139,18 +139,18 @@ Security review required before deployment.
 
 Required tests:
 
-* Unit Tests
-* Integration Tests
-* End-to-End Tests
+- Unit Tests
+- Integration Tests
+- End-to-End Tests
 
 Critical workflows:
 
-* Login
-* Visitor Registration
-* QR Generation
-* Check-In
-* Check-Out
-* Multi-tenant Isolation
+- Login
+- Visitor Registration
+- QR Generation
+- Check-In
+- Check-Out
+- Multi-tenant Isolation
 
 Every feature requires test cases.
 

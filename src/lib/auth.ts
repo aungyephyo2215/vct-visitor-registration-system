@@ -30,9 +30,7 @@ export function toSafeUser(user: {
   };
 }
 
-export async function getCurrentUser(
-  request: NextRequest
-): Promise<SafeUser | null> {
+export async function getCurrentUser(request: NextRequest): Promise<SafeUser | null> {
   try {
     const token =
       request.cookies.get("access_token")?.value ||
@@ -55,9 +53,7 @@ export async function getCurrentUser(
   }
 }
 
-export async function requireAuth(
-  request: NextRequest
-): Promise<SafeUser> {
+export async function requireAuth(request: NextRequest): Promise<SafeUser> {
   const user = await getCurrentUser(request);
   if (!user) {
     throw unauthorizedResponse("Authentication required");

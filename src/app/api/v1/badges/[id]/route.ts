@@ -4,10 +4,7 @@ import { requireAuth } from "@/lib/auth";
 import { successResponse, errorResponse, notFoundResponse } from "@/lib/api-response";
 import { requirePropertyAccess } from "@/lib/rbac";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth(request);
     const { id } = await params;
@@ -16,7 +13,12 @@ export async function GET(
       where: { id },
       include: {
         invitation: {
-          select: { visitor_name: true, visitor_phone: true, visitor_type: true, unit: { select: { unit_no: true, floor: true } } },
+          select: {
+            visitor_name: true,
+            visitor_phone: true,
+            visitor_type: true,
+            unit: { select: { unit_no: true, floor: true } },
+          },
         },
       },
     });

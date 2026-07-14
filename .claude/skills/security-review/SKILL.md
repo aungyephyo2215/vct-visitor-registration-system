@@ -6,11 +6,11 @@ Review authentication, authorization and application security.
 
 Authentication
 
-* JWT Access Token
-* Refresh Token
-* Refresh Rotation
-* Logout endpoint
-* Token revocation
+- JWT Access Token
+- Refresh Token
+- Refresh Rotation
+- Logout endpoint
+- Token revocation
 
 Authorization
 
@@ -18,11 +18,11 @@ Use RBAC.
 
 Roles
 
-* super_admin
-* property_admin
-* security_guard
-* resident
-* office_staff
+- super_admin
+- property_admin
+- security_guard
+- resident
+- office_staff
 
 Multi Tenant
 
@@ -36,30 +36,30 @@ Property A access Property B data.
 
 Passwords
 
-* bcrypt
-* minimum 8 characters
-* never store plaintext
+- bcrypt
+- minimum 8 characters
+- never store plaintext
 
 API Security
 
-* Rate limiting
-* Request validation
-* Input sanitization
-* CORS restrictions
+- Rate limiting
+- Request validation
+- Input sanitization
+- CORS restrictions
 
 File Upload
 
 Allow:
 
-* image/jpeg
-* image/png
-* image/webp
+- image/jpeg
+- image/png
+- image/webp
 
 Reject:
 
-* executable
-* svg
-* oversized file
+- executable
+- svg
+- oversized file
 
 Max Size
 
@@ -69,18 +69,18 @@ Audit Log
 
 Record:
 
-* login
-* logout
-* create
-* update
-* delete
-* check-in
-* check-out
-* failed login
-* failed QR scan
+- login
+- logout
+- create
+- update
+- delete
+- check-in
+- check-out
+- failed login
+- failed QR scan
 
 Session
 
-* Access token 15 min
-* Refresh token 7 days
-* Idle timeout 15 min
+- Access token 15 min
+- Refresh token 7 days
+- Idle timeout 15 min

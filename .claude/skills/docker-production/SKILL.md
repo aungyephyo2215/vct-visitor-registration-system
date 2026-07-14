@@ -6,34 +6,34 @@ Build production-ready Docker environments.
 
 Development Stack
 
-* Next.js
-* TypeScript
-* Prisma
-* PostgreSQL
-* Tailwind
-* shadcn/ui
+- Next.js
+- TypeScript
+- Prisma
+- PostgreSQL
+- Tailwind
+- shadcn/ui
 
 Containers
 
 Frontend
 
-* Next.js
+- Next.js
 
 Database
 
-* PostgreSQL
+- PostgreSQL
 
 Optional
 
-* PgAdmin
-* Redis
+- PgAdmin
+- Redis
 
 Docker Rules
 
-* Use docker compose
-* Use named volumes
-* Use .env file
-* Never hardcode secrets
+- Use docker compose
+- Use named volumes
+- Use .env file
+- Never hardcode secrets
 
 Production
 
@@ -57,18 +57,18 @@ PostgreSQL
 
 Security
 
-* HTTPS only
-* Environment variables
-* Backup database daily
-* Health checks enabled
+- HTTPS only
+- Environment variables
+- Backup database daily
+- Health checks enabled
 
 Volumes
 
 Persist:
 
-* postgres_data
-* uploads
-* backups
+- postgres_data
+- uploads
+- backups
 
 CI/CD
 

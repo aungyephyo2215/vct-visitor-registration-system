@@ -15,10 +15,11 @@ cp .env.example .env
 ```
 
 Required values:
-| Variable | Description |
-|----------|-------------|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `JWT_SECRET` | Secret for signing JWT access tokens (generate with `openssl rand -base64 48`) |
+
+| Variable             | Description                                                                     |
+| -------------------- | ------------------------------------------------------------------------------- |
+| `DATABASE_URL`       | PostgreSQL connection string                                                    |
+| `JWT_SECRET`         | Secret for signing JWT access tokens (generate with `openssl rand -base64 48`)  |
 | `JWT_REFRESH_SECRET` | Secret for signing JWT refresh tokens (generate with `openssl rand -base64 48`) |
 
 ### Email provider configuration

@@ -13,11 +13,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -74,10 +70,7 @@ export default function VisitsPage() {
       try {
         const params: Record<string, string | number> = { page, limit: 20 };
         if (statusFilter) params.status = statusFilter;
-        const result = await api.get<PaginatedResult<Visit>>(
-          "/api/v1/visits",
-          params
-        );
+        const result = await api.get<PaginatedResult<Visit>>("/api/v1/visits", params);
         if (!cancelled) {
           setVisits(result.data);
           setTotalPages(result.totalPages);
@@ -90,7 +83,9 @@ export default function VisitsPage() {
       }
     }
     fetchData();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [page, statusFilter]);
 
   return (
@@ -98,9 +93,7 @@ export default function VisitsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Visits</h1>
-          <p className="text-muted-foreground">
-            Manage visitor check-ins and visits
-          </p>
+          <p className="text-muted-foreground">Manage visitor check-ins and visits</p>
         </div>
         <Link href="/visits/new">
           <Button>
@@ -113,8 +106,14 @@ export default function VisitsPage() {
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v || ""); setPage(1); }}>
+            <Filter className="text-muted-foreground h-4 w-4" />
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => {
+                setStatusFilter(v || "");
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue />
               </SelectTrigger>
@@ -136,9 +135,7 @@ export default function VisitsPage() {
               <Skeleton className="h-8 w-full" />
             </div>
           ) : visits.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground">
-              No visits found.
-            </div>
+            <div className="text-muted-foreground py-8 text-center">No visits found.</div>
           ) : (
             <>
               <Table>
@@ -159,23 +156,17 @@ export default function VisitsPage() {
                       className="cursor-pointer"
                       onClick={() => router.push(`/visits/${v.id}`)}
                     >
-                      <TableCell className="font-medium">
-                        {v.visitor?.name || "—"}
-                      </TableCell>
+                      <TableCell className="font-medium">{v.visitor?.name || "—"}</TableCell>
                       <TableCell>
                         {v.unit?.unit_no || "—"}
                         {v.unit?.floor ? ` (F${v.unit.floor})` : ""}
                       </TableCell>
-                      <TableCell>
-                        {v.purpose?.replace(/_/g, " ")}
-                      </TableCell>
+                      <TableCell>{v.purpose?.replace(/_/g, " ")}</TableCell>
                       <TableCell>
                         <StatusBadge status={v.status} />
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {v.checkin_time
-                          ? new Date(v.checkin_time).toLocaleString()
-                          : "—"}
+                        {v.checkin_time ? new Date(v.checkin_time).toLocaleString() : "—"}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {v.checkout_time
@@ -191,9 +182,7 @@ export default function VisitsPage() {
 
               {totalPages > 1 && (
                 <div className="flex items-center justify-between pt-4">
-                  <p className="text-sm text-muted-foreground">
-                    {total} total
-                  </p>
+                  <p className="text-muted-foreground text-sm">{total} total</p>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"

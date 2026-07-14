@@ -7,12 +7,7 @@ import { Plus, Search, Pencil, Trash2 } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -70,10 +65,7 @@ export default function VisitorsPage() {
       try {
         const params: Record<string, string | number> = { page, limit: 20 };
         if (debouncedSearch) params.search = debouncedSearch;
-        const result = await api.get<PaginatedResult<Visitor>>(
-          "/api/v1/visitors",
-          params
-        );
+        const result = await api.get<PaginatedResult<Visitor>>("/api/v1/visitors", params);
         if (!cancelled) {
           setVisitors(result.data);
           setTotalPages(result.totalPages);
@@ -86,7 +78,9 @@ export default function VisitorsPage() {
       }
     }
     fetchData();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [page, debouncedSearch, refreshKey]);
 
   async function handleDelete(id: string) {
@@ -106,9 +100,7 @@ export default function VisitorsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Visitors</h1>
-          <p className="text-muted-foreground">
-            Manage registered visitors
-          </p>
+          <p className="text-muted-foreground">Manage registered visitors</p>
         </div>
         <Link href="/visitors/new">
           <Button>
@@ -121,7 +113,7 @@ export default function VisitorsPage() {
       <Card>
         <CardHeader className="pb-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
               placeholder="Search by name, phone, or ID number..."
               value={search}
@@ -138,7 +130,7 @@ export default function VisitorsPage() {
               <Skeleton className="h-8 w-full" />
             </div>
           ) : visitors.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground">
+            <div className="text-muted-foreground py-8 text-center">
               {debouncedSearch
                 ? "No visitors found matching your search."
                 : "No visitors yet. Add your first visitor."}
@@ -171,24 +163,19 @@ export default function VisitorsPage() {
                         {new Date(v.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <div
-                          className="flex gap-1"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                        <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() =>
-                              router.push(`/visitors/${v.id}`)
-                            }
+                            onClick={() => router.push(`/visitors/${v.id}`)}
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-destructive"
+                            className="text-destructive h-8 w-8"
                             onClick={() => setDeleteId(v.id)}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -203,9 +190,7 @@ export default function VisitorsPage() {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between pt-4">
-                  <p className="text-sm text-muted-foreground">
-                    {total} total
-                  </p>
+                  <p className="text-muted-foreground text-sm">{total} total</p>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"

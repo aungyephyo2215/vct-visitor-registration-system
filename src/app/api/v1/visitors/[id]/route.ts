@@ -1,7 +1,12 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { successResponse, errorResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response";
+import {
+  successResponse,
+  errorResponse,
+  notFoundResponse,
+  validationErrorResponse,
+} from "@/lib/api-response";
 import { visitorUpdateSchema, formatZodErrors } from "@/lib/validations";
 import { requirePropertyAccess, requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
@@ -13,10 +18,7 @@ async function findVisitor(id: string) {
   });
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth(request);
     requireRole(user, "SUPER_ADMIN", "PROPERTY_ADMIN", "SECURITY_GUARD", "OFFICE_STAFF");
@@ -35,10 +37,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth(request);
     requireRole(user, "SUPER_ADMIN", "PROPERTY_ADMIN", "SECURITY_GUARD", "OFFICE_STAFF");
@@ -85,7 +84,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);

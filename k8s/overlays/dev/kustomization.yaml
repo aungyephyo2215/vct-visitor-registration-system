@@ -1,0 +1,68 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: visitor-registration-system-dev
+
+resources:
+  - ../../base
+
+namespace: visitor-registration-system-dev
+
+namePrefix: dev-
+nameSuffix: ""
+
+commonLabels:
+  environment: dev
+
+patches:
+  # Scale down for dev
+  - target:
+      kind: Deployment
+      name: vrs-app
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 1
+
+  # Reduce resources for dev
+  - target:
+      kind: Deployment
+      name: vrs-app
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: 50m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 128Mi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: 250m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 256Mi
+
+  # Disable ingress TLS for dev
+  - target:
+      kind: Ingress
+      name: vrs-ingress
+    patch: |
+      - op: remove
+        path: /spec/tls
+      - op: replace
+        path: /spec/rules/0/host
+        value: vrs.dev.local
+
+  # Smaller PVC for dev
+  - target:
+      kind: PersistentVolumeClaim
+      name: vrs-postgres-pvc
+    patch: |
+      - op: replace
+        path: /spec/resources/requests/storage
+        value: 1Gi
+
+images:
+  - name: ghcr.io/aungyephyo2215/vct-visitor-registration-system
+    newTag: dev-latest

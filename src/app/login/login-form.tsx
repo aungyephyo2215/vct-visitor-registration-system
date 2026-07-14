@@ -8,13 +8,7 @@ import { api } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth-context";
 import type { SafeUser } from "@/lib/types";
 
@@ -54,16 +48,14 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-muted/30 px-4 py-12">
+    <div className="bg-muted/30 flex flex-1 items-center justify-center px-4 py-12">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <QrCode className="h-6 w-6 text-primary" />
+          <div className="bg-primary/10 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+            <QrCode className="text-primary h-6 w-6" />
           </div>
           <CardTitle className="text-xl">Sign In</CardTitle>
-          <CardDescription>
-            Enter your credentials to access the system
-          </CardDescription>
+          <CardDescription>Enter your credentials to access the system</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -97,20 +89,20 @@ export default function LoginForm() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-0 top-0 h-full px-3"
+                  className="absolute top-0 right-0 h-full px-3"
                   onClick={() => setShowPassword(!showPassword)}
                   tabIndex={-1}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    <EyeOff className="text-muted-foreground h-4 w-4" />
                   ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
+                    <Eye className="text-muted-foreground h-4 w-4" />
                   )}
                 </Button>
               </div>
             </div>
             {error && (
-              <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <div className="bg-destructive/10 text-destructive rounded-md px-3 py-2 text-sm">
                 {error}
               </div>
             )}
@@ -118,7 +110,7 @@ export default function LoginForm() {
               {loading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm text-muted-foreground">
+          <div className="text-muted-foreground mt-4 text-center text-sm">
             <Link href="/" className="hover:text-foreground">
               Back to home
             </Link>

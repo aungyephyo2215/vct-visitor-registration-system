@@ -31,7 +31,11 @@ export async function GET(request: NextRequest) {
       orderBy: { generated_at: "desc" },
       include: {
         invitation: {
-          select: { visitor_name: true, visitor_type: true, unit: { select: { unit_no: true, floor: true } } },
+          select: {
+            visitor_name: true,
+            visitor_type: true,
+            unit: { select: { unit_no: true, floor: true } },
+          },
         },
       },
     });

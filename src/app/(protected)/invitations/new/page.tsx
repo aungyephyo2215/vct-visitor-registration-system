@@ -14,13 +14,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -130,18 +124,14 @@ export default function NewInvitationPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">New Invitation</h1>
-          <p className="text-muted-foreground">
-            Pre-register a visitor
-          </p>
+          <p className="text-muted-foreground">Pre-register a visitor</p>
         </div>
       </div>
 
       <Card className="max-w-lg">
         <CardHeader>
           <CardTitle>Invitation Details</CardTitle>
-          <CardDescription>
-            Enter the visitor&apos;s information and visit details
-          </CardDescription>
+          <CardDescription>Enter the visitor&apos;s information and visit details</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -290,7 +280,7 @@ export default function NewInvitationPage() {
             </div>
 
             {error && (
-              <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <div className="bg-destructive/10 text-destructive rounded-md px-3 py-2 text-sm">
                 {error}
               </div>
             )}
