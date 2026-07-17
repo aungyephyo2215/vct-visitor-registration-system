@@ -29,6 +29,11 @@ claude-output.txt
 # .mcp.json
 cookies.txt
 
+# --- Kubernetes Secrets (NEVER commit real secrets) ---
+k8s/base/app/secret.yaml
+k8s/base/postgres/secret.yaml
+k8s/overlays/*/secrets/
+
 # --- IDE ---
 .vscode/
 .idea/
