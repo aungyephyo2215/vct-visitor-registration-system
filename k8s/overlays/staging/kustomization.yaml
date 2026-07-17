@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+# Staging-specific patches
+patches:
+  # Reduce resource limits for staging
+  - path: patches/resource-limits.yaml
+  # Override ingress host for staging
+  - path: patches/ingress-host.yaml
+  # Override container image for staging
+  - path: patches/container-image.yaml
+
+# Staging-specific ConfigMap values
+configMapGenerator:
+  - name: vrs-app-config
+    namespace: vrs-app
+    behavior: merge
+    literals:
+      - NEXT_PUBLIC_APP_URL=https://vrs-staging.k8s.cmtmm.online
+      - APP_BASE_URL=https://vrs-staging.k8s.cmtmm.online
+      - EMAIL_PROVIDER=noop

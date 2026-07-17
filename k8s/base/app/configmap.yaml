@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vrs-app-config
+  namespace: vrs-app
+  labels:
+    app.kubernetes.io/name: visitor-registration-system
+    app.kubernetes.io/component: application
+data:
+  NODE_ENV: "production"
+  JWT_EXPIRES_IN: "24h"
+  JWT_REFRESH_EXPIRES_IN: "7d"
+  BCRYPT_ROUNDS: "12"
+  QR_EXPIRES_MINUTES: "1440"
+  QR_EMAIL_ENABLED: "true"
+  EMAIL_PROVIDER: "smtp"
+  EMAIL_FROM: "Visitor Registration <no-reply@k8s.cmtmm.online>"
+  SMTP_HOST: "smtp.gmail.com"
+  SMTP_PORT: "587"
+  SMTP_SECURE: "false"
+  SMTP_REQUIRE_TLS: "false"
+  # NEXT_PUBLIC vars are baked at build time — set via Deployment env
+  NEXT_PUBLIC_APP_URL: "https://vrs.k8s.cmtmm.online"
+  APP_BASE_URL: "https://vrs.k8s.cmtmm.online"

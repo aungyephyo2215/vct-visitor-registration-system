@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vrs-postgres-config
+  namespace: vrs-postgres
+  labels:
+    app.kubernetes.io/name: vrs-postgres
+    app.kubernetes.io/component: database
+data:
+  POSTGRES_INITDB_ARGS: "--data-checksums"
+  # Performance tuning for single-node K3s
+  PGDATA: "/var/lib/postgresql/data/pgdata"

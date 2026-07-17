@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vrs-app
+  namespace: vrs-app
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: visitor-registration-system
+  template:
+    spec:
+      containers:
+        - name: vrs-app
+          # Override with staging image tag
+          image: ghcr.io/aungkyephyo2215/visitor-registration-system:staging-latest
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"

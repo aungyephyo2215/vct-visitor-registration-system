@@ -1,0 +1,164 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vrs-app
+  namespace: vrs-app
+  labels:
+    app.kubernetes.io/name: visitor-registration-system
+    app.kubernetes.io/component: application
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: visitor-registration-system
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: visitor-registration-system
+        app.kubernetes.io/component: application
+    spec:
+      initContainers:
+        # Wait for PostgreSQL to be ready before starting app
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z vrs-postgres.vrs-postgres.svc.cluster.local 5432; do
+                echo "Waiting for PostgreSQL..."
+                sleep 2
+              done
+              echo "PostgreSQL is ready!"
+      containers:
+        - name: vrs-app
+          image: ghcr.io/aungyephyo2215/visitor-registration-system:staging
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              name: http
+              protocol: TCP
+          env:
+            # Secrets from K8s Secret
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: vrs-app-secret
+                  key: DATABASE_URL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: vrs-app-secret
+                  key: JWT_SECRET
+            - name: JWT_REFRESH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: vrs-app-secret
+                  key: JWT_REFRESH_SECRET
+            - name: SMTP_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: vrs-app-secret
+                  key: SMTP_PASS
+            # Config from ConfigMap
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: NODE_ENV
+            - name: JWT_EXPIRES_IN
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: JWT_EXPIRES_IN
+            - name: JWT_REFRESH_EXPIRES_IN
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: JWT_REFRESH_EXPIRES_IN
+            - name: BCRYPT_ROUNDS
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: BCRYPT_ROUNDS
+            - name: QR_EXPIRES_MINUTES
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: QR_EXPIRES_MINUTES
+            - name: QR_EMAIL_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: QR_EMAIL_ENABLED
+            - name: EMAIL_PROVIDER
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: EMAIL_PROVIDER
+            - name: EMAIL_FROM
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: EMAIL_FROM
+            - name: SMTP_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: SMTP_HOST
+            - name: SMTP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: SMTP_PORT
+            - name: SMTP_SECURE
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: SMTP_SECURE
+            - name: SMTP_REQUIRE_TLS
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: SMTP_REQUIRE_TLS
+            # NEXT_PUBLIC vars must be set at runtime for standalone
+            - name: NEXT_PUBLIC_APP_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: NEXT_PUBLIC_APP_URL
+            - name: APP_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: APP_BASE_URL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
