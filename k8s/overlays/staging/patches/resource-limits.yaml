@@ -4,6 +4,9 @@ metadata:
   name: vrs-app
   namespace: vrs-app
 spec:
+  selector:
+    matchLabels:
+      app: vrs-app
   template:
     spec:
       containers:
@@ -22,6 +25,10 @@ metadata:
   name: vrs-postgres
   namespace: vrs-postgres
 spec:
+  selector:
+    matchLabels:
+      app: vrs-postgres
+  serviceName: vrs-postgres
   template:
     spec:
       containers:
