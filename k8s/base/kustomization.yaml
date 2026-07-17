@@ -5,14 +5,12 @@ resources:
   # PostgreSQL
   - postgres/namespace.yaml
   - postgres/pvc.yaml
-  - postgres/secret.yaml
   - postgres/configmap.yaml
   - postgres/statefulset.yaml
   - postgres/service.yaml
 
   # Application
   - app/namespace.yaml
-  - app/secret.yaml
   - app/configmap.yaml
   - app/deployment.yaml
   - app/service.yaml
