@@ -9,6 +9,9 @@ metadata:
 spec:
   serviceName: vrs-postgres
   replicas: 1
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
   selector:
     matchLabels:
       app.kubernetes.io/name: vrs-postgres
