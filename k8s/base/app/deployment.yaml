@@ -18,7 +18,7 @@ spec:
         app.kubernetes.io/component: application
     spec:
       initContainers:
-        # Wait for PostgreSQL to be ready before starting app
+        # 1. Wait for PostgreSQL to be ready
         - name: wait-for-postgres
           image: busybox:1.36
           command:
@@ -30,6 +30,28 @@ spec:
                 sleep 2
               done
               echo "PostgreSQL is ready!"
+
+        # 2. Run Prisma migrations (creates/updates tables)
+        - name: run-migrations
+          image: ghcr.io/aungkyephyo2215/visitor-registration-system:staging
+          command: ["npx", "prisma", "migrate", "deploy"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: vrs-app-secret
+                  key: DATABASE_URL
+
+        # 3. Seed database (creates admin user, skips if exists)
+        - name: seed-database
+          image: ghcr.io/aungkyephyo2215/visitor-registration-system:staging
+          command: ["npx", "prisma", "db", "seed"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: vrs-app-secret
+                  key: DATABASE_URL
       containers:
         - name: vrs-app
           image: ghcr.io/aungyephyo2215/visitor-registration-system:staging
