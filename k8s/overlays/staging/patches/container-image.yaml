@@ -11,14 +11,14 @@ spec:
           image: busybox:1.36
           imagePullPolicy: IfNotPresent
         - name: run-migrations
-          image: docker.io/aungyephyo2215/vrs:staging
+          image: docker.io/aungkyawmyint/vrs:staging
           imagePullPolicy: Always
         - name: seed-database
-          image: docker.io/aungyephyo2215/vrs:staging
+          image: docker.io/aungkyawmyint/vrs:staging
           imagePullPolicy: Always
       containers:
         - name: vrs-app
-          image: docker.io/aungyephyo2215/vrs:staging
+          image: docker.io/aungkyawmyint/vrs:staging
           imagePullPolicy: Always
           resources:
             requests:
