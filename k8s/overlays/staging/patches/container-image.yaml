@@ -6,11 +6,18 @@ metadata:
 spec:
   template:
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+        - name: run-migrations
+          image: ghcr.io/aungkyephyo2215/vct-visitor-registration-system:staging
+        - name: seed-database
+          image: ghcr.io/aungkyephyo2215/vct-visitor-registration-system:staging
       containers:
         - name: vrs-app
           # GitHub Actions builds this image on every push to staging/argocd-k8s-lab
           # Tag format: staging (from branch name)
-          image: ghcr.io/aungyephyo2215/vct-visitor-registration-system:staging
+          image: ghcr.io/aungkyephyo2215/vct-visitor-registration-system:staging
           imagePullPolicy: Always
           resources:
             requests:
