@@ -9,10 +9,13 @@ spec:
       initContainers:
         - name: wait-for-postgres
           image: busybox:1.36
+          imagePullPolicy: IfNotPresent
         - name: run-migrations
           image: ghcr.io/aungkyephyo2215/vct-visitor-registration-system:staging
+          imagePullPolicy: Never
         - name: seed-database
           image: ghcr.io/aungkyephyo2215/vct-visitor-registration-system:staging
+          imagePullPolicy: Never
       containers:
         - name: vrs-app
           # GitHub Actions builds this image on every push to staging/argocd-k8s-lab
