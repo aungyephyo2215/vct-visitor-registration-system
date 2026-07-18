@@ -11,16 +11,15 @@ spec:
           image: busybox:1.36
           imagePullPolicy: IfNotPresent
         - name: run-migrations
-          image: ghcr.io/aungkyephyo2215/vct-visitor-registration-system:staging
+          image: docker.io/library/vrs-app:staging
           imagePullPolicy: Never
         - name: seed-database
-          image: ghcr.io/aungkyephyo2215/vct-visitor-registration-system:staging
+          image: docker.io/library/vrs-app:staging
           imagePullPolicy: Never
       containers:
         - name: vrs-app
-          # GitHub Actions builds this image on every push to staging/argocd-k8s-lab
-          # Tag format: staging (from branch name)
-          image: ghcr.io/aungkyephyo2215/vct-visitor-registration-system:staging
+          # Locally built image (docker build + import to containerd)
+          image: docker.io/library/vrs-app:staging
           imagePullPolicy: Never
           resources:
             requests:
