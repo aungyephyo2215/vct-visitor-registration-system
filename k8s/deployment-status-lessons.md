@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-18
 **Environment:** Staging
-**URL:** https://vrs-staging.k8s.cmtmm.online
+**URL:** https://vrs-staging.k8s.example.com
 **Cluster:** K3s single-node (v1.36.2+k3s1)
 **GitOps:** Argo CD v3.4.4
 
@@ -16,20 +16,20 @@
 | **PostgreSQL**         | `vrs-postgres` | ✅ Running   | `vrs-postgres-0` StatefulSet, 5Gi PVC      |
 | **App Service**        | `vrs-app`      | ✅ ClusterIP | Port 3000                                  |
 | **PostgreSQL Service** | `vrs-postgres` | ✅ ClusterIP | Port 5432                                  |
-| **Ingress**            | `vrs-app`      | ✅ Active    | `vrs-staging.k8s.cmtmm.online` via NGINX   |
+| **Ingress**            | `vrs-app`      | ✅ Active    | `vrs-staging.k8s.example.com` via NGINX    |
 | **TLS Certificate**    | `vrs-app`      | ✅ Ready     | Issued by `letsencrypt-production`         |
-| **DNS**                | —              | ✅ Resolving | `vrs-staging.k8s.cmtmm.online` → VPS IP    |
+| **DNS**                | —              | ✅ Resolving | `vrs-staging.k8s.example.com` → VPS IP     |
 | **Argo CD Sync**       | `argocd`       | ✅ Synced    | Automated sync with self-heal              |
 | **Database Schema**    | `vrs-postgres` | ✅ Synced    | Prisma schema applied                      |
 | **Database Seed**      | `vrs-postgres` | ✅ Complete  | 5 users, 1 property, 1 unit, 2 invitations |
 
 ### Application Endpoints
 
-| URL                                                      | Description        |
-| -------------------------------------------------------- | ------------------ |
-| `https://vrs-staging.k8s.cmtmm.online/`                  | Application root   |
-| `https://vrs-staging.k8s.cmtmm.online/login`             | Login page         |
-| `https://vrs-staging.k8s.cmtmm.online/api/v1/auth/login` | Authentication API |
+| URL                                                     | Description        |
+| ------------------------------------------------------- | ------------------ |
+| `https://vrs-staging.k8s.example.com/`                  | Application root   |
+| `https://vrs-staging.k8s.example.com/login`             | Login page         |
+| `https://vrs-staging.k8s.example.com/api/v1/auth/login` | Authentication API |
 
 ### Default Accounts (Seeded)
 
@@ -50,7 +50,7 @@
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        EXTERNAL TRAFFIC                         │
-│              vrs-staging.k8s.cmtmm.online (TLS via LE)          │
+│              vrs-staging.k8s.example.com (TLS via LE)          │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
                             ▼
@@ -557,12 +557,12 @@ kubectl get secret ghcr-pull-secret -n vrs-app -o jsonpath='{.type}'
 
 ```bash
 # Test DNS resolution
-dig vrs-staging.k8s.cmtmm.online +short
-nslookup vrs-staging.k8s.cmtmm.online
+dig vrs-staging.k8s.example.com +short
+nslookup vrs-staging.k8s.example.com
 
 # Test HTTPS
 curl -s -o /dev/null -w "HTTP: %{http_code}\nSSL: %{ssl_verify_result}\n" \
-  https://vrs-staging.k8s.cmtmm.online/
+  https://vrs-staging.k8s.example.com/
 
 # Test from inside cluster
 kubectl exec -n vrs-app <pod-name> -- curl -s http://vrs-postgres.vrs-postgres.svc.cluster.local:5432
@@ -732,7 +732,7 @@ Use this checklist before deploying to any new environment:
 kubectl get pods -A | grep vrs
 kubectl get ingress -n vrs-app
 kubectl get certificates -n vrs-app
-curl -s -o /dev/null -w "%{http_code}" https://vrs-staging.k8s.cmtmm.online/
+curl -s -o /dev/null -w "%{http_code}" https://vrs-staging.k8s.example.com/
 ```
 
 ---
