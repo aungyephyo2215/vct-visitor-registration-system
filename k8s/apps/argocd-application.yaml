@@ -42,8 +42,8 @@ spec:
         - /spec/replicas
     - group: apps
       kind: StatefulSet
-      jqPathExpressions:
-        - .spec.updateStrategy
+      jsonPointers:
+        - /metadata/managedFields
   info:
     - name: environment
       value: staging
