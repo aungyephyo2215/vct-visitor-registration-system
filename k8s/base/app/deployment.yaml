@@ -35,7 +35,7 @@ spec:
 
         # 2. Run Prisma migrations (creates/updates tables)
         - name: run-migrations
-          image: ghcr.io/aungkyephyo2215/vct-visitor-registration-system:staging
+          image: docker.io/aungyephyo2215/vrs:staging
           command: ["npx", "prisma", "migrate", "deploy"]
           env:
             - name: DATABASE_URL
@@ -46,7 +46,7 @@ spec:
 
         # 3. Seed database (creates admin user, skips if exists)
         - name: seed-database
-          image: ghcr.io/aungkyephyo2215/vct-visitor-registration-system:staging
+          image: docker.io/aungyephyo2215/vrs:staging
           command: ["npx", "prisma", "db", "seed"]
           env:
             - name: DATABASE_URL
