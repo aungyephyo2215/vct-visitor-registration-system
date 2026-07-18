@@ -34,12 +34,16 @@ spec:
         duration: 5s
         factor: 2
         maxDuration: 3m
-  # Health checks
+  # Ignore known cosmetic differences
   ignoreDifferences:
     - group: apps
       kind: Deployment
       jsonPointers:
         - /spec/replicas
+    - group: apps
+      kind: StatefulSet
+      jqPathExpressions:
+        - .spec.updateStrategy
   info:
     - name: environment
       value: staging
