@@ -17,6 +17,8 @@ spec:
         app.kubernetes.io/name: visitor-registration-system
         app.kubernetes.io/component: application
     spec:
+      imagePullSecrets:
+        - name: ghcr-pull-secret
       initContainers:
         # 1. Wait for PostgreSQL to be ready
         - name: wait-for-postgres
