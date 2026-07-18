@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/name: visitor-registration-system
     app.kubernetes.io/component: application
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: letsencrypt-production
     # Rate limiting for security
     nginx.ingress.kubernetes.io/limit-rps: "10"
     nginx.ingress.kubernetes.io/limit-burst-multiplier: "5"

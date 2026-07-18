@@ -4,7 +4,7 @@ metadata:
   name: vrs-app
   namespace: vrs-app
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: letsencrypt-production
 spec:
   tls:
     - hosts:
@@ -12,3 +12,12 @@ spec:
       secretName: vrs-staging-app-tls
   rules:
     - host: vrs-staging.k8s.cmtmm.online
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vrs-app
+                port:
+                  number: 3000
