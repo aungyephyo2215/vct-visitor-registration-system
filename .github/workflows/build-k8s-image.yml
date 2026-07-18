@@ -54,6 +54,15 @@ jobs:
           build-args: |
             NODE_ENV=production
 
+      - name: Make package public
+        if: github.event_name == 'push'
+        run: |
+          curl -s -X PATCH \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/user/packages/container/$(echo ${{ env.IMAGE_NAME }} | cut -d'/' -f2)/visibility" \
+            -d '{"visibility":"public"}' || echo "Failed to make package public (may already be public)"
+
       - name: Generate deployment summary
         if: github.event_name == 'push'
         run: |
