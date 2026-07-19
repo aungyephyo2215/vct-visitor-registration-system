@@ -17,8 +17,8 @@ spec:
         app.kubernetes.io/name: visitor-registration-system
         app.kubernetes.io/component: application
     spec:
-      imagePullSecrets:
-        - name: ghcr-pull-secret
+      # NOTE: imagePullSecrets removed — using public Docker Hub images
+      # Add back if switching to private registry (GHCR, ECR, etc.)
       securityContext:
         runAsNonRoot: true
         runAsUser: 1001
@@ -238,8 +238,10 @@ spec:
             httpGet:
               path: /api/health
               port: 3000
-            initialDelaySeconds: 30
-            periodSeconds: 5
+            # Init containers take ~60s (wait + migrations + seed)
+            # Give 90s initial delay to be safe
+            initialDelaySeconds: 90
+            periodSeconds: 10
             failureThreshold: 30
           lifecycle:
             preStop:
