@@ -41,6 +41,8 @@ spec:
         - /spec/replicas
     - group: apps
       kind: StatefulSet
+      jqPathExpressions:
+        - .spec.volumeClaimTemplates[] | .spec.resources.requests.storage
       jsonPointers:
         - /metadata/managedFields
         - /spec/updateStrategy/rollingUpdate
