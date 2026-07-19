@@ -5,3 +5,6 @@ metadata:
   labels:
     app.kubernetes.io/name: visitor-registration-system
     app.kubernetes.io/component: database
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

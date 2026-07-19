@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vrs-postgres-network-policy
+  namespace: vrs-postgres
+  labels:
+    app.kubernetes.io/name: vrs-postgres
+    app.kubernetes.io/component: database
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: vrs-postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    # Only allow connections from vrs-app namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vrs-app
+      ports:
+        - port: 5432
+          protocol: TCP

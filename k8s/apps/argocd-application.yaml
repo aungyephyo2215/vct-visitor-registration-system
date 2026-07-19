@@ -42,7 +42,7 @@ spec:
     - group: apps
       kind: StatefulSet
       jqPathExpressions:
-        - .spec.volumeClaimTemplates[] | .spec.resources.requests.storage
+        - .spec.volumeClaimTemplates[]
       jsonPointers:
         - /metadata/managedFields
         - /spec/updateStrategy/rollingUpdate

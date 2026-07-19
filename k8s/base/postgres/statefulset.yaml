@@ -27,6 +27,8 @@ spec:
         app.kubernetes.io/name: vrs-postgres
         app.kubernetes.io/component: database
     spec:
+      # NOTE: PostgreSQL container needs to run as root for initialization
+      # Pod Security Standards set to "baseline" to allow this
       containers:
         - name: postgres
           image: postgres:16-alpine

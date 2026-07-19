@@ -9,6 +9,8 @@ resources:
   - postgres/configmap.yaml
   - postgres/statefulset.yaml
   - postgres/service.yaml
+  - postgres/network-policy.yaml
+  - postgres/resource-quota.yaml
 
   # Application
   - app/namespace.yaml
@@ -17,6 +19,9 @@ resources:
   - app/service.yaml
   - app/ingress.yaml
   - app/hpa.yaml
+  - app/network-policy.yaml
+  - app/pdb.yaml
+  - app/resource-quota.yaml
 
 commonLabels:
   app.kubernetes.io/part-of: visitor-registration-system

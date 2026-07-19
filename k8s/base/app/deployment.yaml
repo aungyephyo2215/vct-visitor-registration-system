@@ -19,6 +19,13 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-pull-secret
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
       initContainers:
         # 1. Wait for PostgreSQL to be ready
         - name: wait-for-postgres
@@ -58,6 +65,12 @@ spec:
         - name: vrs-app
           image: ghcr.io/aungyephyo2215/visitor-registration-system:staging
           imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 3000
               name: http

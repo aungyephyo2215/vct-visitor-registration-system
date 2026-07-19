@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vrs-app
+  namespace: vrs-app
+  labels:
+    app.kubernetes.io/name: visitor-registration-system
+    app.kubernetes.io/component: application
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: visitor-registration-system
