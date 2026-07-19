@@ -17,5 +17,6 @@ export default defineConfig({
     // Production migrations: GitHub secret PRODUCTION_DATABASE_URL
     // Production runtime: Vercel environment variable
     url: process.env["DATABASE_URL"],
+    directUrl: process.env["DIRECT_DATABASE_URL"],
   },
 });

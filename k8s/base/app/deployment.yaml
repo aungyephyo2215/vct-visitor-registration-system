@@ -42,7 +42,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: vrs-app-secret
-                  key: DATABASE_URL
+                  key: DIRECT_DATABASE_URL
 
         # 3. Seed database (creates admin user, skips if exists)
         - name: seed-database
@@ -53,7 +53,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: vrs-app-secret
-                  key: DATABASE_URL
+                  key: DIRECT_DATABASE_URL
       containers:
         - name: vrs-app
           image: ghcr.io/aungyephyo2215/visitor-registration-system:staging
@@ -84,6 +84,11 @@ spec:
                 secretKeyRef:
                   name: vrs-app-secret
                   key: SMTP_PASS
+            - name: DIRECT_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: vrs-app-secret
+                  key: DIRECT_DATABASE_URL
             # Config from ConfigMap
             - name: NODE_ENV
               valueFrom:
@@ -165,7 +170,7 @@ spec:
               memory: 512Mi
           livenessProbe:
             httpGet:
-              path: /
+              path: /api/health
               port: 3000
             initialDelaySeconds: 30
             periodSeconds: 15
@@ -173,7 +178,7 @@ spec:
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /
+              path: /api/health
               port: 3000
             initialDelaySeconds: 10
             periodSeconds: 10
@@ -181,8 +186,13 @@ spec:
             failureThreshold: 3
           startupProbe:
             httpGet:
-              path: /
+              path: /api/health
               port: 3000
             initialDelaySeconds: 10
             periodSeconds: 5
             failureThreshold: 30
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 5"]
+      terminationGracePeriodSeconds: 30
