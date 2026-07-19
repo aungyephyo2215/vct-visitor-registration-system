@@ -238,9 +238,10 @@ spec:
             httpGet:
               path: /api/health
               port: 3000
-            # Init containers take ~60s (wait + migrations + seed)
-            # Give 90s initial delay to be safe
-            initialDelaySeconds: 90
+            # Init containers take ~50s, app starts ~5s after that
+            # initialDelaySeconds counts from when MAIN container starts (not pod creation)
+            initialDelaySeconds: 10
+            timeoutSeconds: 10
             periodSeconds: 10
             failureThreshold: 30
           lifecycle:
