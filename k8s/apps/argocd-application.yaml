@@ -12,7 +12,7 @@ spec:
   project: default
   source:
     # TODO: Update repoURL to your actual Git repository
-    repoURL: https://github.com/aungkyephyo2215/visitor-registration-system.git
+    repoURL: https://github.com/aungyephyo2215/vct-visitor-registration-system.git
     targetRevision: staging/argocd-k8s-lab
     path: k8s/overlays/staging
   destination:
@@ -44,6 +44,8 @@ spec:
       kind: StatefulSet
       jsonPointers:
         - /metadata/managedFields
+        - /spec/updateStrategy/rollingUpdate
+        - /spec/podManagementPolicy
   info:
     - name: environment
       value: staging

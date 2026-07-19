@@ -9,6 +9,7 @@ metadata:
 spec:
   serviceName: vrs-postgres
   replicas: 1
+  podManagementPolicy: OrderedReady
   revisionHistoryLimit: 10
   persistentVolumeClaimRetentionPolicy:
     whenDeleted: Retain
