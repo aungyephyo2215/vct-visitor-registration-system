@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vrs-app
+  namespace: vrs-app
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+spec:
+  tls:
+    - hosts:
+        - vrs.cmtmm.online
+      secretName: vrs-production-app-tls
+  rules:
+    - host: vrs.cmtmm.online
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vrs-app
+                port:
+                  number: 3000

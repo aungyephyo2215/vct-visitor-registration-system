@@ -174,6 +174,22 @@ spec:
                 configMapKeyRef:
                   name: vrs-app-config
                   key: APP_BASE_URL
+            # Connection pool settings
+            - name: DB_POOL_MAX
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: DB_POOL_MAX
+            - name: DB_IDLE_TIMEOUT_MS
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: DB_IDLE_TIMEOUT_MS
+            - name: DB_CONNECT_TIMEOUT_MS
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: DB_CONNECT_TIMEOUT_MS
           resources:
             requests:
               cpu: 100m

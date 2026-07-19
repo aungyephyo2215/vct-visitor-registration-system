@@ -11,6 +11,7 @@ resources:
   - postgres/service.yaml
   - postgres/network-policy.yaml
   - postgres/resource-quota.yaml
+  - postgres/backup-cronjob.yaml
 
   # Application
   - app/namespace.yaml

@@ -1,0 +1,7 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vrs-app
+  namespace: vrs-app
+spec:
+  replicas: 3

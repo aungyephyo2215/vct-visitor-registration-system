@@ -1,0 +1,63 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: vrs-postgres-backup
+  namespace: vrs-postgres
+  labels:
+    app.kubernetes.io/name: vrs-postgres
+    app.kubernetes.io/component: backup
+spec:
+  schedule: "0 2 * * *" # Daily at 2 AM UTC
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: pg-backup
+              image: postgres:16-alpine
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: vrs-postgres-secret
+                      key: POSTGRES_PASSWORD
+                - name: POSTGRES_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: vrs-postgres-secret
+                      key: POSTGRES_USER
+                - name: POSTGRES_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: vrs-postgres-secret
+                      key: POSTGRES_DB
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  BACKUP_FILE="/backup/vrs_db_$(date +%Y%m%d_%H%M%S).sql.gz"
+                  echo "Starting backup: $BACKUP_FILE"
+                  pg_dump -h vrs-postgres.vrs-postgres.svc.cluster.local \
+                    -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+                    --no-owner --no-acl | gzip > "$BACKUP_FILE"
+                  echo "Backup complete: $(du -h $BACKUP_FILE | cut -f1)"
+                  # Remove backups older than 30 days
+                  find /backup -name "vrs_db_*.sql.gz" -mtime +30 -delete
+                  echo "Cleanup complete"
+              volumeMounts:
+                - name: backup-storage
+                  mountPath: /backup
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: 500m
+                  memory: 256Mi
+          volumes:
+            - name: backup-storage
+              emptyDir:
+                sizeLimit: 1Gi
+          restartPolicy: OnFailure
+      backoffLimit: 3

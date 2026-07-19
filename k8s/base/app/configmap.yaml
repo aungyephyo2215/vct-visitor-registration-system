@@ -19,6 +19,10 @@ data:
   SMTP_PORT: "587"
   SMTP_SECURE: "false"
   SMTP_REQUIRE_TLS: "false"
+  # Connection pool settings (per pod)
+  DB_POOL_MAX: "5"
+  DB_IDLE_TIMEOUT_MS: "30000"
+  DB_CONNECT_TIMEOUT_MS: "5000"
   # NEXT_PUBLIC vars are baked at build time — set via Deployment env
   NEXT_PUBLIC_APP_URL: "https://vrs.k8s.cmtmm.online"
   APP_BASE_URL: "https://vrs.k8s.cmtmm.online"

@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+# Production-specific patches
+patches:
+  - path: patches/resource-limits.yaml
+  - path: patches/replicas.yaml
+  - path: patches/ingress-host.yaml
+
+# Production-specific ConfigMap values
+configMapGenerator:
+  - name: vrs-app-config
+    namespace: vrs-app
+    behavior: merge
+    literals:
+      - NEXT_PUBLIC_APP_URL=https://vrs.cmtmm.online
+      - APP_BASE_URL=https://vrs.cmtmm.online
+      - EMAIL_PROVIDER=smtp
