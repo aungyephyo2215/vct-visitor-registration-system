@@ -1,0 +1,108 @@
+# Resource Quotas for Monitoring Stack
+# Prevent monitoring from consuming all cluster resources
+
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: monitoring-quota
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: monitoring-stack
+spec:
+  hard:
+    # CPU limits
+    requests.cpu: "4"
+    limits.cpu: "8"
+    # Memory limits
+    requests.memory: 4Gi
+    limits.memory: 8Gi
+    # Storage limits
+    requests.storage: 50Gi
+    # Pod limits
+    pods: "20"
+    # PVC limits
+    persistentvolumeclaims: "10"
+    # Service limits
+    services: "10"
+    # ConfigMap limits
+    configmaps: "20"
+    # Secret limits
+    secrets: "20"
+
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: logging-quota
+  namespace: logging
+  labels:
+    app.kubernetes.io/part-of: logging-stack
+spec:
+  hard:
+    # CPU limits
+    requests.cpu: "2"
+    limits.cpu: "4"
+    # Memory limits
+    requests.memory: 2Gi
+    limits.memory: 4Gi
+    # Storage limits
+    requests.storage: 30Gi
+    # Pod limits
+    pods: "10"
+    # PVC limits
+    persistentvolumeclaims: "5"
+    # Service limits
+    services: "5"
+    # ConfigMap limits
+    configmaps: "10"
+    # Secret limits
+    secrets: "10"
+
+---
+# Limit Ranges for default resource requests
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: monitoring-limit-range
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: monitoring-stack
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: 500m
+        memory: 512Mi
+      defaultRequest:
+        cpu: 100m
+        memory: 128Mi
+      max:
+        cpu: 4
+        memory: 8Gi
+      min:
+        cpu: 50m
+        memory: 64Mi
+
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: logging-limit-range
+  namespace: logging
+  labels:
+    app.kubernetes.io/part-of: logging-stack
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: 250m
+        memory: 256Mi
+      defaultRequest:
+        cpu: 50m
+        memory: 64Mi
+      max:
+        cpu: 2
+        memory: 4Gi
+      min:
+        cpu: 25m
+        memory: 32Mi

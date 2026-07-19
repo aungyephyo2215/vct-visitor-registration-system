@@ -1,0 +1,158 @@
+# ArgoCD Application for Monitoring Stack (Prometheus + Grafana)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring-stack
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: monitoring-stack
+    environment: staging
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    # TODO: Update repoURL to your actual Git repository
+    repoURL: https://github.com/aungyephyo2215/vct-visitor-registration-system.git
+    targetRevision: staging/argocd-k8s-lab
+    path: k8s/base/monitoring
+    # Helm values for kube-prometheus-stack
+    helm:
+      releaseName: prometheus
+      values: |
+        ## Prometheus Operator
+        prometheusOperator:
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+        ## Prometheus Configuration
+        prometheus:
+          prometheusSpec:
+            retention: 15d
+            retentionSize: "15GB"
+            scrapeInterval: 30s
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 20Gi
+            resources:
+              requests:
+                cpu: 500m
+                memory: 1Gi
+              limits:
+                cpu: 2000m
+                memory: 4Gi
+
+        ## Alertmanager Configuration
+        alertmanager:
+          alertmanagerSpec:
+            replicas: 1
+            storage:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 5Gi
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 256Mi
+
+        ## Grafana Configuration
+        grafana:
+          adminPassword: "changeme123"
+          persistence:
+            enabled: true
+            size: 5Gi
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          datasources:
+            datasources.yaml:
+              apiVersion: 1
+              datasources:
+                - name: Prometheus
+                  type: prometheus
+                  url: http://prometheus-k8s.monitoring.svc.cluster.local:9090
+                  isDefault: true
+                - name: Loki
+                  type: loki
+                  url: http://loki-gateway.logging.svc.cluster.local:80
+
+        ## Node Exporter
+        nodeExporter:
+          enabled: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+
+        ## Kube State Metrics
+        kubeStateMetrics:
+          enabled: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  # Ignore known cosmetic differences
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: apps
+      kind: StatefulSet
+      jqPathExpressions:
+        - .spec.volumeClaimTemplates[]
+      jsonPointers:
+        - /metadata/managedFields
+        - /spec/updateStrategy/rollingUpdate
+        - /spec/podManagementPolicy
+  info:
+    - name: environment
+      value: staging
+    - name: team
+      value: visitor-registration
+    - name: stack
+      value: monitoring

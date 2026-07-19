@@ -1,0 +1,46 @@
+# Network Policies for Logging Stack
+# Already included in monitoring/network-policy.yaml
+# This file adds additional policies specific to logging
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: logging-stack-default-deny
+  namespace: logging
+  labels:
+    app.kubernetes.io/part-of: logging-stack
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  # Default deny all, then allow specific traffic
+  # (Individual policies in monitoring/network-policy.yaml override this)
+
+---
+# Allow all pods in vrs-app namespace to send logs
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vrs-app-logs-egress
+  namespace: vrs-app
+  labels:
+    app.kubernetes.io/part-of: visitor-registration-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: visitor-registration-system
+  policyTypes:
+    - Egress
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP

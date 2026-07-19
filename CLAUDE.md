@@ -126,6 +126,9 @@ DevOps
 - Docker
 - Docker Compose
 - GitHub Actions
+- Kubernetes (K3s)
+- ArgoCD (GitOps)
+- Vercel (Production)
 
 ⸻
 

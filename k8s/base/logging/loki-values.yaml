@@ -1,0 +1,153 @@
+# Loki Configuration for Visitor Registration System
+# Based on Grafana Loki Helm chart
+
+## Loki Configuration
+loki:
+  # Single-tenant mode (no auth required)
+  auth_enabled: false
+
+  # Server configuration
+  server:
+    http_listen_port: 3100
+
+  # Common configuration
+  common:
+    path_prefix: /loki
+    storage:
+      filesystem:
+        chunks_directory: /loki/chunks
+        rules_directory: /loki/rules
+    replication_factor: 1
+    ring:
+      instance_addr: 127.0.0.1
+      kvstore:
+        store: inmemory
+
+  # Schema configuration
+  schemaConfig:
+    configs:
+      - from: "2024-01-01"
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
+
+  # Storage configuration
+  storageConfig:
+    filesystem:
+      directory: /loki/chunks
+
+  # Limits configuration
+  limits_config:
+    retention_period: 14d
+    max_query_length: 721h
+    max_query_parallelism: 32
+    ingestion_rate_mb: 10
+    ingestion_burst_size_mb: 20
+    per_stream_rate_limit: 5MB
+    per_stream_rate_limit_burst: 15MB
+    max_entries_limit_per_query: 10000
+    reject_old_samples: true
+    reject_old_samples_max_age: 168h
+
+  # Chunk store configuration
+  chunk_store_config:
+    max_look_back_period: 0
+
+  # Table manager
+  table_manager:
+    retention_deletes_enabled: false
+    retention_period: 0
+
+  # Compactor
+  compactor:
+    working_directory: /loki/compactor
+    compaction_interval: 10m
+    retention_enabled: true
+    retention_delete_delay: 2h
+    retention_delete_worker_count: 150
+
+  # Query range
+  query_range:
+    results_cache:
+      cache:
+        embedded_cache:
+          enabled: true
+          max_size_mb: 100
+
+  # Ruler (for alerting)
+  ruler:
+    storage:
+      type: local
+      local:
+        directory: /loki/rules
+    rule_path: /loki/rules-temp
+    alertmanager_url: http://alertmanager-main.monitoring.svc.cluster.local:9093
+    ring:
+      kvstore:
+        store: inmemory
+    enable_api: true
+
+  # Analytics
+  analytics:
+    reporting_enabled: false
+
+## Gateway configuration (optional, for multi-tenant setups)
+gateway:
+  enabled: false
+
+## StatefulSet configuration
+statefulset:
+  enabled: true
+  replicas: 1
+
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+
+  # Autoscaling (disabled for single-node)
+  autoscaling:
+    enabled: false
+
+  # Anti-affinity (not needed for single-node)
+  affinity: {}
+
+# Single binary mode (simpler for small deployments)
+singleBinary:
+  replicas: 1
+  persistence:
+    enabled: true
+    size: 10Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+
+# Test environment
+test:
+  enabled: false
+
+# Monitoring
+monitoring:
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+    labels:
+      app.kubernetes.io/name: prometheus
+      app.kubernetes.io/part-of: monitoring-stack
