@@ -4,6 +4,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm install --ignore-scripts
 COPY . .
+# directUrl requires DIRECT_DATABASE_URL at generate time; use dummy for build
+ENV DIRECT_DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npx prisma generate
 RUN npm run build
 
