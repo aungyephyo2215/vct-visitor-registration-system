@@ -24,18 +24,6 @@ resources:
   - app/pdb.yaml
   - app/resource-quota.yaml
 
-  # Monitoring Stack (Prometheus + Grafana)
-  - monitoring/namespace.yaml
-  - monitoring/alert-rules.yaml
-  - monitoring/ingress.yaml
-  - monitoring/network-policy.yaml
-  - monitoring/resource-quota.yaml
-  - monitoring/secret.yaml
-
-  # Logging Stack (Loki + Promtail)
-  - logging/namespace.yaml
-  - logging/network-policy.yaml
-
 commonLabels:
   app.kubernetes.io/part-of: visitor-registration-system
   managed-by: argocd

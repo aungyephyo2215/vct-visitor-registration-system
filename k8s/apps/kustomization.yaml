@@ -3,5 +3,3 @@ kind: Kustomization
 
 resources:
   - argocd-application.yaml
-  - monitoring-application.yaml
-  - logging-application.yaml
