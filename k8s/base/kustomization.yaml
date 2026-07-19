@@ -4,7 +4,8 @@ kind: Kustomization
 resources:
   # PostgreSQL
   - postgres/namespace.yaml
-  - postgres/pvc.yaml
+  # NOTE: PVC is NOT listed here — StatefulSet creates PVCs via volumeClaimTemplates
+  # The standalone pvc.yaml was causing an orphaned Pending PVC
   - postgres/configmap.yaml
   - postgres/statefulset.yaml
   - postgres/service.yaml

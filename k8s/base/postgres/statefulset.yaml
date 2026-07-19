@@ -99,9 +99,14 @@ spec:
   volumeClaimTemplates:
     - metadata:
         name: postgres-data
+        labels:
+          app.kubernetes.io/name: vrs-postgres
+          app.kubernetes.io/component: database
+          app.kubernetes.io/part-of: visitor-registration-system
       spec:
         accessModes:
           - ReadWriteOnce
+        storageClassName: local-path
         resources:
           requests:
-            storage: 5Gi
+            storage: 10Gi
