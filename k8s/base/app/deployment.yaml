@@ -39,6 +39,13 @@ spec:
                 sleep 2
               done
               echo "PostgreSQL is ready!"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
 
         # 2. Run Prisma migrations (creates/updates tables)
         - name: run-migrations
@@ -50,6 +57,13 @@ spec:
                 secretKeyRef:
                   name: vrs-app-secret
                   key: DIRECT_DATABASE_URL
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
 
         # 3. Seed database (creates admin user, skips if exists)
         - name: seed-database
@@ -61,6 +75,13 @@ spec:
                 secretKeyRef:
                   name: vrs-app-secret
                   key: DIRECT_DATABASE_URL
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
       containers:
         - name: vrs-app
           image: ghcr.io/aungyephyo2215/visitor-registration-system:staging
