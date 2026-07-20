@@ -9,7 +9,7 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: default
+  project: visitor-registration-system
   source:
     # TODO: Update repoURL to your actual Git repository
     repoURL: https://github.com/aungyephyo2215/vct-visitor-registration-system.git

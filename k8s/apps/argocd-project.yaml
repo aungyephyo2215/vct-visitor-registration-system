@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: visitor-registration-system
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Visitor Registration System - staging environment
+  sourceRepos:
+    - "https://github.com/aungyephyo2215/vct-visitor-registration-system.git"
+  destinations:
+    - namespace: vrs-app
+      server: https://kubernetes.default.svc
+    - namespace: vrs-postgres
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: "*"
+    - group: apps
+      kind: "*"
+    - group: networking.k8s.io
+      kind: "*"
+    - group: autoscaling
+      kind: "*"
+    - group: batch
+      kind: "*"
+  orphanedResources:
+    warn: true

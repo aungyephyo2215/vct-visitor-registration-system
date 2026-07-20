@@ -7,7 +7,13 @@ metadata:
     app.kubernetes.io/name: visitor-registration-system
     app.kubernetes.io/component: application
 spec:
-  replicas: 1
+  replicas: 2
+  minReadySeconds: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app.kubernetes.io/name: visitor-registration-system
