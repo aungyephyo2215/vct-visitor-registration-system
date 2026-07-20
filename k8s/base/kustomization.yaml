@@ -26,4 +26,3 @@ resources:
 
 commonLabels:
   app.kubernetes.io/part-of: visitor-registration-system
-  managed-by: argocd
