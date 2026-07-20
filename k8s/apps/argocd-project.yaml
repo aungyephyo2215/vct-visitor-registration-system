@@ -28,5 +28,7 @@ spec:
       kind: "*"
     - group: batch
       kind: "*"
+    - group: policy
+      kind: "*"
   orphanedResources:
     warn: true
