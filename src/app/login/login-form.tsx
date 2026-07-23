@@ -205,15 +205,11 @@ export default function LoginForm() {
                     <div className="flex shrink-0 items-center gap-1">
                       <TooltipProvider>
                         <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              onClick={() => fillDemo(account.email, account.password)}
-                              className="text-muted-foreground hover:text-foreground hover:bg-muted rounded p-1 transition-colors"
-                              title="Fill credentials"
-                            >
-                              <Key className="h-3 w-3" />
-                            </button>
+                          <TooltipTrigger
+                            onClick={() => fillDemo(account.email, account.password)}
+                            className="text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer rounded border-none bg-transparent p-1 transition-colors"
+                          >
+                            <Key className="h-3 w-3" />
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>Fill credentials</p>
@@ -222,21 +218,15 @@ export default function LoginForm() {
                       </TooltipProvider>
                       <TooltipProvider>
                         <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                copyToClipboard(account.email, `email-${account.email}`)
-                              }
-                              className="text-muted-foreground hover:text-foreground hover:bg-muted rounded p-1 transition-colors"
-                              title="Copy email"
-                            >
-                              {copied === `email-${account.email}` ? (
-                                <Check className="h-3 w-3 text-green-500" />
-                              ) : (
-                                <Copy className="h-3 w-3" />
-                              )}
-                            </button>
+                          <TooltipTrigger
+                            onClick={() => copyToClipboard(account.email, `email-${account.email}`)}
+                            className="text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer rounded border-none bg-transparent p-1 transition-colors"
+                          >
+                            {copied === `email-${account.email}` ? (
+                              <Check className="h-3 w-3 text-green-500" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>Copy email</p>
