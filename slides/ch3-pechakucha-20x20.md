@@ -1,11 +1,31 @@
 ---
 marp: true
-theme: uncover
+theme: gaia
 paginate: true
 auto-scaling: true
 size: 16:9
 auto-advance: 20
 ---
+
+<style>
+section.compact {
+  font-size: 28px;
+}
+
+section.compact h2 {
+  margin-bottom: 0.35em;
+}
+
+section.compact table {
+  font-size: 0.86em;
+}
+
+section.compact p,
+section.compact ul {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+</style>
 
 <!-- _class: lead -->
 <!-- 20s -->
@@ -14,46 +34,49 @@ auto-advance: 20
 
 ## QR-Based Digital Visitor Management
 
-### Claude Code AI-Powered Development
+### Secure · Fast · Auditable
 
-![bg right 30%](./docs/screenshots/dashboard.png)
+![bg right 30%](../docs/screenshots/dashboard.png)
 
-> 🎤 _"Hi, I'm Aung. I built a visitor registration system that replaces paper visitor logs with digital QR codes — entirely using Claude Code AI agents, skills, and MCP servers. Here's the story."_
+> 🎤 _"Hi, I'm Aung. I built a visitor registration system that replaces paper visitor logs with digital QR codes. Here's the story."_
 
 ---
 
 <!-- 20s -->
+
+<!-- _class: compact -->
 
 ## 🔍 The Problem
 
-- Paper visitor logs are **slow, insecure, and unsearchable**
-- No real-time host notification when visitors arrive
-- Zero audit trail for security incidents
-- Condos, apartments, offices, and warehouses all face the same challenge
+- Paper visitor logs are **slow, insecure, unsearchable**
+- No real-time arrival notification for hosts
+- No audit trail for security incidents
+- The same problem shows up in condos, offices, and warehouses
 
-> 🎤 _"Every condo, office, and warehouse has the same problem — a clipboard at the front desk. When a security incident happens, there's no record of who came in. Hosts don't know their visitors arrived. It's slow, it's insecure, and it doesn't scale."_
+> 🎤 _"A clipboard at the front desk creates delays, weak security, and no useful record. Hosts do not know when visitors arrive, and incidents leave no audit trail."_
 
 ---
 
 <!-- 20s -->
+
+<!-- _class: compact -->
 
 ## 🎯 The Solution
 
-A **web-based Visitor Registration System** with:
+| Feature            | Description                         |
+| :----------------- | :---------------------------------- |
+| 🔲 QR Check-In/Out | SHA-256 hashed, time-limited tokens |
+| 🛡️ 5-Role RBAC     | Property-level data isolation       |
+| 🔔 Notifications   | Real-time host alerts               |
+| 📊 Audit Logging   | 25+ event types with metadata       |
 
-- 👤 Visitor & Visit Management
-- 🔲 Secure QR Code Generation
-- ✅ QR Check-In / Check-Out
-- 🛡️ Role-Based Access Control (5 roles)
-- 🔔 Real-time Notification System
-- 📊 Dashboard & Audit Logging
-- 🏢 Multi-Property Support
-
-> 🎤 _"Our system replaces the clipboard with a web app. Visitors get a cryptographic QR code. Security scans it at the gate. The system checks the blocklist, verifies identity, records check-in, and notifies the host — all in seconds. One deployment serves multiple properties with complete data isolation."_
+> 🎤 _"Our system replaces the clipboard with a web app. Security scans the QR at the gate, the system verifies identity, records check-in, and notifies the host in seconds."_
 
 ---
 
 <!-- 20s -->
+
+<!-- _class: compact -->
 
 ## 🧠 Claude Code AI Workflow
 
@@ -68,7 +91,7 @@ A **web-based Visitor Registration System** with:
 | DevOps          | DevOps Engineer Subagent  |
 | Release         | Release Manager Subagent  |
 
-> 🎤 _"I didn't just auto-complete code. I used dedicated AI agents for every phase. The Product Manager defined requirements. The Architect reviewed the system design. The Prisma Reviewer validated the schema. Each agent had a specific role and accountability."_
+> 🎤 _"I used dedicated AI agents for every phase. The Product Manager defined requirements, the Architect reviewed design, and the Prisma Reviewer validated the schema."_
 
 ---
 
@@ -104,7 +127,7 @@ A **web-based Visitor Registration System** with:
 - Backend Developer, Frontend Developer
 - UI/UX Designer
 
-> 🎤 _"Skills encode our project rules — database design standards, QR security requirements, testing strategy. Every time Claude works on the codebase, these skills are loaded as context. The agents are specialized roles with defined responsibilities."_
+> 🎤 _"Skills encode our project rules — database design standards, QR security requirements, testing strategy. Every time we work on the codebase, these skills are loaded as context. The agents are specialized roles with defined responsibilities."_
 
 ---
 
@@ -137,10 +160,10 @@ verify-phase.js          — Phase completion check
 | Backend  | Next.js Route Handlers           |
 | Database | PostgreSQL 16, Prisma 7          |
 | Auth     | JWT (jose), bcryptjs             |
-| Testing  | Vitest (147) + Playwright (33)   |
+| Testing  | Vitest (264) + Playwright (50)   |
 | DevOps   | Docker Compose, GitHub Actions   |
 
-> 🎤 _"Modern stack throughout. Next.js 16 for both frontend and backend. Prisma 7 for type-safe database access. JWT with refresh token rotation. And 180 automated tests guard every change."_
+> 🎤 _"Modern stack throughout. Next.js 16 for both frontend and backend. Prisma 7 for type-safe database access. JWT with refresh token rotation. And 314 automated tests guard every change."_
 
 ---
 
@@ -168,14 +191,30 @@ Browser → Next.js App
 
 ## 🔐 Security Architecture
 
-- **JWT Authentication** with refresh tokens
-- **RBAC** — 5 roles, property-level data isolation
-- **Rate Limiting** — In-memory with test-mode bypass
-- **Audit Logs** — 20+ event types
-- **QR Replay Protection** — Single-use tokens
-- **Soft Delete** — All user-facing data
+| Feature       | Detail                            |
+| :------------ | :-------------------------------- |
+| JWT Auth      | Refresh token rotation            |
+| RBAC          | 5 roles, property-level isolation |
+| Rate Limiting | Auth endpoint protection          |
+| Audit Logs    | 20+ event types                   |
+| QR Protection | Single-use, SHA-256 hashed        |
 
 > 🎤 _"Security was designed in from day one. JWT with separate access and refresh tokens. Five roles with property-level scoping — a RESIDENT in Property A cannot see data from Property B. Rate limiting on auth endpoints. Every action is audited. QR tokens are single-use and cryptographically hashed."_
+
+---
+
+<!-- 20s -->
+
+## 🚗 Vehicle Management (v1.4.0)
+
+| Feature       | Description                   |
+| :------------ | :---------------------------- |
+| Vehicle CRUD  | Register, search, soft-delete |
+| Owner Linking | Residents & visitors          |
+| Blacklist     | Auto-reject blocked plates    |
+| QR Scanner    | Camera-based gate workflow    |
+
+> 🎤 _"Phase 4 added vehicle management. Residents register their vehicles. Security can search by plate number. Blacklisted plates are auto-rejected at check-in. The camera-based QR scanner enables real-time gate verification."_
 
 ---
 
@@ -184,16 +223,13 @@ Browser → Next.js App
 ## 🔳 QR Workflow
 
 ```text
-Invitation → Approval → QR Generate → Email QR
-                                          ↓
-                                    Visitor Arrives
-                                          ↓
-                              Security Scan & Verify
-                                          ↓
-                                    Check-In / Check-Out
-                                          ↓
-                                     Audit Log
+Invitation → Approval → QR Generate → Email QR → Security Scan → Check-In → Audit
 ```
+
+- 🔐 **SHA-256 hashed** — cryptographically random tokens
+- ⏱️ **Single-use with expiry** — replay protection built-in
+- 📧 **Email delivery** — QR sent directly to visitor
+- 🔔 **Real-time host notification** on check-in
 
 > 🎤 _"The QR workflow is the heart of the system. A resident pre-registers a visitor. An admin approves. A QR code is generated — cryptographically random, SHA-256 hashed, single-use with expiry. The visitor arrives, security scans the QR, verifies identity, and checks them in. The host gets notified instantly."_
 
@@ -203,7 +239,7 @@ Invitation → Approval → QR Generate → Email QR
 
 ## 🔔 Notification Module (v1.2.0)
 
-![bg right 35%](./docs/screenshots/notification-bell.png)
+![bg right 35%](../docs/screenshots/notification-bell.png)
 
 - 📬 **7 Event Types** across full lifecycle
 - 🔔 **Bell Icon** with real-time unread badge
@@ -219,17 +255,19 @@ Invitation → Approval → QR Generate → Email QR
 
 ## 📊 Database Design
 
-**14 Models, 16 Enums, Full Index Coverage**
+**14 Models · 16 Enums · Full Index Coverage**
 
-- `Property` → `Unit` → `User`
-- `Visitor` → `Visit` → `QRCode`
-- `Invitation` → `Approval` → `Badge`
-- `Verification` → `AuditLog` → `Blocklist`
-- `Notification` (v1.2.0)
+```text
+Property → Unit → User
+Visitor → Visit → QRCode
+Invitation → Approval → Badge
+Verification → AuditLog → Blocklist
+Notification (v1.2.0)
+```
 
 **Multi-tenancy:** Every table scoped by `property_id`
 
-> 🎤 _"Fourteen models, sixteen enums, with composite indexes on every common query pattern. The key design principle is multi-tenancy — every table has property_id. A query from one property never leaks data from another."_
+> 🎤 _"Fourteen models, sixteen enums, with composite indexes on every common query pattern. The key design principle is multi-tenancy — every table has property_id."_
 
 ---
 
@@ -258,18 +296,13 @@ services:
 
 ## 🧪 Testing Strategy
 
-| Suite                      | Count   | Status      |
-| :------------------------- | ------- | :---------- |
-| Unit Tests (Vitest)        | **147** | ✅ All Pass |
-| E2E Smoke                  | 8       | ✅ All Pass |
-| E2E Invitation             | 6       | ✅ All Pass |
-| E2E Notification           | 8       | ✅ All Pass |
-| E2E RBAC                   | 5       | ✅ All Pass |
-| **Total E2E (Playwright)** | **33**  | ✅ All Pass |
+| Suite               | Count    | Status      |
+| :------------------ | -------- | :---------- |
+| Unit (Vitest)       | **264**  | ✅ All Pass |
+| E2E (Playwright)    | **50**   | ✅ All Pass |
+| TypeScript + ESLint | 0 errors | ✅ Clean    |
 
-`npm ci → lint → type check → unit tests → build`
-
-> 🎤 _"147 unit tests cover validations, JWT, RBAC, API responses, invitation rules, and notification logic. 33 Playwright E2E tests cover the full workflow — smoke, invitation lifecycle, RBAC enforcement, and notification delivery. All 180 tests pass before any code merges."_
+> 🎤 _"264 unit tests cover validations, JWT, RBAC, API responses. 50 Playwright E2E tests cover the full workflow — smoke, invitation, notification, RBAC. All 314 tests pass before any code merges."_
 
 ---
 
@@ -277,33 +310,16 @@ services:
 
 ## 📦 Git Releases
 
-| Version | Date         | Key Feature                    |
-| :------ | :----------- | :----------------------------- |
-| v1.0.0  | Jun 16, 2026 | Core MVP                       |
-| v1.1.0  | Jun 17, 2026 | Invitation & Approval Workflow |
-| v1.2.0  | Jun 18, 2026 | Notification Module            |
+| Version | Key Feature                     |
+| :------ | :------------------------------ |
+| v1.0.0  | Core MVP                        |
+| v1.1.0  | Invitation & Approval Workflow  |
+| v1.2.0  | Notification Module             |
+| v1.4.0  | Vehicle Management & QR Scanner |
 
-**30 commits** on `main`, semantic versioning, GitHub Releases with full notes
+**Semantic versioning** · GitHub Releases · Docker ready
 
-> 🎤 _"Three releases in three days — each with full GitHub Release notes. Semantic versioning: patch for fixes, minor for features. Every release is tagged, documented, and reproducible via Docker."_
-
----
-
-<!-- 20s -->
-
-## 📈 Development Methodology
-
-```text
-Requirements → Architecture → Database → API → UI
-                                                  ↓
-                                            Code + Test
-                                                  ↓
-                                     Docker + CI/CD + Deploy
-```
-
-**Rule:** Never code first. Design before implementation.
-
-> 🎤 _"Our methodology: design first, review before code, test everything. Every feature goes through requirements, architecture, database design, and API specification before a single line of code is written. This catches expensive mistakes early."_
+> 🎤 _"Four releases with full GitHub Release notes. Semantic versioning. Every release is tagged, documented, and reproducible via Docker."_
 
 ---
 
@@ -311,7 +327,7 @@ Requirements → Architecture → Database → API → UI
 
 ## 📸 UI Screenshots
 
-![bg left 45%](./docs/screenshots/invitation-detail.png)
+![bg left 45%](../docs/screenshots/invitation-detail.png)
 
 **Invitation Detail Page:**
 
@@ -333,11 +349,12 @@ Requirements → Architecture → Database → API → UI
 | Phase | Feature                          | Status      |
 | :---- | :------------------------------- | :---------- |
 | 1-6   | Core + Invitation + Notification | ✅ Complete |
-| 6.5   | QR Email Delivery                | 📋 Planned  |
-| 7     | Self-Kiosk, Mobile QR Scanner    | 🔜 Upcoming |
-| 8     | AI Analytics, Suspicious Alerts  | 🔜 Upcoming |
+| 6.5   | QR Email Delivery                | ✅ Complete |
+| 7     | Vehicle Management & QR Scanner  | ✅ Complete |
+| 8     | Self-Kiosk, Mobile QR Scanner    | 🔜 Upcoming |
+| 9     | AI Analytics, Suspicious Alerts  | 🔜 Upcoming |
 
-> 🎤 _"What's next? Phase 6.5 adds QR email delivery — automatically emailing the QR code to visitors. Phase 7 brings self-service kiosks and mobile QR scanning. Phase 8 introduces AI analytics — suspicious visitor detection, peak hour prediction, and natural language reporting."_
+> 🎤 _"Phase 7 vehicle management and QR camera scanner are complete. Phase 8 brings self-service kiosks and mobile QR scanning. Phase 9 introduces AI analytics — suspicious visitor detection, peak hour prediction, and natural language reporting."_
 
 ---
 
@@ -346,12 +363,10 @@ Requirements → Architecture → Database → API → UI
 
 ## 🙏 Thank You
 
-**Visitor Registration System v1.2.0**
+**Visitor Registration System v1.4.0**
 
 🔗 [github.com/aungyephyo2215/vct-visitor-registration-system](https://github.com/aungyephyo2215/vct-visitor-registration-system)
 
-📊 **180 Tests** | 🐳 **Docker Ready** | 🔐 **5-Role RBAC**
-
-Built with ❤️ using Claude Code AI
+📊 **314 Tests** | 🐳 **Docker Ready** | 🔐 **5-Role RBAC**
 
 > 🎤 _"Thank you. The repository is public with full documentation, screenshots, release notes, and a one-command Docker deployment. I'm happy to take questions."_
