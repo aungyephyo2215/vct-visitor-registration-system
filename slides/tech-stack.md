@@ -1,6 +1,6 @@
 ---
 marp: true
-theme: uncover
+theme: gaia
 paginate: true
 auto-scaling: true
 size: 16:9
