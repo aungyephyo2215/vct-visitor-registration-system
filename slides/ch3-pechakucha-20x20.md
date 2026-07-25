@@ -29,9 +29,8 @@ auto-advance: 20
 - Paper visitor logs are **slow, insecure, and unsearchable**
 - No real-time host notification when visitors arrive
 - Zero audit trail for security incidents
-- Condos, apartments, offices, and warehouses all face the same challenge
 
-> 🎤 _"Every condo, office, and warehouse has the same problem — a clipboard at the front desk. When a security incident happens, there's no record of who came in. Hosts don't know their visitors arrived. It's slow, it's insecure, and it doesn't scale."_
+> 🎤 _"A clipboard at the front desk means delays, weak security, and no useful record. Hosts do not know when visitors arrive, and incidents leave no audit trail."_
 
 ---
 
