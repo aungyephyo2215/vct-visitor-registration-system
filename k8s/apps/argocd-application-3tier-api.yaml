@@ -63,4 +63,4 @@ spec:
     - name: image
       value: ghcr.io/aungyephyo2215/visitor-registration-system/api:staging
     - name: url
-      value: https://api-staging.vrs.k8s.cmtmm.online
+      value: https://vrs-api.k8s.cmtmm.online

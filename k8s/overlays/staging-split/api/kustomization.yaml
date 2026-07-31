@@ -8,7 +8,6 @@ kind: Kustomization
 
 resources:
   # PostgreSQL (API tier owns DB access — frontend never touches it)
-  - ../../../base/postgres/namespace.yaml
   - ../../../base/postgres/configmap.yaml
   - ../../../base/postgres/statefulset.yaml
   - ../../../base/postgres/service.yaml
@@ -17,7 +16,7 @@ resources:
   - ../../../base/postgres/backup-cronjob.yaml
 
   # API service
-  - ../../../base/api/namespace.yaml
+  - namespace.yaml
   - ../../../base/api/configmap.yaml
   - ../../../base/api/deployment.yaml
   - ../../../base/api/service.yaml
@@ -27,6 +26,87 @@ resources:
   - ../../../base/api/pdb.yaml
 
 patches:
+  # Override postgres namespace from vrs-postgres to vrs-api (split-tier co-locates DB with API)
+  - target:
+      kind: ConfigMap
+      name: vrs-postgres-config
+    patch: |-
+      - op: replace
+        path: /metadata/namespace
+        value: vrs-api
+  - target:
+      kind: StatefulSet
+      name: vrs-postgres
+    patch: |-
+      - op: replace
+        path: /metadata/namespace
+        value: vrs-api
+  - target:
+      kind: Service
+      name: vrs-postgres
+    patch: |-
+      - op: replace
+        path: /metadata/namespace
+        value: vrs-api
+  - target:
+      kind: NetworkPolicy
+      name: vrs-postgres-network-policy
+    patch: |-
+      - op: replace
+        path: /metadata/namespace
+        value: vrs-api
+  - target:
+      kind: ResourceQuota
+      name: vrs-postgres-quota
+    patch: |-
+      - op: replace
+        path: /metadata/namespace
+        value: vrs-api
+  - target:
+      kind: CronJob
+      name: vrs-postgres-backup
+    patch: |-
+      - op: replace
+        path: /metadata/namespace
+        value: vrs-api
+
+  # Override postgres network policy to allow connections from vrs-api namespace (not vrs-app)
+  - target:
+      kind: NetworkPolicy
+      name: vrs-postgres-network-policy
+    patch: |-
+      - op: replace
+        path: /spec/ingress/0/from/0/namespaceSelector/matchLabels/kubernetes.io~1metadata.name
+        value: vrs-api
+
+  # Override backup cronjob postgres DNS for split-tier (postgres is in vrs-api namespace)
+  - target:
+      kind: CronJob
+      name: vrs-postgres-backup
+    patch: |-
+      - op: replace
+        path: /spec/jobTemplate/spec/template/spec/containers/0/command/2
+        value: |
+          set -e
+          BACKUP_FILE="/backup/vrs_db_$(date +%Y%m%d_%H%M%S).sql.gz"
+          echo "Starting backup: $BACKUP_FILE"
+          pg_dump -h vrs-postgres.vrs-api.svc.cluster.local \
+            -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+            --no-owner --no-acl | gzip > "$BACKUP_FILE"
+          echo "Backup complete: $(du -h $BACKUP_FILE | cut -f1)"
+          # Remove backups older than 30 days
+          find /backup -name "vrs_db_*.sql.gz" -mtime +30 -delete
+          echo "Cleanup complete"
+
+  # Override API network policy egress to allow postgres in vrs-api namespace (not vrs-postgres)
+  - target:
+      kind: NetworkPolicy
+      name: vrs-api-netpol
+    patch: |-
+      - op: replace
+        path: /spec/egress/1/to/0/namespaceSelector/matchLabels/kubernetes.io~1metadata.name
+        value: vrs-api
+
   # Staging: reduce API resource limits
   - target:
       kind: Deployment
@@ -44,6 +124,20 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/resources/limits/memory
         value: "256Mi"
+
+  # Override postgres DNS for split-tier (postgres is in vrs-api namespace, not vrs-postgres)
+  - target:
+      kind: Deployment
+      name: vrs-api
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/initContainers/0/command/2
+        value: |
+          until nc -z vrs-postgres.vrs-api.svc.cluster.local 5432; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
 
   # Staging: override image tag (main container + initContainers)
   - target:
@@ -67,16 +161,16 @@ patches:
     patch: |-
       - op: replace
         path: /spec/rules/0/host
-        value: api-staging.vrs.k8s.cmtmm.online
+        value: vrs-api.k8s.cmtmm.online
       - op: replace
         path: /spec/tls/0/hosts/0
-        value: api-staging.vrs.k8s.cmtmm.online
+        value: vrs-api.k8s.cmtmm.online
       - op: replace
         path: /metadata/annotations/cert-manager.io~1cluster-issuer
         value: letsencrypt-staging
       - op: replace
         path: /metadata/annotations/nginx.ingress.kubernetes.io~1cors-allow-origin
-        value: "https://vrs-staging.k8s.cmtmm.online"
+        value: "https://vrs-frontend.k8s.cmtmm.online"
 
   # Staging: scale down HPA
   - target:
@@ -95,8 +189,8 @@ configMapGenerator:
     namespace: vrs-api
     behavior: merge
     literals:
-      - APP_BASE_URL=https://vrs-staging.k8s.cmtmm.online
-      - CORS_ORIGIN=https://vrs-staging.k8s.cmtmm.online
+      - APP_BASE_URL=https://vrs-frontend.k8s.cmtmm.online
+      - CORS_ORIGIN=https://vrs-frontend.k8s.cmtmm.online
       - EMAIL_PROVIDER=noop
 
 commonLabels:

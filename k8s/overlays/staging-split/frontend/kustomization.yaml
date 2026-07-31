@@ -6,7 +6,7 @@ kind: Kustomization
 # Manages: Namespace, ConfigMap, Deployment, Service, Ingress, HPA, NetworkPolicy, PDB
 
 resources:
-  - ../../../base/frontend/namespace.yaml
+  - namespace.yaml
   - ../../../base/frontend/configmap.yaml
   - ../../../base/frontend/deployment.yaml
   - ../../../base/frontend/service.yaml
@@ -50,10 +50,10 @@ patches:
     patch: |-
       - op: replace
         path: /spec/rules/0/host
-        value: vrs-staging.k8s.cmtmm.online
+        value: vrs-frontend.k8s.cmtmm.online
       - op: replace
         path: /spec/tls/0/hosts/0
-        value: vrs-staging.k8s.cmtmm.online
+        value: vrs-frontend.k8s.cmtmm.online
       - op: replace
         path: /metadata/annotations/cert-manager.io~1cluster-issuer
         value: letsencrypt-staging
@@ -75,9 +75,9 @@ configMapGenerator:
     namespace: vrs-frontend
     behavior: merge
     literals:
-      - NEXT_PUBLIC_APP_URL=https://vrs-staging.k8s.cmtmm.online
-      - APP_BASE_URL=https://vrs-staging.k8s.cmtmm.online
-      - NEXT_PUBLIC_API_URL=https://api-staging.vrs.k8s.cmtmm.online
+      - NEXT_PUBLIC_APP_URL=https://vrs-frontend.k8s.cmtmm.online
+      - APP_BASE_URL=https://vrs-frontend.k8s.cmtmm.online
+      - NEXT_PUBLIC_API_URL=https://vrs-api.k8s.cmtmm.online
       - INTERNAL_API_URL=http://vrs-api.vrs-api.svc.cluster.local:4000
 
 commonLabels:

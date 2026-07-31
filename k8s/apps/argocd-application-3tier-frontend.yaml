@@ -55,4 +55,4 @@ spec:
     - name: image
       value: ghcr.io/aungyephyo2215/visitor-registration-system/frontend:staging
     - name: url
-      value: https://vrs-staging.k8s.cmtmm.online
+      value: https://vrs-frontend.k8s.cmtmm.online

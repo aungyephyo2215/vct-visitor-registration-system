@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vrs-frontend
+  labels:
+    app.kubernetes.io/name: visitor-registration-system
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: visitor-registration-system
+    architecture: split-tier
+    environment: staging
+    managed-by: argocd
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
