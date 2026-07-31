@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vrs-notification-svc
+  namespace: vrs-notification-svc
+  labels:
+    app.kubernetes.io/name: vrs-notification-svc
+    app.kubernetes.io/component: notification-svc
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: vrs-notification-svc
+  ports:
+    - name: http
+      port: 4004
+      targetPort: 4004
+      protocol: TCP

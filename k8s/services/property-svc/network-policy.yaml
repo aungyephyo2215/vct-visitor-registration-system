@@ -1,0 +1,57 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vrs-property-svc-netpol
+  namespace: vrs-property-svc
+  labels:
+    app.kubernetes.io/name: vrs-property-svc
+    app.kubernetes.io/component: property-svc
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: vrs-property-svc
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 4005
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vrs-frontend
+      ports:
+        - protocol: TCP
+          port: 4005
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vrs-visitor-svc
+      ports:
+        - protocol: TCP
+          port: 4005
+  egress:
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vrs-postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vrs-auth-svc
+      ports:
+        - protocol: TCP
+          port: 4001

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vrs-property-svc
+  namespace: vrs-property-svc
+  labels:
+    app.kubernetes.io/name: vrs-property-svc
+    app.kubernetes.io/component: property-svc
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: vrs-property-svc
+  ports:
+    - name: http
+      port: 4005
+      targetPort: 4005
+      protocol: TCP

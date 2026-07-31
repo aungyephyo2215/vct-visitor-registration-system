@@ -1,0 +1,63 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: vrs-microservices
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: visitor-registration-system
+    architecture: microservices
+spec:
+  generators:
+    - list:
+        elements:
+          - service: frontend
+            namespace: vrs-frontend
+          - service: auth-svc
+            namespace: vrs-auth-svc
+          - service: visitor-svc
+            namespace: vrs-visitor-svc
+          - service: qr-svc
+            namespace: vrs-qr-svc
+          - service: notification-svc
+            namespace: vrs-notification-svc
+          - service: property-svc
+            namespace: vrs-property-svc
+  template:
+    metadata:
+      name: "vrs-{{service}}"
+      namespace: argocd
+      labels:
+        app.kubernetes.io/part-of: visitor-registration-system
+        app.kubernetes.io/component: "{{service}}"
+        architecture: microservices
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: visitor-registration-system
+      source:
+        repoURL: https://github.com/aungyephyo2215/vct-visitor-registration-system.git
+        targetRevision: arch/k8s-microservices
+        path: k8s/overlays/staging-msvc
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{namespace}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+          allowEmpty: false
+        syncOptions:
+          - CreateNamespace=true
+          - PrunePropagationPolicy=foreground
+          - PruneLast=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
+      ignoreDifferences:
+        - group: apps
+          kind: Deployment
+          jsonPointers:
+            - /spec/replicas

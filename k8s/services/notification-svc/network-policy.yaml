@@ -1,0 +1,43 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vrs-notification-svc-netpol
+  namespace: vrs-notification-svc
+  labels:
+    app.kubernetes.io/name: vrs-notification-svc
+    app.kubernetes.io/component: notification-svc
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: vrs-notification-svc
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Only internal services may call notification-svc — no direct ingress exposure
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vrs-visitor-svc
+      ports:
+        - protocol: TCP
+          port: 4004
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vrs-qr-svc
+      ports:
+        - protocol: TCP
+          port: 4004
+  egress:
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # SMTP outbound
+    - ports:
+        - protocol: TCP
+          port: 587
+        - protocol: TCP
+          port: 465

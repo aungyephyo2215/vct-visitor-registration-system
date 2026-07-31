@@ -1,0 +1,212 @@
+---
+# Frontend Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vrs-frontend-ingress
+  namespace: vrs-frontend
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.ingress.kubernetes.io/limit-rps: "30"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "5"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - vrs.k8s.cmtmm.online
+      secretName: vrs-frontend-tls
+  rules:
+    - host: vrs.k8s.cmtmm.online
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vrs-frontend
+                port:
+                  number: 3000
+---
+# Auth Service Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vrs-auth-ingress
+  namespace: vrs-auth-svc
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.ingress.kubernetes.io/limit-rps: "20"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "3"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://vrs.k8s.cmtmm.online"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Authorization, Content-Type"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.vrs.k8s.cmtmm.online
+      secretName: vrs-api-tls
+  rules:
+    - host: api.vrs.k8s.cmtmm.online
+      http:
+        paths:
+          - path: /api/v1/auth
+            pathType: Prefix
+            backend:
+              service:
+                name: vrs-auth-svc
+                port:
+                  number: 4001
+          - path: /api/v1/users
+            pathType: Prefix
+            backend:
+              service:
+                name: vrs-auth-svc
+                port:
+                  number: 4001
+---
+# Visitor Service Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vrs-visitor-ingress
+  namespace: vrs-visitor-svc
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.ingress.kubernetes.io/limit-rps: "30"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "5"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://vrs.k8s.cmtmm.online"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Authorization, Content-Type"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.vrs.k8s.cmtmm.online
+      secretName: vrs-visitor-api-tls
+  rules:
+    - host: api.vrs.k8s.cmtmm.online
+      http:
+        paths:
+          - path: /api/v1/visitors
+            pathType: Prefix
+            backend:
+              service:
+                name: vrs-visitor-svc
+                port:
+                  number: 4002
+          - path: /api/v1/visits
+            pathType: Prefix
+            backend:
+              service:
+                name: vrs-visitor-svc
+                port:
+                  number: 4002
+          - path: /api/v1/checkin
+            pathType: Prefix
+            backend:
+              service:
+                name: vrs-visitor-svc
+                port:
+                  number: 4002
+          - path: /api/v1/checkout
+            pathType: Prefix
+            backend:
+              service:
+                name: vrs-visitor-svc
+                port:
+                  number: 4002
+          - path: /api/v1/badges
+            pathType: Prefix
+            backend:
+              service:
+                name: vrs-visitor-svc
+                port:
+                  number: 4002
+---
+# QR Service Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vrs-qr-ingress
+  namespace: vrs-qr-svc
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.ingress.kubernetes.io/limit-rps: "20"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "3"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://vrs.k8s.cmtmm.online"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Authorization, Content-Type"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.vrs.k8s.cmtmm.online
+      secretName: vrs-qr-api-tls
+  rules:
+    - host: api.vrs.k8s.cmtmm.online
+      http:
+        paths:
+          - path: /api/v1/qr
+            pathType: Prefix
+            backend:
+              service:
+                name: vrs-qr-svc
+                port:
+                  number: 4003
+          - path: /api/v1/verify
+            pathType: Prefix
+            backend:
+              service:
+                name: vrs-qr-svc
+                port:
+                  number: 4003
+          - path: /api/v1/invitations
+            pathType: Prefix
+            backend:
+              service:
+                name: vrs-qr-svc
+                port:
+                  number: 4003
+---
+# Property Service Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vrs-property-ingress
+  namespace: vrs-property-svc
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.ingress.kubernetes.io/limit-rps: "20"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "3"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://vrs.k8s.cmtmm.online"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Authorization, Content-Type"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.vrs.k8s.cmtmm.online
+      secretName: vrs-property-api-tls
+  rules:
+    - host: api.vrs.k8s.cmtmm.online
+      http:
+        paths:
+          - path: /api/v1/units
+            pathType: Prefix
+            backend:
+              service:
+                name: vrs-property-svc
+                port:
+                  number: 4005
+          - path: /api/v1/vehicles
+            pathType: Prefix
+            backend:
+              service:
+                name: vrs-property-svc
+                port:
+                  number: 4005

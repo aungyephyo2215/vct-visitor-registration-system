@@ -1,0 +1,62 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vrs-auth-svc-netpol
+  namespace: vrs-auth-svc
+  labels:
+    app.kubernetes.io/name: vrs-auth-svc
+    app.kubernetes.io/component: auth-svc
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: vrs-auth-svc
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow from ingress controller (external traffic)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 4001
+    # Allow from frontend (server-side API calls)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vrs-frontend
+      ports:
+        - protocol: TCP
+          port: 4001
+    # Allow from visitor-svc (token validation)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vrs-visitor-svc
+      ports:
+        - protocol: TCP
+          port: 4001
+    # Allow from qr-svc (token validation)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vrs-qr-svc
+      ports:
+        - protocol: TCP
+          port: 4001
+  egress:
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # PostgreSQL access
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vrs-postgres
+      ports:
+        - protocol: TCP
+          port: 5432

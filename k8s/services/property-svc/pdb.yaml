@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vrs-property-svc-pdb
+  namespace: vrs-property-svc
+  labels:
+    app.kubernetes.io/name: vrs-property-svc
+    app.kubernetes.io/component: property-svc
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vrs-property-svc

@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vrs-qr-svc-pdb
+  namespace: vrs-qr-svc
+  labels:
+    app.kubernetes.io/name: vrs-qr-svc
+    app.kubernetes.io/component: qr-svc
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vrs-qr-svc

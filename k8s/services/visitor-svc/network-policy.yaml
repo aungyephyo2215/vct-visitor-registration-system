@@ -1,0 +1,66 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vrs-visitor-svc-netpol
+  namespace: vrs-visitor-svc
+  labels:
+    app.kubernetes.io/name: vrs-visitor-svc
+    app.kubernetes.io/component: visitor-svc
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: vrs-visitor-svc
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 4002
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vrs-frontend
+      ports:
+        - protocol: TCP
+          port: 4002
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vrs-qr-svc
+      ports:
+        - protocol: TCP
+          port: 4002
+  egress:
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vrs-postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Validate tokens against auth-svc
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vrs-auth-svc
+      ports:
+        - protocol: TCP
+          port: 4001
+    # Trigger notifications
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vrs-notification-svc
+      ports:
+        - protocol: TCP
+          port: 4004

@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vrs-visitor-svc-pdb
+  namespace: vrs-visitor-svc
+  labels:
+    app.kubernetes.io/name: vrs-visitor-svc
+    app.kubernetes.io/component: visitor-svc
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vrs-visitor-svc

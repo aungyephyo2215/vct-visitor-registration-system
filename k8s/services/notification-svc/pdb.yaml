@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vrs-notification-svc-pdb
+  namespace: vrs-notification-svc
+  labels:
+    app.kubernetes.io/name: vrs-notification-svc
+    app.kubernetes.io/component: notification-svc
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vrs-notification-svc

@@ -1,0 +1,50 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../services
+
+patches:
+  - path: patches/resource-limits.yaml
+  - path: patches/ingress-hosts.yaml
+  - path: patches/container-images.yaml
+
+# Staging-specific ConfigMap overrides
+configMapGenerator:
+  - name: vrs-frontend-config
+    namespace: vrs-frontend
+    behavior: merge
+    literals:
+      - NEXT_PUBLIC_APP_URL=https://vrs-staging.k8s.cmtmm.online
+      - APP_BASE_URL=https://vrs-staging.k8s.cmtmm.online
+
+  - name: vrs-auth-svc-config
+    namespace: vrs-auth-svc
+    behavior: merge
+    literals:
+      - CORS_ORIGIN=https://vrs-staging.k8s.cmtmm.online
+
+  - name: vrs-visitor-svc-config
+    namespace: vrs-visitor-svc
+    behavior: merge
+    literals:
+      - CORS_ORIGIN=https://vrs-staging.k8s.cmtmm.online
+
+  - name: vrs-qr-svc-config
+    namespace: vrs-qr-svc
+    behavior: merge
+    literals:
+      - CORS_ORIGIN=https://vrs-staging.k8s.cmtmm.online
+
+  - name: vrs-notification-svc-config
+    namespace: vrs-notification-svc
+    behavior: merge
+    literals:
+      - EMAIL_PROVIDER=noop
+      - APP_BASE_URL=https://vrs-staging.k8s.cmtmm.online
+
+  - name: vrs-property-svc-config
+    namespace: vrs-property-svc
+    behavior: merge
+    literals:
+      - CORS_ORIGIN=https://vrs-staging.k8s.cmtmm.online

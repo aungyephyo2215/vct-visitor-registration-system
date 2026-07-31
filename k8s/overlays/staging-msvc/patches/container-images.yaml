@@ -1,0 +1,48 @@
+# Override container images with staging tags
+- target:
+    kind: Deployment
+    name: vrs-frontend
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/image
+      value: ghcr.io/aungyephyo2215/visitor-registration-system/frontend:staging
+
+- target:
+    kind: Deployment
+    name: vrs-auth-svc
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/image
+      value: ghcr.io/aungyephyo2215/visitor-registration-system/auth-svc:staging
+
+- target:
+    kind: Deployment
+    name: vrs-visitor-svc
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/image
+      value: ghcr.io/aungyephyo2215/visitor-registration-system/visitor-svc:staging
+
+- target:
+    kind: Deployment
+    name: vrs-qr-svc
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/image
+      value: ghcr.io/aungyephyo2215/visitor-registration-system/qr-svc:staging
+
+- target:
+    kind: Deployment
+    name: vrs-notification-svc
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/image
+      value: ghcr.io/aungyephyo2215/visitor-registration-system/notification-svc:staging
+
+- target:
+    kind: Deployment
+    name: vrs-property-svc
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/image
+      value: ghcr.io/aungyephyo2215/visitor-registration-system/property-svc:staging

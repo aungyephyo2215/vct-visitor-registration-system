@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vrs-visitor-svc
+  namespace: vrs-visitor-svc
+  labels:
+    app.kubernetes.io/name: vrs-visitor-svc
+    app.kubernetes.io/component: visitor-svc
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: vrs-visitor-svc
+  ports:
+    - name: http
+      port: 4002
+      targetPort: 4002
+      protocol: TCP

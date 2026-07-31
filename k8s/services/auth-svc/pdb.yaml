@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vrs-auth-svc-pdb
+  namespace: vrs-auth-svc
+  labels:
+    app.kubernetes.io/name: vrs-auth-svc
+    app.kubernetes.io/component: auth-svc
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vrs-auth-svc

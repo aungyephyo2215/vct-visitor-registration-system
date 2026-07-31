@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vrs-visitor-svc-config
+  namespace: vrs-visitor-svc
+  labels:
+    app.kubernetes.io/name: vrs-visitor-svc
+    app.kubernetes.io/component: visitor-svc
+data:
+  NODE_ENV: "production"
+  PORT: "4002"
+  # Routes owned: /api/v1/visitors /api/v1/visits /api/v1/checkin /api/v1/checkout /api/v1/badges
+  DB_POOL_MAX: "10"
+  DB_IDLE_TIMEOUT_MS: "30000"
+  DB_CONNECT_TIMEOUT_MS: "5000"
+  CORS_ORIGIN: "https://vrs.k8s.cmtmm.online"
+  # Auth service URL for JWT validation
+  AUTH_SERVICE_URL: "http://vrs-auth-svc.vrs-auth-svc.svc.cluster.local:4001"

@@ -1,0 +1,73 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # PostgreSQL (reused from existing base)
+  - ../base/postgres/namespace.yaml
+  - ../base/postgres/configmap.yaml
+  - ../base/postgres/statefulset.yaml
+  - ../base/postgres/service.yaml
+  - ../base/postgres/network-policy.yaml
+  - ../base/postgres/resource-quota.yaml
+  - ../base/postgres/backup-cronjob.yaml
+
+  # Frontend
+  - frontend/namespace.yaml
+  - frontend/configmap.yaml
+  - frontend/deployment.yaml
+  - frontend/service.yaml
+  - frontend/hpa.yaml
+  - frontend/pdb.yaml
+
+  # Auth Service  (/api/v1/auth  /api/v1/users)
+  - auth-svc/namespace.yaml
+  - auth-svc/configmap.yaml
+  - auth-svc/deployment.yaml
+  - auth-svc/service.yaml
+  - auth-svc/hpa.yaml
+  - auth-svc/network-policy.yaml
+  - auth-svc/pdb.yaml
+
+  # Visitor Service  (/api/v1/visitors  /api/v1/visits  /api/v1/checkin  /api/v1/checkout  /api/v1/badges)
+  - visitor-svc/namespace.yaml
+  - visitor-svc/configmap.yaml
+  - visitor-svc/deployment.yaml
+  - visitor-svc/service.yaml
+  - visitor-svc/hpa.yaml
+  - visitor-svc/network-policy.yaml
+  - visitor-svc/pdb.yaml
+
+  # QR Service  (/api/v1/qr  /api/v1/verify  /api/v1/invitations)
+  - qr-svc/namespace.yaml
+  - qr-svc/configmap.yaml
+  - qr-svc/deployment.yaml
+  - qr-svc/service.yaml
+  - qr-svc/hpa.yaml
+  - qr-svc/network-policy.yaml
+  - qr-svc/pdb.yaml
+
+  # Notification Service  (/api/v1/notifications)
+  - notification-svc/namespace.yaml
+  - notification-svc/configmap.yaml
+  - notification-svc/deployment.yaml
+  - notification-svc/service.yaml
+  - notification-svc/hpa.yaml
+  - notification-svc/network-policy.yaml
+  - notification-svc/pdb.yaml
+
+  # Property Service  (/api/v1/units  /api/v1/vehicles)
+  - property-svc/namespace.yaml
+  - property-svc/configmap.yaml
+  - property-svc/deployment.yaml
+  - property-svc/service.yaml
+  - property-svc/hpa.yaml
+  - property-svc/network-policy.yaml
+  - property-svc/pdb.yaml
+
+  # Shared ingress rules
+  - shared/ingress.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: visitor-registration-system
+  managed-by: argocd
+  architecture: microservices

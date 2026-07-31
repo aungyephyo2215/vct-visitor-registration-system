@@ -1,0 +1,10 @@
+# Reduce replica counts and resource limits for staging
+- target:
+    kind: HorizontalPodAutoscaler
+  patch: |-
+    - op: replace
+      path: /spec/minReplicas
+      value: 1
+    - op: replace
+      path: /spec/maxReplicas
+      value: 2

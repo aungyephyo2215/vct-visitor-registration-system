@@ -1,0 +1,70 @@
+# Override all ingress hosts to staging subdomain
+- target:
+    kind: Ingress
+    name: vrs-frontend-ingress
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: vrs-staging.k8s.cmtmm.online
+    - op: replace
+      path: /spec/tls/0/hosts/0
+      value: vrs-staging.k8s.cmtmm.online
+    - op: replace
+      path: /metadata/annotations/cert-manager.io~1cluster-issuer
+      value: letsencrypt-staging
+
+- target:
+    kind: Ingress
+    name: vrs-auth-ingress
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: api-staging.vrs.k8s.cmtmm.online
+    - op: replace
+      path: /spec/tls/0/hosts/0
+      value: api-staging.vrs.k8s.cmtmm.online
+    - op: replace
+      path: /metadata/annotations/cert-manager.io~1cluster-issuer
+      value: letsencrypt-staging
+
+- target:
+    kind: Ingress
+    name: vrs-visitor-ingress
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: api-staging.vrs.k8s.cmtmm.online
+    - op: replace
+      path: /spec/tls/0/hosts/0
+      value: api-staging.vrs.k8s.cmtmm.online
+    - op: replace
+      path: /metadata/annotations/cert-manager.io~1cluster-issuer
+      value: letsencrypt-staging
+
+- target:
+    kind: Ingress
+    name: vrs-qr-ingress
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: api-staging.vrs.k8s.cmtmm.online
+    - op: replace
+      path: /spec/tls/0/hosts/0
+      value: api-staging.vrs.k8s.cmtmm.online
+    - op: replace
+      path: /metadata/annotations/cert-manager.io~1cluster-issuer
+      value: letsencrypt-staging
+
+- target:
+    kind: Ingress
+    name: vrs-property-ingress
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: api-staging.vrs.k8s.cmtmm.online
+    - op: replace
+      path: /spec/tls/0/hosts/0
+      value: api-staging.vrs.k8s.cmtmm.online
+    - op: replace
+      path: /metadata/annotations/cert-manager.io~1cluster-issuer
+      value: letsencrypt-staging
