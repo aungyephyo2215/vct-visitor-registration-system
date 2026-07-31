@@ -2,5 +2,12 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
+  # Shared ArgoCD project (allows all namespaces)
   - argocd-project.yaml
+
+  # Option 1 — Monolith (currently running on staging/argocd-k8s-lab)
   - argocd-application.yaml
+
+  # Option 2 — 3-Tier split-tier (arch/k8s-split-tier-deployment)
+  # Deploys: vrs-frontend + vrs-api as separate ArgoCD Applications
+  - argocd-applicationset-split.yaml

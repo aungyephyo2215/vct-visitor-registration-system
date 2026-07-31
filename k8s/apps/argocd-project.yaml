@@ -6,13 +6,30 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  description: Visitor Registration System - staging environment
+  description: Visitor Registration System - all architectures (monolith, split-tier, microservices)
   sourceRepos:
     - "https://github.com/aungyephyo2215/vct-visitor-registration-system.git"
   destinations:
+    # Option 1 — Monolith
     - namespace: vrs-app
       server: https://kubernetes.default.svc
     - namespace: vrs-postgres
+      server: https://kubernetes.default.svc
+    # Option 2 — 3-Tier Split
+    - namespace: vrs-frontend
+      server: https://kubernetes.default.svc
+    - namespace: vrs-api
+      server: https://kubernetes.default.svc
+    # Option 3 — Microservices
+    - namespace: vrs-auth-svc
+      server: https://kubernetes.default.svc
+    - namespace: vrs-visitor-svc
+      server: https://kubernetes.default.svc
+    - namespace: vrs-qr-svc
+      server: https://kubernetes.default.svc
+    - namespace: vrs-notification-svc
+      server: https://kubernetes.default.svc
+    - namespace: vrs-property-svc
       server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: ""

@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vrs-3tier-api
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: visitor-registration-system
+    app.kubernetes.io/component: api
+    architecture: split-tier
+    environment: staging
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: visitor-registration-system
+  source:
+    repoURL: https://github.com/aungyephyo2215/vct-visitor-registration-system.git
+    targetRevision: arch/k8s-split-tier-deployment
+    path: k8s/overlays/staging-split
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: vrs-api
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+  info:
+    - name: architecture
+      value: 3-tier split
+    - name: tier
+      value: api
+    - name: environment
+      value: staging
+    - name: branch
+      value: arch/k8s-split-tier-deployment
