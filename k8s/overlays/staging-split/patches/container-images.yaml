@@ -1,0 +1,22 @@
+# Override container images for staging tags
+- target:
+    kind: Deployment
+    name: vrs-frontend
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/image
+      value: ghcr.io/aungyephyo2215/visitor-registration-system/frontend:staging
+
+- target:
+    kind: Deployment
+    name: vrs-api
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/image
+      value: ghcr.io/aungyephyo2215/visitor-registration-system/api:staging
+    - op: replace
+      path: /spec/template/spec/initContainers/1/image
+      value: ghcr.io/aungyephyo2215/visitor-registration-system/api:staging
+    - op: replace
+      path: /spec/template/spec/initContainers/2/image
+      value: ghcr.io/aungyephyo2215/visitor-registration-system/api:staging

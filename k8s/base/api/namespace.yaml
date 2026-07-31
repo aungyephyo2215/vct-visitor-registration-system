@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vrs-api
+  labels:
+    app.kubernetes.io/part-of: visitor-registration-system
+    app.kubernetes.io/component: api
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/warn: restricted

@@ -1,0 +1,41 @@
+# ─── Stage 1: Builder ────────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+# TODO: This image expects a standalone API server (Hono or Express).
+# Migration steps:
+#   1. Create a new entry point: src/api-server.ts
+#   2. Move all src/app/api/v1/* route handlers into src/api-server.ts
+#   3. Replace Next.js Request/Response types with standard Web API types
+#   4. Keep Prisma, JWT, bcrypt, nodemailer, zod — they all stay in the API
+#   5. Remove Next.js from this image entirely (or use a separate package.json)
+
+COPY package.json package-lock.json ./
+RUN npm install --ignore-scripts
+
+COPY . .
+RUN npx prisma generate
+# Build the API server entry point
+RUN npx tsc --project tsconfig.api.json
+
+# ─── Stage 2: Runner ─────────────────────────────────────────────────────────
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 apiuser
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/src/generated ./src/generated
+COPY --from=builder --chown=apiuser:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=apiuser:nodejs /app/node_modules ./node_modules
+
+USER apiuser
+
+EXPOSE 4000
+ENV PORT=4000
+
+CMD ["node", "dist/api-server.js"]

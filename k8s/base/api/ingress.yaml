@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vrs-api
+  namespace: vrs-api
+  labels:
+    app.kubernetes.io/name: vrs-api
+    app.kubernetes.io/component: api
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    # Stricter rate limiting on the API
+    nginx.ingress.kubernetes.io/limit-rps: "30"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "3"
+    # Enable CORS at ingress level
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://vrs.k8s.cmtmm.online"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Authorization, Content-Type"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.vrs.k8s.cmtmm.online
+      secretName: vrs-api-tls
+  rules:
+    - host: api.vrs.k8s.cmtmm.online
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vrs-api
+                port:
+                  number: 4000

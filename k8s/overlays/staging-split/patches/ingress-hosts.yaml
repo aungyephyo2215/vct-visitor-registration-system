@@ -1,0 +1,31 @@
+# Override ingress hosts for staging
+- target:
+    kind: Ingress
+    name: vrs-frontend
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: vrs-staging.k8s.cmtmm.online
+    - op: replace
+      path: /spec/tls/0/hosts/0
+      value: vrs-staging.k8s.cmtmm.online
+    - op: replace
+      path: /metadata/annotations/cert-manager.io~1cluster-issuer
+      value: letsencrypt-staging
+
+- target:
+    kind: Ingress
+    name: vrs-api
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: api-staging.vrs.k8s.cmtmm.online
+    - op: replace
+      path: /spec/tls/0/hosts/0
+      value: api-staging.vrs.k8s.cmtmm.online
+    - op: replace
+      path: /metadata/annotations/cert-manager.io~1cluster-issuer
+      value: letsencrypt-staging
+    - op: replace
+      path: /metadata/annotations/nginx.ingress.kubernetes.io~1cors-allow-origin
+      value: "https://vrs-staging.k8s.cmtmm.online"

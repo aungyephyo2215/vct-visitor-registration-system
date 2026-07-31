@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vrs-frontend
+  namespace: vrs-frontend
+  labels:
+    app.kubernetes.io/name: vrs-frontend
+    app.kubernetes.io/component: frontend
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.ingress.kubernetes.io/limit-rps: "20"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "5"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - vrs.k8s.cmtmm.online
+      secretName: vrs-frontend-tls
+  rules:
+    - host: vrs.k8s.cmtmm.online
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vrs-frontend
+                port:
+                  number: 3000

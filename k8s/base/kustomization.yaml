@@ -4,8 +4,6 @@ kind: Kustomization
 resources:
   # PostgreSQL
   - postgres/namespace.yaml
-  # NOTE: PVC is NOT listed here — StatefulSet creates PVCs via volumeClaimTemplates
-  # The standalone pvc.yaml was causing an orphaned Pending PVC
   - postgres/configmap.yaml
   - postgres/statefulset.yaml
   - postgres/service.yaml
@@ -13,16 +11,25 @@ resources:
   - postgres/resource-quota.yaml
   - postgres/backup-cronjob.yaml
 
-  # Application
-  - app/namespace.yaml
-  - app/configmap.yaml
-  - app/deployment.yaml
-  - app/service.yaml
-  - app/ingress.yaml
-  - app/hpa.yaml
-  - app/network-policy.yaml
-  - app/pdb.yaml
-  - app/resource-quota.yaml
+  # Frontend (Next.js UI only — no API routes)
+  - frontend/namespace.yaml
+  - frontend/configmap.yaml
+  - frontend/deployment.yaml
+  - frontend/service.yaml
+  - frontend/ingress.yaml
+  - frontend/hpa.yaml
+  - frontend/network-policy.yaml
+  - frontend/pdb.yaml
+
+  # API Service (Hono/Express — all /api/v1/* routes)
+  - api/namespace.yaml
+  - api/configmap.yaml
+  - api/deployment.yaml
+  - api/service.yaml
+  - api/ingress.yaml
+  - api/hpa.yaml
+  - api/network-policy.yaml
+  - api/pdb.yaml
 
 commonLabels:
   app.kubernetes.io/part-of: visitor-registration-system

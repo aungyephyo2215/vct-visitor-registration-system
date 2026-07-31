@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vrs-api-pdb
+  namespace: vrs-api
+  labels:
+    app.kubernetes.io/name: vrs-api
+    app.kubernetes.io/component: api
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vrs-api
