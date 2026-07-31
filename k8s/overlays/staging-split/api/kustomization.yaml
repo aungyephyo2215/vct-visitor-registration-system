@@ -1,0 +1,105 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# API-only overlay — deployed by ArgoCD app: vrs-3tier-api
+# Namespace: vrs-api
+# Manages: Namespace, ConfigMap, Deployment, Service, Ingress, HPA, NetworkPolicy, PDB
+# NOTE: also includes postgres (shared StatefulSet) — API owns the DB connection
+
+resources:
+  # PostgreSQL (API tier owns DB access — frontend never touches it)
+  - ../../../base/postgres/namespace.yaml
+  - ../../../base/postgres/configmap.yaml
+  - ../../../base/postgres/statefulset.yaml
+  - ../../../base/postgres/service.yaml
+  - ../../../base/postgres/network-policy.yaml
+  - ../../../base/postgres/resource-quota.yaml
+  - ../../../base/postgres/backup-cronjob.yaml
+
+  # API service
+  - ../../../base/api/namespace.yaml
+  - ../../../base/api/configmap.yaml
+  - ../../../base/api/deployment.yaml
+  - ../../../base/api/service.yaml
+  - ../../../base/api/ingress.yaml
+  - ../../../base/api/hpa.yaml
+  - ../../../base/api/network-policy.yaml
+  - ../../../base/api/pdb.yaml
+
+patches:
+  # Staging: reduce API resource limits
+  - target:
+      kind: Deployment
+      name: vrs-api
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "100m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "300m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "128Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "256Mi"
+
+  # Staging: override image tag (main container + initContainers)
+  - target:
+      kind: Deployment
+      name: vrs-api
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: ghcr.io/aungyephyo2215/visitor-registration-system/api:staging
+      - op: replace
+        path: /spec/template/spec/initContainers/1/image
+        value: ghcr.io/aungyephyo2215/visitor-registration-system/api:staging
+      - op: replace
+        path: /spec/template/spec/initContainers/2/image
+        value: ghcr.io/aungyephyo2215/visitor-registration-system/api:staging
+
+  # Staging: override ingress host + cert-issuer + CORS origin
+  - target:
+      kind: Ingress
+      name: vrs-api
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: api-staging.vrs.k8s.cmtmm.online
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: api-staging.vrs.k8s.cmtmm.online
+      - op: replace
+        path: /metadata/annotations/cert-manager.io~1cluster-issuer
+        value: letsencrypt-staging
+      - op: replace
+        path: /metadata/annotations/nginx.ingress.kubernetes.io~1cors-allow-origin
+        value: "https://vrs-staging.k8s.cmtmm.online"
+
+  # Staging: scale down HPA
+  - target:
+      kind: HorizontalPodAutoscaler
+      name: vrs-api
+    patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 1
+      - op: replace
+        path: /spec/maxReplicas
+        value: 2
+
+configMapGenerator:
+  - name: vrs-api-config
+    namespace: vrs-api
+    behavior: merge
+    literals:
+      - APP_BASE_URL=https://vrs-staging.k8s.cmtmm.online
+      - CORS_ORIGIN=https://vrs-staging.k8s.cmtmm.online
+      - EMAIL_PROVIDER=noop
+
+commonLabels:
+  app.kubernetes.io/part-of: visitor-registration-system
+  architecture: split-tier
+  managed-by: argocd

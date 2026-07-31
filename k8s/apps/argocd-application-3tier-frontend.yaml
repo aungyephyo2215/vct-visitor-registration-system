@@ -8,6 +8,9 @@ metadata:
     app.kubernetes.io/component: frontend
     architecture: split-tier
     environment: staging
+  annotations:
+    # Human-readable description shown in ArgoCD UI
+    argocd.argoproj.io/description: "3-Tier frontend — Next.js UI only (no API routes)"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -15,7 +18,8 @@ spec:
   source:
     repoURL: https://github.com/aungyephyo2215/vct-visitor-registration-system.git
     targetRevision: arch/k8s-split-tier-deployment
-    path: k8s/overlays/staging-split
+    # ✅ Points to frontend-only overlay — deploys ONLY vrs-frontend namespace resources
+    path: k8s/overlays/staging-split/frontend
   destination:
     server: https://kubernetes.default.svc
     namespace: vrs-frontend
@@ -48,3 +52,7 @@ spec:
       value: staging
     - name: branch
       value: arch/k8s-split-tier-deployment
+    - name: image
+      value: ghcr.io/aungyephyo2215/visitor-registration-system/frontend:staging
+    - name: url
+      value: https://vrs-staging.k8s.cmtmm.online

@@ -8,6 +8,8 @@ metadata:
     app.kubernetes.io/component: api
     architecture: split-tier
     environment: staging
+  annotations:
+    argocd.argoproj.io/description: "3-Tier API — Hono/Express all /api/v1/* routes + PostgreSQL"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -15,7 +17,8 @@ spec:
   source:
     repoURL: https://github.com/aungyephyo2215/vct-visitor-registration-system.git
     targetRevision: arch/k8s-split-tier-deployment
-    path: k8s/overlays/staging-split
+    # ✅ Points to api-only overlay — deploys vrs-api + vrs-postgres namespace resources
+    path: k8s/overlays/staging-split/api
   destination:
     server: https://kubernetes.default.svc
     namespace: vrs-api
@@ -39,12 +42,25 @@ spec:
       kind: Deployment
       jsonPointers:
         - /spec/replicas
+    # Ignore StatefulSet volumeClaimTemplates (known cosmetic diff)
+    - group: apps
+      kind: StatefulSet
+      jqPathExpressions:
+        - .spec.volumeClaimTemplates[]
+      jsonPointers:
+        - /metadata/managedFields
+        - /spec/updateStrategy/rollingUpdate
+        - /spec/podManagementPolicy
   info:
     - name: architecture
       value: 3-tier split
     - name: tier
-      value: api
+      value: api + database
     - name: environment
       value: staging
     - name: branch
       value: arch/k8s-split-tier-deployment
+    - name: image
+      value: ghcr.io/aungyephyo2215/visitor-registration-system/api:staging
+    - name: url
+      value: https://api-staging.vrs.k8s.cmtmm.online

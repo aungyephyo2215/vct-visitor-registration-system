@@ -1,0 +1,86 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Frontend-only overlay — deployed by ArgoCD app: vrs-3tier-frontend
+# Namespace: vrs-frontend
+# Manages: Namespace, ConfigMap, Deployment, Service, Ingress, HPA, NetworkPolicy, PDB
+
+resources:
+  - ../../../base/frontend/namespace.yaml
+  - ../../../base/frontend/configmap.yaml
+  - ../../../base/frontend/deployment.yaml
+  - ../../../base/frontend/service.yaml
+  - ../../../base/frontend/ingress.yaml
+  - ../../../base/frontend/hpa.yaml
+  - ../../../base/frontend/network-policy.yaml
+  - ../../../base/frontend/pdb.yaml
+
+patches:
+  # Staging: reduce resource limits
+  - target:
+      kind: Deployment
+      name: vrs-frontend
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "50m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "200m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "128Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "256Mi"
+
+  # Staging: override image tag
+  - target:
+      kind: Deployment
+      name: vrs-frontend
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: ghcr.io/aungyephyo2215/visitor-registration-system/frontend:staging
+
+  # Staging: override ingress host + cert-issuer
+  - target:
+      kind: Ingress
+      name: vrs-frontend
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: vrs-staging.k8s.cmtmm.online
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: vrs-staging.k8s.cmtmm.online
+      - op: replace
+        path: /metadata/annotations/cert-manager.io~1cluster-issuer
+        value: letsencrypt-staging
+
+  # Staging: scale down HPA
+  - target:
+      kind: HorizontalPodAutoscaler
+      name: vrs-frontend
+    patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 1
+      - op: replace
+        path: /spec/maxReplicas
+        value: 2
+
+configMapGenerator:
+  - name: vrs-frontend-config
+    namespace: vrs-frontend
+    behavior: merge
+    literals:
+      - NEXT_PUBLIC_APP_URL=https://vrs-staging.k8s.cmtmm.online
+      - APP_BASE_URL=https://vrs-staging.k8s.cmtmm.online
+      - NEXT_PUBLIC_API_URL=https://api-staging.vrs.k8s.cmtmm.online
+      - INTERNAL_API_URL=http://vrs-api.vrs-api.svc.cluster.local:4000
+
+commonLabels:
+  app.kubernetes.io/part-of: visitor-registration-system
+  architecture: split-tier
+  managed-by: argocd

@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vrs-apps-manager
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: visitor-registration-system
+    pattern: app-of-apps
+  annotations:
+    argocd.argoproj.io/description: |
+      App of Apps root — manages all VRS child applications.
+      Apply this ONCE manually, then ArgoCD self-manages everything.
+
+      Child apps managed:
+        - visitor-registration-system  (Option 1 — monolith, staging/argocd-k8s-lab)
+        - vrs-3tier-frontend            (Option 2 — frontend tier, arch/k8s-split-tier-deployment)
+        - vrs-3tier-api                 (Option 2 — api + db tier, arch/k8s-split-tier-deployment)
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: visitor-registration-system
+  source:
+    repoURL: https://github.com/aungyephyo2215/vct-visitor-registration-system.git
+    targetRevision: arch/k8s-split-tier-deployment
+    # Watches this folder — any Application yaml added here is auto-deployed
+    path: k8s/apps
+  destination:
+    server: https://kubernetes.default.svc
+    # App of Apps deploys INTO argocd namespace (it creates Application objects)
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 1m
+  # Only manage Application and AppProject objects — nothing else
+  ignoreDifferences:
+    - group: argoproj.io
+      kind: Application
+      jsonPointers:
+        - /status

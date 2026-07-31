@@ -1,13 +1,43 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+# ── App of Apps pattern ───────────────────────────────────────────────────────
+#
+#  HOW IT WORKS:
+#  1. Apply argocd-app-of-apps.yaml ONCE manually (bootstrap step):
+#       kubectl apply -f k8s/apps/argocd-app-of-apps.yaml
+#
+#  2. ArgoCD (vrs-apps-manager) then watches THIS folder on Git.
+#     Every Application yaml listed below is automatically created/synced.
+#
+#  3. To add a new ArgoCD app: add a new Application yaml to this folder
+#     and reference it here. ArgoCD picks it up on next sync — no kubectl needed.
+#
+#  STRUCTURE IN ARGOCD UI:
+#
+#    vrs-apps-manager  (App of Apps root — you apply this once)
+#    ├── argocd-project.yaml              → AppProject
+#    ├── visitor-registration-system      → Option 1 monolith (running)
+#    ├── vrs-3tier-frontend               → Option 2 frontend tier
+#    └── vrs-3tier-api                    → Option 2 api + db tier
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
 resources:
-  # Shared ArgoCD project (allows all namespaces)
+  # ArgoCD AppProject — grants permissions for all namespaces
   - argocd-project.yaml
 
-  # Option 1 — Monolith (currently running on staging/argocd-k8s-lab)
+  # ── Option 1: Monolith (currently live on staging/argocd-k8s-lab) ─────────
   - argocd-application.yaml
 
-  # Option 2 — 3-Tier split-tier (arch/k8s-split-tier-deployment)
-  # Deploys: vrs-frontend + vrs-api as separate ArgoCD Applications
-  - argocd-applicationset-split.yaml
+  # ── Option 2: 3-Tier Split (arch/k8s-split-tier-deployment) ──────────────
+  # Two separate Applications — one per tier — independently deployable
+  - argocd-application-3tier-frontend.yaml # vrs-3tier-frontend → vrs-frontend ns
+  - argocd-application-3tier-api.yaml # vrs-3tier-api      → vrs-api + vrs-postgres ns
+
+
+  # NOTE: argocd-applicationset-split.yaml is kept as reference only.
+  # Do NOT include it here — separate Applications are used instead.
+
+  # NOTE: argocd-app-of-apps.yaml is NOT listed here.
+  # It is the ROOT that watches this folder — including it would cause a loop.
