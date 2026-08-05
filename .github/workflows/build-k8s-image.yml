@@ -1,4 +1,4 @@
-name: Build K8s Image
+name: Build & Deploy K8s Image
 
 on:
   push:
@@ -9,17 +9,36 @@ on:
 env:
   REGISTRY: docker.io
   IMAGE_NAME: aungkyawmyint/vrs
+  # Path ArgoCD watches — workflow commits new SHA tag here
+  IMAGE_PATCH_FILE: k8s/overlays/staging/patches/container-image.yaml
 
 jobs:
   build-and-push:
     name: Build & Push Container Image
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write # needed to git commit the updated image tag back
+    outputs:
+      sha_tag: ${{ steps.sha.outputs.tag }}
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Use a PAT or deploy key so the git push back triggers ArgoCD
+          # If using GITHUB_TOKEN, push won't re-trigger workflows (safe)
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
+      # ── Compute short SHA tag ────────────────────────────────────────────
+      - name: Compute short SHA tag
+        id: sha
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          echo "tag=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "full_image=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "Short SHA: ${SHORT_SHA}"
+
+      # ── Build & push image ───────────────────────────────────────────────
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -30,34 +49,79 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=staging
-            type=sha,prefix=,format=short
-
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           platforms: linux/amd64
           push: ${{ github.event_name == 'push' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          # Push TWO tags:
+          #   :abc1234  → immutable, used in deployment.yaml (ArgoCD detects change)
+          #   :staging  → mutable, convenient for manual pulls
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.sha.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
             NODE_ENV=production
 
-      - name: Generate deployment summary
+      # ── Update image tag in git (GitOps commit back) ─────────────────────
+      # This is what ArgoCD actually detects — a git change, not a Docker push.
+      # ArgoCD sees the new SHA tag in container-image.yaml → triggers rollout.
+      - name: Update image tag in k8s manifest
         if: github.event_name == 'push'
         run: |
-          echo "## Container Image Built" >> $GITHUB_STEP_SUMMARY
+          SHORT_SHA="${{ steps.sha.outputs.tag }}"
+          FULL_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${SHORT_SHA}"
+
+          echo "Updating image tag to: ${FULL_IMAGE}"
+
+          # Replace the image tag for the main container and both initContainers
+          # Uses sed to replace any existing tag with the new SHA tag
+          sed -i "s|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:.*|${FULL_IMAGE}|g" \
+            ${{ env.IMAGE_PATCH_FILE }}
+
+          echo "Updated manifest:"
+          cat ${{ env.IMAGE_PATCH_FILE }}
+
+      - name: Commit and push updated image tag
+        if: github.event_name == 'push'
+        run: |
+          SHORT_SHA="${{ steps.sha.outputs.tag }}"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Only commit if there is actually a change
+          if git diff --quiet ${{ env.IMAGE_PATCH_FILE }}; then
+            echo "No image tag change detected — skipping commit"
+            exit 0
+          fi
+
+          git add ${{ env.IMAGE_PATCH_FILE }}
+          git commit -m "chore(k8s): update staging image tag to ${SHORT_SHA}
+
+          Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${SHORT_SHA}
+          Triggered by: ${{ github.sha }}
+          Workflow: ${{ github.workflow }}
+
+          ArgoCD will detect this change and trigger a rolling update."
+
+          git push origin staging/argocd-k8s-lab
+
+      # ── Summary ──────────────────────────────────────────────────────────
+      - name: Deployment summary
+        if: github.event_name == 'push'
+        run: |
+          SHORT_SHA="${{ steps.sha.outputs.tag }}"
+          echo "## Image Built & GitOps Commit Pushed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image:** \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Digest:** \`${{ steps.meta.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| **SHA tag** | \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${SHORT_SHA}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Stable tag** | \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "ArgoCD will detect the manifest change and trigger a rolling update automatically." >> $GITHUB_STEP_SUMMARY
