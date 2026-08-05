@@ -13,7 +13,13 @@ spec:
   source:
     # TODO: Update repoURL to your actual Git repository
     repoURL: https://github.com/aungyephyo2215/vct-visitor-registration-system.git
-    targetRevision: staging/argocd-k8s-lab
+    # ── IMPORTANT ────────────────────────────────────────────────────────
+    # ArgoCD watches staging/k8s-gitops-deploy, NOT staging/argocd-k8s-lab.
+    # staging/argocd-k8s-lab = code branch (protected, humans push here)
+    # staging/k8s-gitops-deploy = deploy branch (bot commits image tags here)
+    # This separation avoids branch protection conflicts on the GitOps commit.
+    # ─────────────────────────────────────────────────────────────────────
+    targetRevision: staging/k8s-gitops-deploy
     path: k8s/overlays/staging
   destination:
     server: https://kubernetes.default.svc
