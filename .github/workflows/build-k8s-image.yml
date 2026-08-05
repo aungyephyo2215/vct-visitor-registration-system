@@ -9,16 +9,6 @@ on:
 env:
   REGISTRY: docker.io
   IMAGE_NAME: aungkyawmyint/vrs
-
-  # ── GitOps deploy branch ──────────────────────────────────────────────────
-  # This branch has NO branch protection — the bot owns it.
-  # ArgoCD watches THIS branch, not staging/argocd-k8s-lab.
-  # Humans push code to staging/argocd-k8s-lab (protected).
-  # Bot commits image tag updates to staging/k8s-gitops-deploy (unprotected).
-  # ─────────────────────────────────────────────────────────────────────────
-  DEPLOY_BRANCH: staging/k8s-gitops-deploy
-
-  # Path inside the deploy branch that ArgoCD reads
   IMAGE_PATCH_FILE: k8s/overlays/staging/patches/container-image.yaml
 
 jobs:
@@ -27,15 +17,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    outputs:
-      sha_tag: ${{ steps.sha.outputs.tag }}
 
     steps:
-      # ── Checkout CODE branch (to build the app) ───────────────────────────
-      - name: Checkout code branch
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: staging/argocd-k8s-lab
           token: ${{ secrets.GITHUB_TOKEN }}
 
       # ── Compute short SHA ─────────────────────────────────────────────────
@@ -63,8 +49,8 @@ jobs:
           context: .
           platforms: linux/amd64
           push: ${{ github.event_name == 'push' }}
-          # :abc1234 → immutable SHA tag (ArgoCD uses this)
-          # :staging  → mutable tag (convenient for manual pulls)
+          # :abc1234 → immutable SHA tag  (ArgoCD detects this change in git)
+          # :staging  → mutable tag       (convenient for manual pulls)
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.sha.outputs.tag }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging
@@ -73,38 +59,25 @@ jobs:
           build-args: |
             NODE_ENV=production
 
-      # ── GitOps commit back to DEPLOY branch (unprotected) ─────────────────
-      # Checkout the deploy branch separately — no conflicts with code branch.
-      # The bot updates only container-image.yaml with the new SHA tag.
-      # ArgoCD watches this branch → detects the change → triggers rollout.
-      - name: Checkout deploy branch
-        if: github.event_name == 'push'
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ env.DEPLOY_BRANCH }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          path: gitops-deploy
-
-      - name: Update image tag in deploy branch
+      # ── GitOps commit back ────────────────────────────────────────────────
+      # Update the image tag in the manifest and push back to the same branch.
+      # ArgoCD detects this git change and triggers a rolling update.
+      - name: Update image tag in manifest
         if: github.event_name == 'push'
         run: |
           SHORT_SHA="${{ steps.sha.outputs.tag }}"
           FULL_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${SHORT_SHA}"
 
-          echo "Updating image tag to: ${FULL_IMAGE}"
-
           sed -i "s|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:.*|${FULL_IMAGE}|g" \
-            gitops-deploy/${{ env.IMAGE_PATCH_FILE }}
+            ${{ env.IMAGE_PATCH_FILE }}
 
           echo "Updated manifest:"
-          cat gitops-deploy/${{ env.IMAGE_PATCH_FILE }}
+          cat ${{ env.IMAGE_PATCH_FILE }}
 
-      - name: Commit and push to deploy branch
+      - name: Commit and push updated image tag
         if: github.event_name == 'push'
         run: |
           SHORT_SHA="${{ steps.sha.outputs.tag }}"
-
-          cd gitops-deploy
 
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -118,12 +91,11 @@ jobs:
           git commit -m "chore(k8s): update staging image tag to ${SHORT_SHA}
 
           Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${SHORT_SHA}
-          Source commit: ${{ github.sha }}
-          Source branch: staging/argocd-k8s-lab
+          Commit: ${{ github.sha }}
 
           ArgoCD detects this change and triggers a rolling update."
 
-          git push origin ${{ env.DEPLOY_BRANCH }}
+          git push origin staging/argocd-k8s-lab
 
       # ── Summary ───────────────────────────────────────────────────────────
       - name: Deployment summary
@@ -136,8 +108,7 @@ jobs:
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
           echo "| **SHA tag** | \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${SHORT_SHA}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Stable tag** | \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Code branch** | \`staging/argocd-k8s-lab\` (protected) |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Deploy branch** | \`${{ env.DEPLOY_BRANCH }}\` (ArgoCD watches) |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Source commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | \`staging/argocd-k8s-lab\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "ArgoCD will detect the manifest change on \`${{ env.DEPLOY_BRANCH }}\` and trigger a rolling update." >> $GITHUB_STEP_SUMMARY
+          echo "ArgoCD detects the manifest change and triggers a rolling update." >> $GITHUB_STEP_SUMMARY
