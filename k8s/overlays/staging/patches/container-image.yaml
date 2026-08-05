@@ -10,15 +10,24 @@ spec:
         - name: wait-for-postgres
           image: busybox:1.36
           imagePullPolicy: IfNotPresent
+
+        # ── IMAGE TAG MANAGED BY CI ──────────────────────────────────────────
+        # DO NOT edit the image tags below manually.
+        # The workflow .github/workflows/build-k8s-image.yml updates these
+        # automatically after every push to staging/argocd-k8s-lab.
+        # ArgoCD detects the git change here and triggers a rolling update.
+        # ─────────────────────────────────────────────────────────────────────
         - name: run-migrations
-          image: docker.io/aungkyawmyint/vrs:staging
+          image: docker.io/aungkyawmyint/vrs:bdbf2ee
           imagePullPolicy: Always
+
         - name: seed-database
-          image: docker.io/aungkyawmyint/vrs:staging
+          image: docker.io/aungkyawmyint/vrs:bdbf2ee
           imagePullPolicy: Always
+
       containers:
         - name: vrs-app
-          image: docker.io/aungkyawmyint/vrs:staging
+          image: docker.io/aungkyawmyint/vrs:bdbf2ee
           imagePullPolicy: Always
           resources:
             requests:
