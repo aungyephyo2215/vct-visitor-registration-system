@@ -18,16 +18,16 @@ spec:
         # ArgoCD detects the git change here and triggers a rolling update.
         # ─────────────────────────────────────────────────────────────────────
         - name: run-migrations
-          image: docker.io/aungkyawmyint/vrs:staging
+          image: docker.io/aungkyawmyint/vrs:bdbf2ee
           imagePullPolicy: Always
 
         - name: seed-database
-          image: docker.io/aungkyawmyint/vrs:staging
+          image: docker.io/aungkyawmyint/vrs:bdbf2ee
           imagePullPolicy: Always
 
       containers:
         - name: vrs-app
-          image: docker.io/aungkyawmyint/vrs:staging
+          image: docker.io/aungkyawmyint/vrs:bdbf2ee
           imagePullPolicy: Always
           resources:
             requests:
