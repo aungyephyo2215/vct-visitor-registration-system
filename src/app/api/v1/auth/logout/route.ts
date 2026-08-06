@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     if (user) {
       await createAuditLog({
         prisma,
-        property_id: user.property_id || "unknown",
+        property_id: user.property_id || undefined,
         user_id: user.id,
         action: "LOGOUT",
         resource_type: "user",

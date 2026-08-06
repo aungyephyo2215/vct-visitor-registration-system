@@ -3,6 +3,28 @@ import type { NextRequest } from "next/server";
 import type { JWTPayload } from "jose";
 import { verifyAccessToken } from "@/lib/jwt";
 
+const LOG_LEVEL = process.env.LOG_LEVEL || "info";
+const LOG_FORMAT = process.env.LOG_FORMAT || "pretty";
+
+function log(level: string, message: string, data?: Record<string, unknown>) {
+  const entry = {
+    level,
+    message,
+    timestamp: new Date().toISOString(),
+    ...data,
+  };
+
+  if (LOG_FORMAT === "json") {
+    console[level === "error" ? "error" : level === "warn" ? "warn" : "log"](JSON.stringify(entry));
+  } else {
+    const prefix = `[${entry.timestamp}] [${level.toUpperCase()}]`;
+    const extra = data ? ` ${JSON.stringify(data)}` : "";
+    console[level === "error" ? "error" : level === "warn" ? "warn" : "log"](
+      `${prefix} ${message}${extra}`,
+    );
+  }
+}
+
 function setUserHeaders(headers: Headers, payload: JWTPayload): Headers {
   const h = new Headers(headers);
   h.set("x-user-id", payload.sub as string);
@@ -28,6 +50,8 @@ const publicPaths = ["/", "/login", "/_next", "/favicon.ico"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const method = request.method;
+  const start = Date.now();
 
   // Always allow public paths
   if (publicPaths.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
@@ -49,10 +73,17 @@ export async function middleware(request: NextRequest) {
   // API route protection
   if (pathname.startsWith("/api/")) {
     if (publicApiPaths.some((p) => pathname === p)) {
+      log("info", "request", { method, pathname, status: 200, duration_ms: Date.now() - start });
       return NextResponse.next();
     }
 
     if (!token) {
+      log("warn", "unauthorized", {
+        method,
+        pathname,
+        status: 401,
+        duration_ms: Date.now() - start,
+      });
       return NextResponse.json(
         { success: false, error: { message: "Authentication required" } },
         { status: 401 },
@@ -61,12 +92,25 @@ export async function middleware(request: NextRequest) {
 
     const payload = await verifyAccessToken(token);
     if (!payload?.sub) {
+      log("warn", "invalid_token", {
+        method,
+        pathname,
+        status: 401,
+        duration_ms: Date.now() - start,
+      });
       return NextResponse.json(
         { success: false, error: { message: "Invalid or expired token" } },
         { status: 401 },
       );
     }
 
+    log("info", "request", {
+      method,
+      pathname,
+      status: 200,
+      user_id: payload.sub,
+      duration_ms: Date.now() - start,
+    });
     return NextResponse.next({
       request: { headers: setUserHeaders(request.headers, payload) },
     });
@@ -75,6 +119,7 @@ export async function middleware(request: NextRequest) {
   // Page route protection
   if (protectedPages.some((p) => pathname.startsWith(p))) {
     if (!token) {
+      log("info", "redirect_to_login", { method, pathname, duration_ms: Date.now() - start });
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
@@ -82,6 +127,7 @@ export async function middleware(request: NextRequest) {
 
     const payload = await verifyAccessToken(token);
     if (!payload?.sub) {
+      log("warn", "invalid_token", { method, pathname, duration_ms: Date.now() - start });
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);

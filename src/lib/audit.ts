@@ -40,13 +40,23 @@ interface CreateAuditLogParams {
   metadata?: Record<string, unknown>;
 }
 
-async function getDefaultPropertyId(prisma: PrismaClient): Promise<string> {
+async function getDefaultPropertyId(prisma: PrismaClient): Promise<string | null> {
   const property = await prisma.property.findFirst({ where: { status: "ACTIVE" } });
-  return property?.id || "seed-property-01";
+  return property?.id ?? null;
 }
 
 export async function createAuditLog(params: CreateAuditLogParams) {
+  // Resolve property_id — if none provided, try to find the first active property
   const property_id = params.property_id || (await getDefaultPropertyId(params.prisma));
+
+  // If still no valid property_id, skip audit log silently.
+  // This prevents a FK violation when SUPER_ADMIN users have no property assigned.
+  if (!property_id) {
+    console.warn(
+      `[audit] Skipping audit log — no valid property_id for action: ${params.action} user: ${params.user_id}`,
+    );
+    return null;
+  }
 
   return params.prisma.auditLog.create({
     data: {
