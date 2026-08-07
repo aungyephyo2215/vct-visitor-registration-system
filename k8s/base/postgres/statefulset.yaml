@@ -33,6 +33,11 @@ spec:
         - name: postgres
           image: postgres:16-alpine
           imagePullPolicy: IfNotPresent
+          args:
+            - "-c"
+            - "timezone=Asia/Bangkok"
+            - "-c"
+            - "log_timezone=Asia/Bangkok"
           ports:
             - containerPort: 5432
               name: postgres

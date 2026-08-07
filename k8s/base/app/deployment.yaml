@@ -50,6 +50,9 @@ spec:
                 sleep 2
               done
               echo "PostgreSQL is ready!"
+          env:
+            - name: TZ
+              value: "Asia/Bangkok"
           resources:
             requests:
               cpu: 50m
@@ -240,6 +243,11 @@ spec:
                 configMapKeyRef:
                   name: vrs-app-config
                   key: LOG_FORMAT
+            - name: LOG_TIMEZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: LOG_TIMEZONE
           resources:
             requests:
               cpu: 100m
