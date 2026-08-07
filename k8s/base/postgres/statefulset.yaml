@@ -63,6 +63,15 @@ spec:
                 configMapKeyRef:
                   name: vrs-postgres-config
                   key: POSTGRES_INITDB_ARGS
+            # Logging — slow queries + connection logs
+            - name: POSTGRES_LOG_MIN_DURATION_STATEMENT
+              value: "1000" # log queries slower than 1000ms
+            - name: POSTGRES_LOG_CONNECTIONS
+              value: "off" # off in production to reduce noise
+            - name: POSTGRES_LOG_DISCONNECTIONS
+              value: "off"
+            - name: POSTGRES_LOG_STATEMENT
+              value: "none" # none=off, ddl=schema changes only, all=everything
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data

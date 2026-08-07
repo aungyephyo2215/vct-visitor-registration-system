@@ -22,6 +22,11 @@ spec:
       labels:
         app.kubernetes.io/name: visitor-registration-system
         app.kubernetes.io/component: application
+      annotations:
+        # Tell log collectors this pod emits JSON logs
+        logging.kubernetes.io/format: "json"
+        # Loki/Promtail label for log filtering
+        prometheus.io/scrape: "false"
     spec:
       # NOTE: imagePullSecrets removed — using public Docker Hub images
       # Add back if switching to private registry (GHCR, ECR, etc.)
@@ -217,6 +222,17 @@ spec:
                 configMapKeyRef:
                   name: vrs-app-config
                   key: DB_CONNECT_TIMEOUT_MS
+            # Logging
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: LOG_LEVEL
+            - name: LOG_FORMAT
+              valueFrom:
+                configMapKeyRef:
+                  name: vrs-app-config
+                  key: LOG_FORMAT
           resources:
             requests:
               cpu: 100m
