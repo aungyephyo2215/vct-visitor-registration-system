@@ -38,6 +38,9 @@ spec:
               name: postgres
               protocol: TCP
           env:
+            # Timezone
+            - name: TZ
+              value: "Asia/Bangkok"
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
