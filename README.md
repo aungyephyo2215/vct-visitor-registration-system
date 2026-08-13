@@ -1,3 +1,5 @@
+
+
 <p align="center">
   <img src="https://img.shields.io/badge/version-1.5.0-blue?style=for-the-badge" alt="Version 1.5.0">
   <img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge" alt="Build Passing">
@@ -152,7 +154,7 @@
 ```bash
 # 1. Clone and install
 git clone https://github.com/aungyephyo2215/vct-visitor-registration-system.git
-cd visitor-registration-system
+cd vct-visitor-registration-system
 npm install
 
 # 2. Copy environment
